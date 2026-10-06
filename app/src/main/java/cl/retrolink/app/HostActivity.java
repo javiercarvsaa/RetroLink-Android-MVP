@@ -68,6 +68,7 @@ public class HostActivity extends Activity implements HostBleManager.Listener, F
         findViewById(R.id.btnStopHost).setOnClickListener(v -> stopHost());
         findViewById(R.id.btnRom).setOnClickListener(v -> pickRom());
         findViewById(R.id.btnLaunch).setOnClickListener(v -> launchIntegratedN64());
+        findViewById(R.id.btnHostTestControls).setOnClickListener(v -> startActivity(new Intent(this, ControlTestActivity.class)));
         for (int p = 1; p <= 4; p++) {
             final int count = p;
             playerButtons[p].setOnClickListener(v -> setPlayers(count));

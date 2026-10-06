@@ -7,83 +7,76 @@
     android:fillViewport="true"
     android:scrollbars="none">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="14dp">
-
-        <!-- Header / red real -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingLeft="18dp" android:paddingTop="10dp" android:paddingRight="18dp" android:paddingBottom="10dp">
+        <!-- Header -->
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
-            <ImageView android:layout_width="54dp" android:layout_height="54dp" android:contentDescription="RetroLink" android:src="@mipmap/ic_launcher" />
+            <ImageView android:layout_width="58dp" android:layout_height="58dp" android:contentDescription="RetroLink" android:src="@mipmap/ic_launcher" />
             <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginLeft="10dp" android:orientation="vertical">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Sala local" android:textColor="@color/retro_text" android:textSize="24sp" android:textStyle="bold" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Sala local" android:textColor="@color/retro_text" android:textSize="23sp" android:textStyle="bold" />
                 <TextView android:id="@+id/txtHostStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Sala detenida" android:textColor="@color/retro_cyan" android:textSize="9sp" />
             </LinearLayout>
-            <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/card_status_green" android:orientation="vertical">
-                <TextView android:id="@+id/txtRoomState" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="○ SALA DETENIDA" android:textColor="@color/retro_text" android:textSize="9sp" android:textStyle="bold" />
-                <TextView android:id="@+id/txtVideoClients" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:text="Red local" android:textColor="@color/retro_green" android:textSize="8sp" />
+            <LinearLayout android:layout_width="330dp" android:layout_height="52dp" android:background="@drawable/card_status_green" android:gravity="center_vertical" android:orientation="horizontal" android:paddingLeft="14dp" android:paddingRight="14dp">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:id="@+id/txtRoomState" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="○ SALA DETENIDA" android:textColor="@color/retro_text" android:textSize="9sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/txtVideoClients" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="Red local" android:textColor="@color/retro_green" android:textSize="8sp" />
+                </LinearLayout>
+                <Button android:id="@+id/btnStartHost" android:layout_width="100dp" android:layout_height="38dp" android:background="@drawable/btn_secondary_neon" android:text="ACTIVAR" android:textColor="@color/retro_text" android:textSize="8sp" android:textStyle="bold" />
+                <Button android:id="@+id/btnStopHost" android:layout_width="82dp" android:layout_height="38dp" android:layout_marginLeft="5dp" android:background="@drawable/card_magenta_soft" android:text="DETENER" android:textColor="@color/retro_text" android:textSize="7sp" />
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Sala -->
-        <LinearLayout android:layout_width="match_parent" android:layout_height="238dp" android:layout_marginTop="9dp" android:orientation="horizontal">
-            <!-- Players reales -->
+        <!-- Jugadores + juego + jugadores -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="232dp" android:layout_marginTop="9dp" android:orientation="horizontal">
             <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.95" android:orientation="vertical">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:background="@drawable/card_cyan_active" android:gravity="center_vertical" android:orientation="horizontal">
-                    <TextView android:layout_width="44dp" android:layout_height="44dp" android:background="@drawable/pill_green" android:gravity="center" android:text="P1" android:textColor="@color/retro_cyan" android:textStyle="bold" />
+                    <TextView android:layout_width="46dp" android:layout_height="46dp" android:background="@drawable/pill_green" android:gravity="center" android:text="P1" android:textColor="@color/retro_cyan" android:textStyle="bold" />
                     <TextView android:id="@+id/txtP1State" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginLeft="10dp" android:text="● Este dispositivo · P1" android:textColor="@color/retro_green" android:textSize="9sp" android:textStyle="bold" />
                 </LinearLayout>
-                <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="6dp" android:background="@drawable/card_magenta_active" android:gravity="center_vertical" android:orientation="horizontal">
-                    <TextView android:layout_width="44dp" android:layout_height="44dp" android:background="@drawable/pill_status" android:gravity="center" android:text="P2" android:textColor="@color/retro_magenta" android:textStyle="bold" />
+                <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="8dp" android:background="@drawable/card_magenta_active" android:gravity="center_vertical" android:orientation="horizontal">
+                    <TextView android:layout_width="46dp" android:layout_height="46dp" android:background="@drawable/pill_status" android:gravity="center" android:text="P2" android:textColor="@color/retro_magenta" android:textStyle="bold" />
                     <TextView android:id="@+id/txtP2State" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginLeft="10dp" android:text="Esperando jugador…" android:textColor="@color/retro_muted" android:textSize="9sp" />
                 </LinearLayout>
-                <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="6dp" android:background="@drawable/card_purple" android:gravity="center_vertical" android:orientation="horizontal">
-                    <TextView android:layout_width="44dp" android:layout_height="44dp" android:background="@drawable/pill_status" android:gravity="center" android:text="P3" android:textColor="#B27BFF" android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.45" android:layout_marginLeft="9dp" android:background="@drawable/hero_neon" android:orientation="vertical" android:padding="18dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="JUEGO SELECCIONADO" android:textColor="#B8DAF4" android:textSize="8sp" android:textStyle="bold" android:letterSpacing="0.16" />
+                <TextView android:id="@+id/txtRomInfo" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:maxLines="2" android:text="Selecciona una ROM N64" android:textColor="@color/retro_text" android:textSize="17sp" android:textStyle="bold" />
+                <TextView android:id="@+id/txtCoreStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Mupen64Plus-Next · sin juego seleccionado" android:textColor="#A8C1DF" android:textSize="8sp" />
+                <TextView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center_vertical" android:text="Control remoto BLE · video por red local\nPresentSync · controles táctiles y gamepad" android:textColor="#789BC0" android:textSize="8sp" android:lineSpacingExtra="3dp" />
+                <LinearLayout android:layout_width="match_parent" android:layout_height="46dp" android:orientation="horizontal">
+                    <Button android:id="@+id/btnRom" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/btn_secondary_neon" android:text="CAMBIAR JUEGO" android:textColor="@color/retro_text" android:textSize="8sp" />
+                    <Button android:id="@+id/btnLaunch" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.35" android:layout_marginLeft="7dp" android:background="@drawable/btn_primary_gradient" android:text="▶  INICIAR PARTIDA" android:textColor="@color/retro_text" android:textSize="9sp" android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.95" android:layout_marginLeft="9dp" android:orientation="vertical">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:background="@drawable/card_purple" android:gravity="center_vertical" android:orientation="horizontal">
+                    <TextView android:layout_width="46dp" android:layout_height="46dp" android:background="@drawable/pill_status" android:gravity="center" android:text="P3" android:textColor="#B27BFF" android:textStyle="bold" />
                     <TextView android:id="@+id/txtP3State" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginLeft="10dp" android:text="Esperando jugador…" android:textColor="@color/retro_muted" android:textSize="9sp" />
                 </LinearLayout>
-                <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="6dp" android:background="@drawable/card_blue" android:gravity="center_vertical" android:orientation="horizontal">
-                    <TextView android:layout_width="44dp" android:layout_height="44dp" android:background="@drawable/pill_status" android:gravity="center" android:text="P4" android:textColor="#7FAFFF" android:textStyle="bold" />
+                <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="8dp" android:background="@drawable/card_blue" android:gravity="center_vertical" android:orientation="horizontal">
+                    <TextView android:layout_width="46dp" android:layout_height="46dp" android:background="@drawable/pill_status" android:gravity="center" android:text="P4" android:textColor="#7FAFFF" android:textStyle="bold" />
                     <TextView android:id="@+id/txtP4State" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginLeft="10dp" android:text="Esperando jugador…" android:textColor="@color/retro_muted" android:textSize="9sp" />
                 </LinearLayout>
             </LinearLayout>
-
-            <!-- Juego -->
-            <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.35" android:layout_marginLeft="9dp" android:background="@drawable/hero_neon" android:orientation="vertical" android:padding="18dp">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="JUEGO SELECCIONADO" android:textColor="#B8DAF4" android:textSize="8sp" android:textStyle="bold" android:letterSpacing="0.16" />
-                <TextView android:id="@+id/txtRomInfo" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:maxLines="2" android:text="Selecciona una ROM N64" android:textColor="@color/retro_text" android:textSize="16sp" android:textStyle="bold" />
-                <TextView android:id="@+id/txtCoreStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:text="Mupen64Plus-Next · sin juego seleccionado" android:textColor="#A8C1DF" android:textSize="9sp" />
-                <TextView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center_vertical" android:text="P1–P4 · control remoto BLE · video por Wi‑Fi local\nLa partida usa el mismo core N64 integrado." android:textColor="#789BC0" android:textSize="9sp" android:lineSpacingExtra="3dp" />
-                <LinearLayout android:layout_width="match_parent" android:layout_height="48dp" android:orientation="horizontal">
-                    <Button android:id="@+id/btnRom" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/btn_secondary_neon" android:text="CAMBIAR JUEGO" android:textColor="@color/retro_text" android:textSize="9sp" />
-                    <Button android:id="@+id/btnLaunch" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.25" android:layout_marginLeft="7dp" android:background="@drawable/btn_primary_gradient" android:text="▶  INICIAR PARTIDA" android:textColor="@color/retro_text" android:textSize="10sp" android:textStyle="bold" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- Configuración real de sala -->
-            <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.95" android:layout_marginLeft="9dp" android:background="@drawable/card_magenta_active" android:orientation="vertical">
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="JUGADORES" android:textColor="#C8D9ED" android:textSize="9sp" android:textStyle="bold" android:letterSpacing="0.13" />
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:text="Cantidad esperada en la partida" android:textColor="#8FA9C5" android:textSize="8sp" />
-                <LinearLayout android:layout_width="match_parent" android:layout_height="44dp" android:layout_marginTop="8dp" android:orientation="horizontal">
-                    <Button android:id="@+id/btnPlayers1" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/segment_selected" android:text="1" android:textColor="@color/retro_text" android:textSize="9sp" />
-                    <Button android:id="@+id/btnPlayers2" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginLeft="4dp" android:background="@drawable/btn_secondary_neon" android:text="2" android:textColor="@color/retro_text" android:textSize="9sp" />
-                    <Button android:id="@+id/btnPlayers3" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginLeft="4dp" android:background="@drawable/btn_secondary_neon" android:text="3" android:textColor="@color/retro_text" android:textSize="9sp" />
-                    <Button android:id="@+id/btnPlayers4" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginLeft="4dp" android:background="@drawable/btn_secondary_neon" android:text="4" android:textColor="@color/retro_text" android:textSize="9sp" />
-                </LinearLayout>
-                <TextView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="8dp" android:text="ACTIVAR SALA inicia:\n• servicio BLE de controles\n• servidor de video local\n\nDETENER cierra ambos servicios." android:textColor="#A8C1DF" android:textSize="8sp" android:lineSpacingExtra="2dp" />
-            </LinearLayout>
         </LinearLayout>
 
-        <!-- Acciones reales -->
-        <LinearLayout android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="9dp" android:orientation="horizontal">
-            <Button android:id="@+id/btnStartHost" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.25" android:background="@drawable/btn_primary_gradient" android:text="⌁  ACTIVAR SALA" android:textColor="@color/retro_text" android:textSize="10sp" android:textStyle="bold" />
-            <Button android:id="@+id/btnStopHost" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.9" android:layout_marginLeft="8dp" android:background="@drawable/card_magenta_soft" android:text="DETENER" android:textColor="@color/retro_text" android:textSize="9sp" />
-            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.8" android:layout_marginLeft="8dp" android:background="@drawable/card_glass" android:gravity="center_vertical" android:paddingLeft="14dp" android:text="Sin código de sala simulado · conexión real por BLE + misma red Wi‑Fi/hotspot" android:textColor="#8FA9C5" android:textSize="8sp" />
+        <!-- Configuración funcional de sala -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="62dp" android:layout_marginTop="9dp" android:orientation="horizontal">
+            <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.15" android:background="@drawable/card_glass" android:gravity="center_vertical" android:orientation="horizontal" android:paddingLeft="14dp" android:paddingRight="14dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="JUGADORES" android:textColor="#BFD8F1" android:textSize="8sp" android:textStyle="bold" />
+                <Button android:id="@+id/btnPlayers1" android:layout_width="46dp" android:layout_height="38dp" android:layout_marginLeft="10dp" android:background="@drawable/segment_selected" android:text="1" android:textColor="@color/retro_text" android:textSize="9sp" />
+                <Button android:id="@+id/btnPlayers2" android:layout_width="46dp" android:layout_height="38dp" android:layout_marginLeft="4dp" android:background="@drawable/btn_secondary_neon" android:text="2" android:textColor="@color/retro_text" android:textSize="9sp" />
+                <Button android:id="@+id/btnPlayers3" android:layout_width="46dp" android:layout_height="38dp" android:layout_marginLeft="4dp" android:background="@drawable/btn_secondary_neon" android:text="3" android:textColor="@color/retro_text" android:textSize="9sp" />
+                <Button android:id="@+id/btnPlayers4" android:layout_width="46dp" android:layout_height="38dp" android:layout_marginLeft="4dp" android:background="@drawable/btn_secondary_neon" android:text="4" android:textColor="@color/retro_text" android:textSize="9sp" />
+            </LinearLayout>
+            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.4" android:layout_marginLeft="8dp" android:background="@drawable/card_cyan_active" android:gravity="center_vertical" android:paddingLeft="14dp" android:text="⌁  CONEXIÓN REAL\nBLE para controles · Wi‑Fi/hotspot para video" android:textColor="@color/retro_text" android:textSize="8sp" android:textStyle="bold" />
+            <Button android:id="@+id/btnHostTestControls" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.9" android:layout_marginLeft="8dp" android:background="@drawable/card_magenta_active" android:text="🎮  PROBAR\nCONTROLES" android:textColor="@color/retro_text" android:textSize="8sp" android:textStyle="bold" />
         </LinearLayout>
 
         <LinearLayout android:layout_width="match_parent" android:layout_height="54dp" android:layout_marginTop="10dp" android:background="@drawable/nav_bar" android:gravity="center" android:orientation="horizontal">
             <TextView android:id="@+id/navHostHome" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:clickable="true" android:focusable="true" android:gravity="center" android:text="⌂\nInicio" android:textColor="#A3B8D2" android:textSize="9sp" />
-            <TextView android:id="@+id/navHostGames" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:clickable="true" android:focusable="true" android:gravity="center" android:text="▣\nJuegos" android:textColor="#A3B8D2" android:textSize="9sp" />
+            <TextView android:id="@+id/navHostGames" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:clickable="true" android:focusable="true" android:gravity="center" android:text="🎮\nJuegos" android:textColor="#A3B8D2" android:textSize="9sp" />
             <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="♟\nSala" android:textColor="@color/retro_cyan" android:textSize="9sp" android:textStyle="bold" />
             <TextView android:id="@+id/navHostProfile" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:clickable="true" android:focusable="true" android:gravity="center" android:text="◯\nPerfil" android:textColor="#A3B8D2" android:textSize="9sp" />
             <TextView android:id="@+id/navHostSettings" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:clickable="true" android:focusable="true" android:gravity="center" android:text="⚙\nAjustes" android:textColor="#A3B8D2" android:textSize="9sp" />

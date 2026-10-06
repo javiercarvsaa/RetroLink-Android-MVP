@@ -82,3 +82,19 @@ La sesión puede leer el repositorio GitHub, pero las operaciones de escritura (
 - Ajustes de deadzone, sensibilidad e inversión Y.
 - Editor de posiciones v0.6 preservado y compatible.
 - Pendiente validación física: Smash Bros arriba/abajo, mando BT/USB y multitouch.
+
+## v0.6.2 RC1 — Functional UI
+
+- Auditoría de menú/submenús: se retiraron Favoritos, búsqueda, sistemas no integrados, código de sala y métricas simuladas.
+- Inicio, Biblioteca, Sala, Ajustes y Perfil muestran solo acciones/estados conectados a código real.
+- Streaming, input, recorte P1 y reset de preferencias expuestos como controles reales.
+
+## v0.6.3 RC1 — Menu Functional Visual
+
+- Rediseño visual siguiendo el dashboard RetroLink aprobado.
+- Inicio con hero de última sesión y accesos separados por función.
+- Biblioteca N64 real con múltiples ROM importadas y selección persistente.
+- Sala reorganizada P1/P2 — juego — P3/P4, con red y jugadores reales.
+- Perfil renovado con dispositivo, biblioteca, core y gamepad reales.
+- Ajustes conserva únicamente opciones funcionales.
+- versionCode 18 / versionName 0.6.3-rc1.

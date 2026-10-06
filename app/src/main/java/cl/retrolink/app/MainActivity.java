@@ -17,7 +17,7 @@ public class MainActivity extends Activity {
     private static final int REQ_BT_PERMISSIONS = 100;
     private static final int REQ_ENABLE_BT = 101;
 
-    private TextView status, lastGame, lastMeta, continueButton;
+    private TextView status, lastGame, lastMeta, continueButton, librarySummary;
     private BluetoothAdapter adapter;
 
     @Override protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +29,7 @@ public class MainActivity extends Activity {
         lastGame = findViewById(R.id.txtLastGame);
         lastMeta = findViewById(R.id.txtLastGameMeta);
         continueButton = findViewById(R.id.btnQuickPlay);
+        librarySummary = findViewById(R.id.txtLibrarySummary);
 
         BluetoothManager manager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         adapter = manager != null ? manager.getAdapter() : null;
@@ -68,6 +69,10 @@ public class MainActivity extends Activity {
         lastGame.setText(hasRom && summary != null && !summary.isEmpty() ? shortTitle(summary) : "Sin juego reciente");
         lastMeta.setText(hasRom ? "Nintendo 64 · listo para continuar" : "Importa una ROM N64 desde Jugar ahora o Biblioteca");
         continueButton.setText(hasRom ? "▶  CONTINUAR" : "＋  ELEGIR JUEGO");
+        int games = N64RomRepository.listRoms(this).size();
+        String gamepad = AndroidGamepadMapper.connectedGamepadsSummary();
+        librarySummary.setText((games == 0 ? "Biblioteca N64 vacía" : games + (games == 1 ? " juego N64 importado" : " juegos N64 importados"))
+                + "\n" + (gamepad.startsWith("●") ? gamepad : "Controles táctiles + gamepad compatibles"));
         updateStatus();
     }
 

@@ -1,0 +1,473 @@
+name: RetroLink v0.6.5 Remote View Parity
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/build-retrolink-v0.6.5-remote-parity.yml"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  BRANCH_NAME: codex/v0.6-ui-controls
+  ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+  ANDROID_HOME: /usr/local/lib/android/sdk
+  NDK_VERSION: 28.2.13676358
+  N64_CORE_SHA: 12edd2c74a517ff86dfa8cfc71ad75e4c10486d5
+
+jobs:
+  remote-parity-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Switch to v0.6 development branch
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git fetch origin "${BRANCH_NAME}"
+          git switch -C "${BRANCH_NAME}" "origin/${BRANCH_NAME}"
+          grep -Eq 'versionName "0\.6\.(4|5)-rc1"' app/build.gradle
+
+      - name: Restore v0.6.5 remote parity overlay
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cat > "$RUNNER_TEMP/retrolink-v065-remote.b64" <<'RETROLINK_REMOTE_PAYLOAD'
+          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
+          ergerofr4Xq4/teu/wYTJlXxAPAAAA==
+          RETROLINK_REMOTE_PAYLOAD
+          base64 -d "$RUNNER_TEMP/retrolink-v065-remote.b64" > "$RUNNER_TEMP/retrolink-v065-remote.tar.gz"
+          echo "23ff1dbaa643fda38a80d325606a0434c5c1773f2d3c92957da58db630286e56  $RUNNER_TEMP/retrolink-v065-remote.tar.gz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/retrolink-v065-remote.tar.gz" -C .
+          grep -q 'versionName "0.6.5-rc1"' app/build.gradle
+          test -f app/src/main/java/cl/retrolink/app/RemoteFrameView.java
+
+      - name: Static remote parity validation
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python3 - <<'PY2'
+          from pathlib import Path
+          import re
+          import xml.etree.ElementTree as ET
+          for p in Path('app/src/main/res').rglob('*.xml'):
+              ET.parse(p)
+          ET.parse('app/src/main/AndroidManifest.xml')
+          ids=set()
+          for p in Path('app/src/main/res').rglob('*.xml'):
+              ids.update(re.findall(r'@\+id/([A-Za-z0-9_]+)', p.read_text(errors='ignore')))
+          refs=set()
+          for p in Path('app/src/main/java').rglob('*.java'):
+              refs.update(re.findall(r'R\.id\.([A-Za-z0-9_]+)', p.read_text(errors='ignore')))
+          missing=sorted(refs-ids)
+          assert not missing, f'Missing R.id: {missing}'
+          controller=Path('app/src/main/java/cl/retrolink/app/ControllerActivity.java').read_text()
+          remote=Path('app/src/main/java/cl/retrolink/app/RemoteFrameView.java').read_text()
+          client=Path('app/src/main/java/cl/retrolink/app/net/FrameStreamClient.java').read_text()
+          layout=Path('app/src/main/res/layout/activity_controller.xml').read_text()
+          controls=Path('app/src/main/java/cl/retrolink/app/ControlLayoutStore.java').read_text()
+          editor=Path('app/src/main/java/cl/retrolink/app/ControlLayoutActivity.java').read_text()
+          for token in ['controllerTopBar','btnControllerHud','btnControllerEditControls','setHudVisible','hideSystemUi']:
+              assert token in controller or token in layout, token
+          assert 'private boolean playerView = false;' in remote
+          assert 'private volatile boolean playerView = false;' in client
+          assert 'fitRect(4, 3, getWidth(), getHeight())' in remote
+          assert 'SCOPE_N64_REMOTE_LANDSCAPE' in controls
+          assert 'EXTRA_SCOPE' in editor
+          assert 'android:layout_width="180dp"' in layout
+          print('v0.6.5 remote parity static checks PASS')
+          PY2
+
+      - name: Commit v0.6.5 remote parity
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euxo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app README.md TEST_CHECKLIST.md docs
+          if git diff --cached --quiet; then
+            echo "v0.6.5 source already present."
+          else
+            git commit -m "fix(v0.6.5): align remote player HUD and viewport"
+            git push origin "${BRANCH_NAME}"
+          fi
+
+      - name: Update or open draft pull request
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euxo pipefail
+          if gh pr view "${BRANCH_NAME}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            echo "Draft PR already exists."
+          else
+            gh pr create --repo "${GITHUB_REPOSITORY}" --base main --head "${BRANCH_NAME}" --draft \
+              --title "RetroLink v0.6.5 — Remote View Parity" \
+              --body "HUD ocultable para P2-P4, vista FULL segura al iniciar, PLAYER 4:3 equivalente a P1, modo inmersivo y layout de controles remoto independiente. Validación física pendiente."
+          fi
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle 9.4.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.4.1"
+
+      - name: Install Android SDK, NDK and CMake
+        shell: bash
+        run: |
+          set -euxo pipefail
+          SDKMANAGER=/usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" \
+            "platform-tools" \
+            "platforms;android-36" \
+            "build-tools;36.0.0" \
+            "ndk;${NDK_VERSION}" \
+            "cmake;3.22.1"
+
+      - name: Fetch pinned Mupen64Plus-Next core
+        shell: bash
+        run: |
+          set -euxo pipefail
+          rm -rf n64core
+          git init n64core
+          cd n64core
+          git remote add origin https://github.com/libretro/mupen64plus-libretro-nx.git
+          git fetch --depth 1 origin "${N64_CORE_SHA}"
+          git checkout --detach FETCH_HEAD
+          test "$(git rev-parse HEAD)" = "${N64_CORE_SHA}"
+          test -f libretro/jni/Android.mk
+          test -f libretro/jni/Application.mk
+          test -f libretro-common/include/libretro.h
+
+      - name: Give N64 core a stable Android library name
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python3 - <<'PY2'
+          import re
+          p='n64core/libretro/jni/Android.mk'
+          s=open(p, encoding='utf-8').read()
+          s2, n = re.subn(r'(?m)^(LOCAL_MODULE\s*:=\s*)retro\s*$', r'\1retro_n64', s, count=1)
+          if n != 1:
+              raise SystemExit('No se encontró exactamente un LOCAL_MODULE retro para renombrar')
+          open(p,'w',encoding='utf-8').write(s2)
+          PY2
+          grep -Eq '^[[:space:]]*LOCAL_MODULE[[:space:]]*:=[[:space:]]*retro_n64[[:space:]]*$' n64core/libretro/jni/Android.mk
+
+      - name: Build integrated N64 core for ARM64 GLES3
+        shell: bash
+        run: |
+          set -euxo pipefail
+          export NDK_ROOT="${ANDROID_SDK_ROOT}/ndk/${NDK_VERSION}"
+          cd n64core/libretro/jni
+          "${NDK_ROOT}/ndk-build" \
+            -j2 \
+            NDK_PROJECT_PATH=. \
+            NDK_APPLICATION_MK=Application.mk \
+            APP_BUILD_SCRIPT=Android.mk \
+            APP_ABI=arm64-v8a \
+            GLES3=1
+          test -f libs/arm64-v8a/libretro_n64.so
+
+      - name: Install N64 core and libretro ABI
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p app/src/main/jniLibs/arm64-v8a app/src/main/cpp
+          cp n64core/libretro/jni/libs/arm64-v8a/libretro_n64.so app/src/main/jniLibs/arm64-v8a/libretro_n64.so
+          cp n64core/libretro-common/include/libretro.h app/src/main/cpp/libretro.h
+
+      - name: Build RetroLink v0.6.5 RC1 APK
+        shell: bash
+        run: |
+          set -euxo pipefail
+          gradle --no-daemon :app:assembleDebug --stacktrace
+
+      - name: Validate APK contents
+        shell: bash
+        run: |
+          set -euxo pipefail
+          APK=app/build/outputs/apk/debug/app-debug.apk
+          test -f "$APK"
+          unzip -l "$APK" | grep 'lib/arm64-v8a/libretro_n64.so'
+          unzip -l "$APK" | grep 'lib/arm64-v8a/libretrolink_native.so'
+          unzip -l "$APK" | grep 'lib/arm64-v8a/libc++_shared.so'
+          grep -q 'versionName "0.6.5-rc1"' app/build.gradle
+          grep -q 'btnControllerHud' app/src/main/res/layout/activity_controller.xml
+          grep -q 'fitRect(4, 3' app/src/main/java/cl/retrolink/app/RemoteFrameView.java
+
+      - name: Prepare APK and checksum
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cp app/build/outputs/apk/debug/app-debug.apk RetroLink-v0.6.5-remote-parity-rc1-debug.apk
+          sha256sum RetroLink-v0.6.5-remote-parity-rc1-debug.apk | tee RetroLink-v0.6.5-remote-parity-rc1-debug.sha256
+
+      - name: Upload RetroLink v0.6.5 Remote View Parity RC1
+        uses: actions/upload-artifact@v4
+        with:
+          name: RetroLink-v0.6.5-remote-parity-rc1
+          path: |
+            RetroLink-v0.6.5-remote-parity-rc1-debug.apk
+            RetroLink-v0.6.5-remote-parity-rc1-debug.sha256
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Build summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## RetroLink v0.6.5 RC1"
+            echo ""
+            echo "- Remote HUD: hide/show parity with P1"
+            echo "- Remote startup: FULL by default"
+            echo "- Remote PLAYER 2P: normalized to 4:3 like P1"
+            echo "- Remote mode: immersive system UI"
+            echo "- Remote control layout: independent movable profile"
+            echo "- APK artifact: RetroLink-v0.6.5-remote-parity-rc1"
+            echo "- Physical validation pending: P2 menu completeness, 2P PLAYER parity, HUD toggle, control layout persistence"
+          } >> "$GITHUB_STEP_SUMMARY"

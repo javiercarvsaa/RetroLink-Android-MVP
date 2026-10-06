@@ -98,3 +98,12 @@ La sesión puede leer el repositorio GitHub, pero las operaciones de escritura (
 - Perfil renovado con dispositivo, biblioteca, core y gamepad reales.
 - Ajustes conserva únicamente opciones funcionales.
 - versionCode 18 / versionName 0.6.3-rc1.
+
+## v0.6.4 RC1 — Automatic Cover Search
+- Búsqueda automática de carátulas N64 desde Libretro Thumbnails/Named_Boxarts.
+- Índice remoto cacheado 7 días y carátulas cacheadas localmente.
+- Matching por nombre original, cabecera, región y similitud; fallback sin bloquear el juego.
+- Biblioteca visual con carátulas y detalle seleccionado.
+- Selector 1P–4P corregido para evitar recortes.
+- Perfil simplificado; gamepads virtuales excluidos del resumen físico.
+- versionCode 19 / versionName 0.6.4-rc1.

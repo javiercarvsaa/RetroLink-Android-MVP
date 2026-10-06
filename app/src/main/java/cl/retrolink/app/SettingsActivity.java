@@ -11,7 +11,7 @@ import android.widget.Toast;
 
 import java.io.File;
 
-/** Ajustes v0.6.3: toda opción editable está conectada a una función real. */
+/** Ajustes v0.6.4: toda opción editable está conectada a una función real. */
 public class SettingsActivity extends Activity {
     private Button gfx, retroSrMode, volUp, volDown, streamFps, splitProfile;
     private Switch volumeButtons, blockVolume, haptic, invertStickY;

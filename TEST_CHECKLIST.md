@@ -1,57 +1,34 @@
-# RetroLink v0.6.3 RC1 — Checklist
+# RetroLink v0.6.4 RC1 — Checklist
 
-## Inicio
-- [ ] El menú mantiene el diseño neón y no muestra métricas simuladas.
-- [ ] CONTINUAR abre la ROM seleccionada en 1P.
-- [ ] Sin ROM, CONTINUAR pasa a importar un juego.
-- [ ] JUGAR AHORA abre Biblioteca y selector.
-- [ ] BIBLIOTECA abre la biblioteca real.
-- [ ] HOST LOCAL abre Sala y solicita Bluetooth solo cuando corresponde.
-- [ ] UNIRSE abre el modo teléfono-control.
-- [ ] CONTROLES y AJUSTES abren herramientas reales.
-- [ ] El resumen de biblioteca muestra el número real de ROM N64.
+## Build
+- [ ] GitHub Actions termina SUCCESS.
+- [ ] APK contiene `libretro_n64.so`, `libretrolink_native.so` y `libc++_shared.so`.
+- [ ] `versionName` = `0.6.4-rc1`.
 
-## Biblioteca N64
-- [ ] La biblioteca muestra todas las ROM N64 importadas válidas.
-- [ ] Importar otra ROM no elimina los otros juegos.
-- [ ] Tocar una tarjeta la deja como juego seleccionado.
-- [ ] JUGAR 1P inicia exactamente la ROM seleccionada.
-- [ ] HOST LOCAL conserva la ROM seleccionada al abrir Sala.
-- [ ] Solo aparece Nintendo 64 como plataforma disponible.
-- [ ] No hay Favoritos, búsqueda ni sistemas ficticios activos.
+## Biblioteca / carátulas
+- [ ] Abrir biblioteca con Wi-Fi/datos disponibles.
+- [ ] Las ROM existentes siguen apareciendo aunque no haya carátula.
+- [ ] Al importar una ROM se inicia búsqueda automática sin bloquear la UI.
+- [ ] Mario Kart 64 muestra una carátula coherente si existe coincidencia.
+- [ ] Donkey Kong 64 muestra una carátula coherente si existe coincidencia.
+- [ ] Super Smash Bros. / SMASH BROTHERS encuentra la carátula correcta si está en el catálogo.
+- [ ] Cerrar y reabrir la app: carátulas cargan desde caché local.
+- [ ] Sin Internet: la biblioteca sigue siendo utilizable y no impide jugar.
+- [ ] Botón `↻ CARÁTULAS` reintenta las faltantes.
+- [ ] No se muestra una carátula cuando el match es dudoso.
 
 ## Sala
-- [ ] P1/P2 quedan a la izquierda y P3/P4 a la derecha.
-- [ ] Las tarjetas reflejan conexión real de cada jugador.
-- [ ] IP/puerto y pantallas reflejan FrameStreamServer real.
-- [ ] 1/2/3/4 modifica el número configurado de jugadores.
-- [ ] ACTIVAR inicia BLE + servidor de video.
-- [ ] DETENER cierra ambos servicios.
-- [ ] PROBAR CONTROLES abre la prueba real.
-- [ ] INICIAR PARTIDA usa la ROM seleccionada.
-
-## Ajustes
-- [ ] Perfil gráfico cambia render real.
-- [ ] RetroSR cambia modo real.
-- [ ] Nitidez se guarda.
-- [ ] Streaming AUTO/30/40/50/60 afecta FrameStreamServer.
-- [ ] Calidad JPEG Q65-Q90 se guarda.
-- [ ] Deadzone/sensibilidad/invertir Y funcionan.
-- [ ] Mando Bluetooth/USB detectado se muestra realmente.
-- [ ] Editar posiciones / probar controles funcionan.
-- [ ] Recorte P1 cambia SplitScreenProfile.
-- [ ] RESTABLECER no borra ROMs.
+- [ ] Selector de jugadores muestra 1, 2, 3 y 4 completos, sin recortes.
+- [ ] Cambiar 1P/2P/3P/4P actualiza la sesión correctamente.
 
 ## Perfil
-- [ ] Modelo Android y versión son reales.
-- [ ] Conteo de juegos corresponde a la biblioteca local.
-- [ ] Última partida es la ROM seleccionada real.
-- [ ] Estado del core N64 depende del .so instalado.
-- [ ] Mando físico muestra el dispositivo detectado o ausencia real.
+- [ ] Dispositivo muestra solo modelo, versión Android y disponibilidad N64.
+- [ ] `Virtual` no aparece como mando físico.
+- [ ] Un gamepad Bluetooth/USB real sí aparece.
 
-## Regresión
+## Regresión N64
 - [ ] Smash Bros: stick arriba/abajo/izquierda/derecha correcto.
-- [ ] DK64: sin ghosting/regresión visual.
-- [ ] Mario Kart 2P: P1 sin borde de P2.
-- [ ] Mover botones persiste tras reiniciar.
-- [ ] Salir/minimizar/reabrir sin crash.
+- [ ] Donkey Kong 64: sin ghosting visual previo.
+- [ ] Mario Kart 64: recorte P1/P2 sigue correcto.
+- [ ] Editor de controles conserva posiciones/tamaño/opacidad.
+- [ ] Salir/minimizar/reabrir no muestra crash de Android.

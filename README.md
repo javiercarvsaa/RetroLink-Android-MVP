@@ -1,19 +1,15 @@
-# RetroLink Android MVP — v0.6.3 RC1
+# RetroLink Android MVP — v0.6.4 RC1
 
-RetroLink es un frontend/emulador Android orientado a juego retro local, controles táctiles/físicos y multijugador entre dispositivos.
+RetroLink es un frontend Android de juego retro local. Esta versión mantiene la baseline N64 validada e incorpora la primera biblioteca visual con búsqueda automática de carátulas.
 
-## Estado actual
+## Incluye
+
 - Nintendo 64 integrado con Mupen64Plus-Next ARM64/GLES3.
-- PresentSync preservado.
-- RetroSR / perfiles gráficos.
-- Controles táctiles movibles con tamaño/opacidad.
-- Stick corregido y configurable.
-- Gamepads Android Bluetooth/USB.
-- P1-P4 por BLE + video por Wi-Fi local.
-- Biblioteca N64 local con múltiples ROM importadas por el usuario.
-- Interfaz v0.6.3 rediseñada siguiendo el dashboard visual RetroLink, sin controles ficticios.
+- PresentSync y perfiles gráficos existentes.
+- Controles táctiles movibles y soporte gamepad Android Bluetooth/USB.
+- Biblioteca multi-ROM N64.
+- Búsqueda automática de carátulas N64 mediante Libretro Thumbnails, con caché local y fallback seguro.
+- Corrección responsive del selector de jugadores 1P–4P.
+- Perfil simplificado a datos útiles y detección de mando físico sin dispositivos virtuales.
 
-## Principio de UI
-La estética de referencia se utiliza para jerarquía, composición y lenguaje visual. Una función solo aparece como interactiva cuando está conectada a una acción real de RetroLink.
-
-Ver `docs/RETROLINK_V0_6_3_MENU_FUNCIONAL.md` y `TEST_CHECKLIST.md`.
+RetroLink no incluye ROM, BIOS ni contenido comercial.

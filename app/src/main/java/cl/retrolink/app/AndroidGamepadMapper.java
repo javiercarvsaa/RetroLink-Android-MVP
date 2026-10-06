@@ -66,7 +66,7 @@ public final class AndroidGamepadMapper {
         List<String> names = new ArrayList<>();
         for (int id : InputDevice.getDeviceIds()) {
             InputDevice d = InputDevice.getDevice(id);
-            if (!isController(d)) continue;
+            if (!isPhysicalGamepad(d)) continue;
             String name = d.getName();
             if (name == null || name.trim().isEmpty()) name = "Mando Android";
             if (!names.contains(name)) names.add(name);
@@ -74,6 +74,14 @@ public final class AndroidGamepadMapper {
         if (names.isEmpty()) return "Sin mando físico · conecta Bluetooth o USB";
         if (names.size() == 1) return "● " + names.get(0) + " · LISTO";
         return "● " + names.size() + " mandos detectados · " + names.get(0);
+    }
+
+
+    private static boolean isPhysicalGamepad(InputDevice d) {
+        if (d == null || d.isVirtual()) return false;
+        int s = d.getSources();
+        return (s & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD
+                || (s & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK;
     }
 
     public static boolean isController(InputDevice d) {

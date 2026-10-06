@@ -16,7 +16,6 @@
         android:paddingRight="18dp"
         android:paddingBottom="12dp">
 
-        <!-- Header inspirado en la referencia, pero con datos reales -->
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
             <ImageView android:layout_width="58dp" android:layout_height="58dp" android:contentDescription="RetroLink" android:src="@mipmap/ic_launcher" />
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="10dp" android:text="RetroLink" android:textColor="@color/retro_text" android:textSize="27sp" android:textStyle="bold" />
@@ -30,34 +29,38 @@
             <Button android:id="@+id/btnLibraryBack" android:layout_width="46dp" android:layout_height="42dp" android:layout_marginLeft="8dp" android:background="@drawable/btn_secondary_neon" android:text="←" android:textColor="@color/retro_text" android:textSize="18sp" />
         </LinearLayout>
 
-        <!-- Filtro: solo N64 existe hoy -->
+        <!-- Solo muestra plataformas realmente disponibles. -->
         <LinearLayout android:layout_width="match_parent" android:layout_height="42dp" android:layout_marginTop="8dp" android:orientation="horizontal">
             <TextView android:layout_width="150dp" android:layout_height="match_parent" android:background="@drawable/segment_selected" android:gravity="center" android:text="🎮  Nintendo 64" android:textColor="@color/retro_text" android:textSize="10sp" android:textStyle="bold" />
-            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginLeft="8dp" android:background="@drawable/card_glass" android:gravity="center_vertical" android:paddingLeft="14dp" android:text="SNES · PS1 · Game Boy · Atari se habilitarán solamente cuando sus cores estén integrados." android:textColor="#7898BC" android:textSize="8sp" />
+            <TextView android:id="@+id/txtLibraryCoverStatus" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginLeft="8dp" android:background="@drawable/card_glass" android:gravity="center_vertical" android:paddingLeft="14dp" android:text="Carátulas automáticas · se buscan al importar juegos" android:textColor="#8BB3D8" android:textSize="8sp" />
+            <Button android:id="@+id/btnLibraryRefreshCovers" android:layout_width="112dp" android:layout_height="match_parent" android:layout_marginLeft="8dp" android:background="@drawable/btn_secondary_neon" android:text="↻ CARÁTULAS" android:textColor="@color/retro_text" android:textSize="7sp" android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Biblioteca real + detalle seleccionado -->
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:baselineAligned="false" android:orientation="horizontal">
-            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1.8" android:minHeight="260dp" android:background="@drawable/card_glass" android:orientation="vertical" android:padding="12dp">
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1.8" android:minHeight="280dp" android:background="@drawable/card_glass" android:orientation="vertical" android:padding="12dp">
                 <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="JUEGOS N64 IMPORTADOS" android:textColor="#B8DAF4" android:textSize="8sp" android:textStyle="bold" android:letterSpacing="0.14" />
                 <GridLayout android:id="@+id/romGrid" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="9dp" android:columnCount="2" android:useDefaultMargins="false" />
             </LinearLayout>
 
-            <LinearLayout android:layout_width="0dp" android:layout_height="260dp" android:layout_weight="1" android:layout_marginLeft="10dp" android:background="@drawable/hero_neon" android:orientation="vertical" android:padding="18dp">
+            <LinearLayout android:layout_width="0dp" android:layout_height="280dp" android:layout_weight="1" android:layout_marginLeft="10dp" android:background="@drawable/hero_neon" android:orientation="vertical" android:padding="14dp">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="JUEGO SELECCIONADO" android:textColor="#B8DAF4" android:textSize="8sp" android:textStyle="bold" android:letterSpacing="0.14" />
-                <TextView android:id="@+id/txtLibraryTitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="7dp" android:maxLines="2" android:text="Selecciona una ROM N64" android:textColor="@color/retro_text" android:textSize="18sp" android:textStyle="bold" />
-                <TextView android:id="@+id/txtLibraryMeta" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:maxLines="3" android:text="Nintendo 64 · Mupen64Plus-Next" android:textColor="#A7BEDA" android:textSize="8sp" />
-                <TextView android:id="@+id/txtLibraryStatus" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="7dp" android:text="○ SIN JUEGO SELECCIONADO" android:textColor="@color/retro_green" android:textSize="9sp" android:textStyle="bold" />
+                <LinearLayout android:layout_width="match_parent" android:layout_height="116dp" android:layout_marginTop="7dp" android:orientation="horizontal">
+                    <ImageView android:id="@+id/imgLibrarySelectedCover" android:layout_width="82dp" android:layout_height="116dp" android:background="@drawable/card_blue" android:contentDescription="Carátula del juego seleccionado" android:scaleType="centerInside" android:src="@mipmap/ic_launcher" android:alpha="0.30" />
+                    <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginLeft="10dp" android:orientation="vertical">
+                        <TextView android:id="@+id/txtLibraryTitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:maxLines="2" android:text="Selecciona una ROM N64" android:textColor="@color/retro_text" android:textSize="16sp" android:textStyle="bold" />
+                        <TextView android:id="@+id/txtLibraryMeta" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:maxLines="3" android:text="Nintendo 64 · Mupen64Plus-Next" android:textColor="#A7BEDA" android:textSize="8sp" />
+                        <TextView android:id="@+id/txtLibraryStatus" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="7dp" android:text="○ SIN JUEGO SELECCIONADO" android:textColor="@color/retro_green" android:textSize="9sp" android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
                 <TextView android:id="@+id/txtLibraryPath" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="5dp" android:gravity="center_vertical" android:maxLines="2" android:text="RetroLink no incluye contenido comercial." android:textColor="#789BC0" android:textSize="7sp" />
-                <Button android:id="@+id/btnLibraryPlay" android:layout_width="match_parent" android:layout_height="46dp" android:background="@drawable/btn_primary_gradient" android:text="▶  JUGAR 1P" android:textColor="@color/retro_text" android:textSize="10sp" android:textStyle="bold" />
-                <LinearLayout android:layout_width="match_parent" android:layout_height="40dp" android:layout_marginTop="6dp" android:orientation="horizontal">
+                <Button android:id="@+id/btnLibraryPlay" android:layout_width="match_parent" android:layout_height="44dp" android:background="@drawable/btn_primary_gradient" android:text="▶  JUGAR 1P" android:textColor="@color/retro_text" android:textSize="10sp" android:textStyle="bold" />
+                <LinearLayout android:layout_width="match_parent" android:layout_height="38dp" android:layout_marginTop="5dp" android:orientation="horizontal">
                     <Button android:id="@+id/btnLibraryHost" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/btn_secondary_neon" android:text="HOST LOCAL" android:textColor="@color/retro_text" android:textSize="8sp" />
                     <Button android:id="@+id/btnLibraryControls" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginLeft="6dp" android:background="@drawable/btn_secondary_neon" android:text="PROBAR CONTROL" android:textColor="@color/retro_text" android:textSize="8sp" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Navegación -->
         <LinearLayout android:layout_width="match_parent" android:layout_height="54dp" android:layout_marginTop="10dp" android:background="@drawable/nav_bar" android:gravity="center" android:orientation="horizontal">
             <TextView android:id="@+id/navLibraryHome" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:clickable="true" android:focusable="true" android:gravity="center" android:text="⌂\nInicio" android:textColor="#A3B8D2" android:textSize="9sp" />
             <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="🎮\nJuegos" android:textColor="@color/retro_cyan" android:textSize="9sp" android:textStyle="bold" />

@@ -2,12 +2,17 @@ package cl.retrolink.app;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
+import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.GridLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -15,14 +20,16 @@ import android.widget.Toast;
 import java.io.File;
 import java.util.List;
 
-/** Biblioteca funcional: muestra únicamente ROM N64 realmente importadas por el usuario. */
+/** Biblioteca N64 funcional con carátulas automáticas y caché local. */
 public class LibraryActivity extends Activity {
     public static final String EXTRA_OPEN_ROM_PICKER = "open_rom_picker";
     private static final int REQ_ROM = 221;
 
-    private TextView selectedTitle, selectedMeta, selectedStatus, selectedPath, countText;
+    private TextView selectedTitle, selectedMeta, selectedStatus, selectedPath, countText, coverStatus;
+    private ImageView selectedCover;
     private GridLayout grid;
     private N64RomRepository.ImportedRom selected;
+    private List<N64RomRepository.ImportedRom> currentRoms;
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
@@ -33,7 +40,9 @@ public class LibraryActivity extends Activity {
         selectedMeta = findViewById(R.id.txtLibraryMeta);
         selectedStatus = findViewById(R.id.txtLibraryStatus);
         selectedPath = findViewById(R.id.txtLibraryPath);
+        selectedCover = findViewById(R.id.imgLibrarySelectedCover);
         countText = findViewById(R.id.txtLibraryCount);
+        coverStatus = findViewById(R.id.txtLibraryCoverStatus);
         grid = findViewById(R.id.romGrid);
 
         findViewById(R.id.btnLibraryBack).setOnClickListener(v -> finish());
@@ -41,6 +50,7 @@ public class LibraryActivity extends Activity {
         findViewById(R.id.btnLibraryImport).setOnClickListener(v -> pickRom());
         findViewById(R.id.btnLibraryHost).setOnClickListener(v -> openHost());
         findViewById(R.id.btnLibraryControls).setOnClickListener(v -> startActivity(new Intent(this, ControlTestActivity.class)));
+        findViewById(R.id.btnLibraryRefreshCovers).setOnClickListener(v -> refreshCovers());
 
         findViewById(R.id.navLibraryHome).setOnClickListener(v -> finish());
         findViewById(R.id.navLibraryRoom).setOnClickListener(v -> startActivity(new Intent(this, HostActivity.class)));
@@ -59,62 +69,111 @@ public class LibraryActivity extends Activity {
     }
 
     private void refresh() {
-        List<N64RomRepository.ImportedRom> roms = N64RomRepository.listRoms(this);
+        currentRoms = N64RomRepository.listRoms(this);
         File last = N64RomRepository.lastRom(this);
         selected = null;
-        for (N64RomRepository.ImportedRom r : roms) {
+        for (N64RomRepository.ImportedRom r : currentRoms) {
             if (last != null && last.equals(r.file)) { selected = r; break; }
         }
-        if (selected == null && !roms.isEmpty()) {
-            selected = roms.get(0);
+        if (selected == null && !currentRoms.isEmpty()) {
+            selected = currentRoms.get(0);
             N64RomRepository.select(this, selected);
         }
-        countText.setText(roms.size() + (roms.size() == 1 ? " juego N64" : " juegos N64"));
-        rebuildGrid(roms);
+        countText.setText(currentRoms.size() + (currentRoms.size() == 1 ? " juego N64" : " juegos N64"));
+        updateCoverStatus();
         refreshSelected();
+        grid.post(() -> rebuildGrid(currentRoms));
     }
 
     private void rebuildGrid(List<N64RomRepository.ImportedRom> roms) {
         grid.removeAllViews();
-        if (roms.isEmpty()) {
-            TextView empty = card("＋\nIMPORTAR PRIMER JUEGO\nToca para seleccionar una ROM N64", R.drawable.card_cyan_active);
+        if (roms == null || roms.isEmpty()) {
+            TextView empty = simpleCard("＋\nIMPORTAR PRIMER JUEGO\nToca para seleccionar una ROM N64", R.drawable.card_cyan_active);
             GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
-            lp.width = dp(178); lp.height = dp(118); lp.setMargins(0, 0, dp(8), dp(8));
+            lp.width = Math.max(dp(150), grid.getWidth() > 0 ? grid.getWidth() : dp(360));
+            lp.height = dp(128); lp.setMargins(0, 0, 0, dp(8));
             empty.setLayoutParams(lp);
             empty.setOnClickListener(v -> pickRom());
             grid.addView(empty);
             return;
         }
+
+        int available = grid.getWidth() > 0 ? grid.getWidth() : dp(380);
+        int width = Math.max(dp(150), (available - dp(8)) / 2);
         for (N64RomRepository.ImportedRom rom : roms) {
-            String title = rom.info.title == null || rom.info.title.trim().isEmpty() ? "Juego N64" : rom.info.title.trim();
-            String text = "N64\n" + title + "\n" + rom.info.friendlyRegion();
-            boolean active = selected != null && selected.file.equals(rom.file);
-            TextView v = card(text, active ? R.drawable.card_cyan_active : R.drawable.card_glass);
+            View card = gameCard(rom);
             GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
-            lp.width = dp(178); lp.height = dp(118); lp.setMargins(0, 0, dp(8), dp(8));
-            v.setLayoutParams(lp);
-            v.setOnClickListener(view -> {
+            lp.width = width; lp.height = dp(158); lp.setMargins(0, 0, dp(8), dp(8));
+            card.setLayoutParams(lp);
+            card.setOnClickListener(view -> {
                 selected = rom;
                 N64RomRepository.select(this, rom);
                 refresh();
             });
-            grid.addView(v);
+            grid.addView(card);
         }
-        TextView add = card("＋\nIMPORTAR ROM\nAñadir otro juego N64", R.drawable.card_purple);
+
+        TextView add = simpleCard("＋\nIMPORTAR ROM\nAñadir otro juego N64", R.drawable.card_purple);
         GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
-        lp.width = dp(178); lp.height = dp(118); lp.setMargins(0, 0, dp(8), dp(8));
+        lp.width = width; lp.height = dp(158); lp.setMargins(0, 0, dp(8), dp(8));
         add.setLayoutParams(lp);
         add.setOnClickListener(v -> pickRom());
         grid.addView(add);
     }
 
-    private TextView card(String text, int background) {
+    private View gameCard(N64RomRepository.ImportedRom rom) {
+        boolean active = selected != null && selected.file.equals(rom.file);
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setBackgroundResource(active ? R.drawable.card_cyan_active : R.drawable.card_glass);
+        card.setPadding(dp(7), dp(7), dp(7), dp(7));
+        card.setClickable(true);
+        card.setFocusable(true);
+
+        ImageView image = new ImageView(this);
+        image.setContentDescription("Carátula de " + rom.info.title);
+        image.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        image.setBackgroundResource(R.drawable.card_blue);
+        image.setClipToOutline(true);
+        image.setTag(rom.file.getAbsolutePath());
+        LinearLayout.LayoutParams imageLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f);
+        image.setLayoutParams(imageLp);
+        setPlaceholder(image);
+
+        File cached = CoverArtManager.cachedCover(this, rom);
+        if (cached != null) setCover(image, cached);
+        else CoverArtManager.request(this, rom, (file, matched) -> {
+            if (isFinishing() || isDestroyed()) return;
+            Object tag = image.getTag();
+            if (tag == null || !rom.file.getAbsolutePath().equals(tag.toString())) return;
+            if (file != null) setCover(image, file);
+            updateCoverStatus();
+            if (selected != null && selected.file.equals(rom.file)) refreshSelectedCoverOnly();
+        });
+
+        TextView title = new TextView(this);
+        String name = rom.info.title == null || rom.info.title.trim().isEmpty() ? "Juego N64" : rom.info.title.trim();
+        title.setText(name + "\n" + rom.info.friendlyRegion());
+        title.setTextColor(getColor(R.color.retro_text));
+        title.setTextSize(8.5f);
+        title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        title.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+        title.setMaxLines(2);
+        title.setPadding(dp(5), dp(4), dp(5), 0);
+        title.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(42)));
+
+        card.addView(image);
+        card.addView(title);
+        return card;
+    }
+
+    private TextView simpleCard(String text, int background) {
         TextView v = new TextView(this);
         v.setText(text);
         v.setTextColor(getColor(R.color.retro_text));
         v.setTextSize(10f);
         v.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        v.setGravity(Gravity.BOTTOM | Gravity.LEFT);
+        v.setGravity(Gravity.CENTER);
         v.setPadding(dp(14), dp(12), dp(14), dp(14));
         v.setBackgroundResource(background);
         v.setClickable(true);
@@ -125,13 +184,68 @@ public class LibraryActivity extends Activity {
     private void refreshSelected() {
         boolean hasRom = selected != null && selected.file.isFile();
         selectedTitle.setText(hasRom ? selected.info.title : "Selecciona una ROM N64");
-        selectedMeta.setText(hasRom ? selected.info.summary() : "Nintendo 64 · Mupen64Plus-Next · ROM del usuario");
+        selectedMeta.setText(hasRom ? selected.info.friendlyRegion() + " · " + selected.info.revisionText() + " · " + selected.info.byteOrder : "Nintendo 64 · Mupen64Plus-Next");
         selectedStatus.setText(hasRom ? "● LISTO PARA JUGAR" : "○ SIN JUEGO SELECCIONADO");
-        selectedPath.setText(hasRom ? "Archivo local: " + selected.file.getName() : "RetroLink no incluye ROM, BIOS ni contenido comercial.");
+        selectedPath.setText(hasRom ? "Carátula automática · " + CoverArtManager.sourceLabel() : "RetroLink no incluye ROM, BIOS ni contenido comercial.");
         findViewById(R.id.btnLibraryPlay).setEnabled(hasRom);
         findViewById(R.id.btnLibraryPlay).setAlpha(hasRom ? 1f : 0.42f);
         findViewById(R.id.btnLibraryHost).setEnabled(hasRom);
         findViewById(R.id.btnLibraryHost).setAlpha(hasRom ? 1f : 0.42f);
+        refreshSelectedCoverOnly();
+    }
+
+    private void refreshSelectedCoverOnly() {
+        if (selectedCover == null) return;
+        if (selected == null) { setPlaceholder(selectedCover); return; }
+        selectedCover.setTag(selected.file.getAbsolutePath());
+        File cached = CoverArtManager.cachedCover(this, selected);
+        if (cached != null) {
+            setCover(selectedCover, cached);
+            return;
+        }
+        setPlaceholder(selectedCover);
+        CoverArtManager.request(this, selected, (file, matched) -> {
+            if (isFinishing() || isDestroyed() || selected == null) return;
+            Object tag = selectedCover.getTag();
+            if (tag == null || !selected.file.getAbsolutePath().equals(tag.toString())) return;
+            if (file != null) setCover(selectedCover, file);
+            updateCoverStatus();
+        });
+    }
+
+    private void updateCoverStatus() {
+        if (coverStatus == null || currentRoms == null) return;
+        int found = CoverArtManager.cachedCount(this, currentRoms);
+        int total = currentRoms.size();
+        if (total == 0) coverStatus.setText("Carátulas automáticas · se buscan al importar juegos");
+        else if (found >= total) coverStatus.setText("✓ Carátulas " + found + "/" + total + " · caché local");
+        else coverStatus.setText("Carátulas " + found + "/" + total + " · búsqueda automática activa");
+    }
+
+    private void refreshCovers() {
+        CoverArtManager.invalidateIndex(this);
+        coverStatus.setText("Actualizando catálogo de carátulas…");
+        if (currentRoms == null || currentRoms.isEmpty()) return;
+        // Las imágenes existentes se conservan; las faltantes vuelven a consultar el catálogo remoto.
+        grid.post(() -> rebuildGrid(currentRoms));
+        refreshSelectedCoverOnly();
+    }
+
+    private void setPlaceholder(ImageView image) {
+        image.setImageResource(R.mipmap.ic_launcher);
+        image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        image.setPadding(dp(22), dp(14), dp(22), dp(14));
+        image.setAlpha(0.30f);
+    }
+
+    private void setCover(ImageView image, File file) {
+        if (image == null || file == null || !file.isFile()) return;
+        Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
+        if (bitmap == null) return;
+        image.setPadding(0, 0, 0, 0);
+        image.setAlpha(1f);
+        image.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        image.setImageBitmap(bitmap);
     }
 
     private void pickRom() {
@@ -169,7 +283,7 @@ public class LibraryActivity extends Activity {
         try {
             N64RomRepository.ImportedRom imported = N64RomRepository.importRom(this, uri);
             selected = imported;
-            Toast.makeText(this, "Juego añadido · " + imported.info.title, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Juego añadido · buscando carátula automáticamente", Toast.LENGTH_SHORT).show();
             refresh();
         } catch (Exception e) {
             Toast.makeText(this, "ROM N64 no válida: " + e.getMessage(), Toast.LENGTH_LONG).show();

@@ -2,6 +2,9 @@ package cl.retrolink.app;
 
 import android.content.Context;
 import android.net.Uri;
+import android.database.Cursor;
+import android.provider.OpenableColumns;
+import android.content.SharedPreferences;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,13 +23,23 @@ public final class N64RomRepository {
     public static final class ImportedRom {
         public final File file;
         public final N64RomInfo info;
-        ImportedRom(File file, N64RomInfo info) {
+        public final String sourceName;
+        ImportedRom(File file, N64RomInfo info, String sourceName) {
             this.file = file;
             this.info = info;
+            this.sourceName = sourceName == null ? "" : sourceName;
         }
     }
 
+    private static final String META_PREFS = "retrolink_rom_metadata_v064";
+
     private N64RomRepository() {}
+
+    private static SharedPreferences meta(Context c) {
+        return c.getSharedPreferences(META_PREFS, Context.MODE_PRIVATE);
+    }
+
+    private static String sourceKey(File f) { return "source." + f.getName(); }
 
     private static File romDir(Context c) {
         File dir = new File(c.getFilesDir(), "roms/n64");
@@ -60,8 +73,11 @@ public final class N64RomRepository {
         List<ImportedRom> out = new ArrayList<>();
         for (File f : files) {
             if (!f.isFile()) continue;
-            try { out.add(new ImportedRom(f, readInfo(f))); }
-            catch (Exception ignored) {}
+            try {
+                N64RomInfo info = readInfo(f);
+                String source = meta(c).getString(sourceKey(f), info.title);
+                out.add(new ImportedRom(f, info, source));
+            } catch (Exception ignored) {}
         }
         out.sort(Comparator.comparingLong((ImportedRom r) -> r.file.lastModified()).reversed());
         return out;
@@ -125,8 +141,31 @@ public final class N64RomRepository {
         }
         //noinspection ResultOfMethodCallIgnored
         dst.setLastModified(System.currentTimeMillis());
-        ImportedRom imported = new ImportedRom(dst, info);
+        String originalName = resolveDisplayName(c, uri);
+        if (originalName == null || originalName.trim().isEmpty()) originalName = info.title;
+        meta(c).edit().putString(sourceKey(dst), originalName).apply();
+        ImportedRom imported = new ImportedRom(dst, info, originalName);
         select(c, imported);
         return imported;
     }
+
+    private static String resolveDisplayName(Context c, Uri uri) {
+        Cursor cursor = null;
+        try {
+            cursor = c.getContentResolver().query(uri, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                int idx = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                if (idx >= 0) {
+                    String name = cursor.getString(idx);
+                    if (name != null && !name.trim().isEmpty()) return name.trim();
+                }
+            }
+        } catch (Throwable ignored) {
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        String last = uri.getLastPathSegment();
+        return last == null ? "" : last;
+    }
+
 }

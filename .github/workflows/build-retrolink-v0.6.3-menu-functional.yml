@@ -36,7 +36,7 @@ jobs:
           set -euxo pipefail
           git fetch origin "${BRANCH_NAME}"
           git switch -C "${BRANCH_NAME}" "origin/${BRANCH_NAME}"
-          grep -q 'versionName "0.6.2-rc1"' app/build.gradle
+          grep -Eq 'versionName "0\.6\.(2|3)-rc1"' app/build.gradle
 
       - name: Restore v0.6.3 menu functional overlay
         shell: bash
@@ -509,12 +509,15 @@ jobs:
         run: |
           set -euxo pipefail
           python3 - <<'PY'
+          import re
           p='n64core/libretro/jni/Android.mk'
           s=open(p, encoding='utf-8').read()
-          s=s.replace('LOCAL_MODULE := retro', 'LOCAL_MODULE := retro_n64')
-          open(p,'w',encoding='utf-8').write(s)
+          s2, n = re.subn(r'(?m)^(LOCAL_MODULE\s*:=\s*)retro\s*$', r'\1retro_n64', s, count=1)
+          if n != 1:
+              raise SystemExit('No se encontró exactamente un LOCAL_MODULE retro para renombrar')
+          open(p,'w',encoding='utf-8').write(s2)
           PY
-          grep -q 'LOCAL_MODULE := retro_n64' n64core/libretro/jni/Android.mk
+          grep -Eq '^[[:space:]]*LOCAL_MODULE[[:space:]]*:=[[:space:]]*retro_n64[[:space:]]*$' n64core/libretro/jni/Android.mk
 
       - name: Build integrated N64 core for ARM64 GLES3
         shell: bash

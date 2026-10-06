@@ -32,7 +32,13 @@ public class RemoteFrameView extends View {
     }
 
     public void setPlayer(int p){ player=Math.max(1,Math.min(4,p)); postInvalidateOnAnimation(); }
-    public void setPlayerView(boolean v){ playerView=v; lastModeChangeMs=System.currentTimeMillis(); postInvalidateOnAnimation(); }
+    public void setPlayerView(boolean v){
+        if (playerView == v) return;
+        playerView=v;
+        lastModeChangeMs=System.currentTimeMillis();
+        refreshRetroSr();
+        postInvalidateOnAnimation();
+    }
     public boolean isPlayerView(){ return playerView; }
     public void setDk64Raw(boolean v){
         if (dk64Raw == v) return;
@@ -43,7 +49,11 @@ public class RemoteFrameView extends View {
     public void refreshRetroSr() {
         if (Build.VERSION.SDK_INT >= 33) {
             if (!dk64Raw && RetroPreferences.retroSrEnabled(getContext())) {
-                Api33Impl.apply(this, RetroPreferences.retroSrSharpness(getContext()));
+                float strength = RetroPreferences.retroSrSharpness(getContext());
+                // PLAYER remoto pierde detalle por captura + compresión. Un refuerzo
+                // espacial moderado recupera bordes sin introducir historia temporal.
+                if (playerView && preCropped) strength = Math.min(0.62f, strength + 0.12f);
+                Api33Impl.apply(this, strength);
             } else {
                 Api33Impl.clear(this);
             }
@@ -54,11 +64,13 @@ public class RemoteFrameView extends View {
     public void setFrame(Bitmap b, int count, boolean alreadyCropped) {
         post(() -> {
             Bitmap older = previous;
+            boolean cropModeChanged = preCropped != alreadyCropped;
             previous = frame;
             previousPreCropped = preCropped;
             frame = b;
             playerCount = Math.max(1, Math.min(4, count));
             preCropped = alreadyCropped;
+            if (cropModeChanged) refreshRetroSr();
             motionScore = estimateMotion(previous, frame);
             if (motionScore < 0.012f) stillFrameStreak++; else stillFrameStreak = 0;
             postInvalidateOnAnimation();
@@ -77,10 +89,10 @@ public class RemoteFrameView extends View {
         }
 
         Rect src = sourceFor(frame, preCropped);
-        // v0.6.5: la vista PLAYER debe tener la misma geometría visual 4:3 que P1.
-        // En 2P el recorte ocupa media altura (8:3); se expande verticalmente a 4:3,
-        // igual que hace IntegratedN64Activity con RACE P1. En 3P/4P el recorte ya es 4:3.
-        Rect dst = (playerView && playerCount > 1)
+        // v0.6.6: PLAYER pre-recortado ya llega normalizado por el Host a 4:3.
+        // Se respeta su geometría real para no volver a estirar la imagen en P2.
+        // Solo conservamos el fallback 4:3 para un frame transitorio no normalizado.
+        Rect dst = (playerView && playerCount > 1 && !preCropped)
                 ? fitRect(4, 3, getWidth(), getHeight())
                 : fitRect(src.width(), src.height(), getWidth(), getHeight());
 
@@ -97,6 +109,10 @@ public class RemoteFrameView extends View {
         // temporal de RetroLink sobre ese juego: solo reconstrucción espacial.
         if (dk64Raw || SessionState.isDk64Profile())
             srMode = RetroPreferences.RETRO_SR_OFF;
+        // En PLAYER remoto priorizamos nitidez de movimiento. La reconstrucción
+        // temporal sobre JPEG puede suavizar bordes y empeorar la sensación de foco.
+        else if (playerView && preCropped)
+            srMode = RetroPreferences.RETRO_SR_SPATIAL;
         boolean historyAvailable = srMode != RetroPreferences.RETRO_SR_OFF
                 && previous != null && !previous.isRecycled()
                 && previous.getWidth() == frame.getWidth()

@@ -107,3 +107,18 @@ La sesión puede leer el repositorio GitHub, pero las operaciones de escritura (
 - Selector 1P–4P corregido para evitar recortes.
 - Perfil simplificado; gamepads virtuales excluidos del resumen físico.
 - versionCode 19 / versionName 0.6.4-rc1.
+
+
+## v0.6.5 RC1 — Remote View Parity
+- HUD ocultable P2–P4.
+- FULL por defecto antes del split real del juego.
+- PLAYER remoto 4:3 y layout táctil remoto independiente.
+- versionCode 20 / versionName 0.6.5-rc1.
+
+## v0.6.6 RC1 — Remote Sharp View
+- El Host recorta el viewport P2–P4 con el mismo overscan de P1 y elimina la unión central.
+- El viewport PLAYER se normaliza a 4:3 antes de JPEG, evitando un segundo estiramiento en el cliente.
+- PLAYER usa JPEG Q90–Q94 para recuperar detalle en textos y bordes.
+- El cliente respeta la geometría del frame ya normalizado.
+- RetroSR PLAYER usa reconstrucción espacial sin historia temporal y un refuerzo moderado de nitidez.
+- versionCode 21 / versionName 0.6.6-rc1.

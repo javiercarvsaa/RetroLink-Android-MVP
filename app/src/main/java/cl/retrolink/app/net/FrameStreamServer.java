@@ -124,19 +124,52 @@ public class FrameStreamServer {
                         if (frame == null) {
                             Bitmap payload = b;
                             Bitmap cropped = null;
+                            Bitmap focused = null;
+                            Bitmap normalized = null;
                             try {
                                 if (crop) {
-                                    Rect r = SplitScreenProfile.sourceRect(b.getWidth(), b.getHeight(), pc, c.player);
+                                    // v0.6.6: extrae exactamente el viewport del jugador usando el
+                                    // mismo overscan configurado para P1 y elimina la unión central.
+                                    Rect r = SplitScreenProfile.focusedSourceRect(
+                                            b.getWidth(), b.getHeight(), pc, c.player,
+                                            RetroPreferences.splitOverscan(context));
                                     cropped = Bitmap.createBitmap(b, r.left, r.top, r.width(), r.height());
-                                    payload = cropped;
+
+                                    // Algunos juegos dejan una banda negra dentro del viewport P2.
+                                    // Se detecta solo si el borde es prácticamente negro de extremo
+                                    // a extremo; así evitamos confundir una escena oscura con letterbox.
+                                    Rect content = trimUniformBlackBands(cropped);
+                                    if (content.top != 0 || content.bottom != cropped.getHeight()) {
+                                        focused = Bitmap.createBitmap(cropped, 0, content.top, cropped.getWidth(), content.height());
+                                    } else {
+                                        focused = cropped;
+                                    }
+
+                                    // El split 2P nativo es ancho (p.ej. 640x240). Antes se enviaba
+                                    // así y el teléfono P2 lo estiraba después de comprimir, perdiendo
+                                    // nitidez y haciendo visible la deformación. Normalizamos a 4:3
+                                    // ANTES del JPEG, a la resolución completa de streaming.
+                                    int targetW = b.getWidth();
+                                    int targetH = Math.max(1, Math.round(targetW * 3f / 4f));
+                                    if (targetH > b.getHeight()) {
+                                        targetH = b.getHeight();
+                                        targetW = Math.max(1, Math.round(targetH * 4f / 3f));
+                                    }
+                                    normalized = Bitmap.createScaledBitmap(focused, targetW, targetH, true);
+                                    payload = normalized;
                                 }
-                                ByteArrayOutputStream baos = new ByteArrayOutputStream(crop ? 180000 : 320000);
-                                int q = crop ? Math.min(86, RetroPreferences.streamQuality(context) + 2)
-                                             : RetroPreferences.streamQuality(context);
+                                ByteArrayOutputStream baos = new ByteArrayOutputStream(crop ? 360000 : 320000);
+                                // PLAYER prioriza claridad: un único JPEG de calidad alta después de
+                                // normalizar el viewport. FULL mantiene el perfil de red elegido.
+                                int q = crop
+                                        ? Math.min(94, Math.max(90, RetroPreferences.streamQuality(context) + 8))
+                                        : RetroPreferences.streamQuality(context);
                                 payload.compress(Bitmap.CompressFormat.JPEG, q, baos);
                                 frame = baos.toByteArray();
                                 encoded.put(key, frame);
                             } finally {
+                                if (normalized != null && normalized != focused && normalized != cropped && normalized != b && !normalized.isRecycled()) normalized.recycle();
+                                if (focused != null && focused != cropped && focused != b && !focused.isRecycled()) focused.recycle();
                                 if (cropped != null && cropped != b && !cropped.isRecycled()) cropped.recycle();
                             }
                         }
@@ -153,6 +186,40 @@ public class FrameStreamServer {
             long wait = framePeriod - work;
             if (wait > 0) try { Thread.sleep(wait); } catch (InterruptedException ignored) {}
         }
+    }
+
+    /**
+     * Recorta únicamente bandas horizontales casi negras pegadas al borde.
+     * El recorte máximo es 22% por lado y exige >= 94% de muestras oscuras,
+     * por lo que una pista/túnel oscuro normal no debería activar el ajuste.
+     */
+    private static Rect trimUniformBlackBands(Bitmap bitmap) {
+        if (bitmap == null || bitmap.isRecycled()) return new Rect(0, 0, 1, 1);
+        int w = bitmap.getWidth();
+        int h = bitmap.getHeight();
+        if (w < 32 || h < 32) return new Rect(0, 0, w, h);
+        int maxTrim = Math.max(1, Math.round(h * 0.22f));
+        int top = 0;
+        int bottom = h;
+        while (top < maxTrim && rowMostlyBlack(bitmap, top)) top++;
+        while (bottom > h - maxTrim && bottom - 1 > top && rowMostlyBlack(bitmap, bottom - 1)) bottom--;
+        if (bottom - top < Math.round(h * 0.68f)) return new Rect(0, 0, w, h);
+        return new Rect(0, top, w, bottom);
+    }
+
+    private static boolean rowMostlyBlack(Bitmap bitmap, int y) {
+        int w = bitmap.getWidth();
+        int samples = Math.min(48, Math.max(16, w / 12));
+        int dark = 0;
+        for (int i = 0; i < samples; i++) {
+            int x = Math.min(w - 1, Math.round((w - 1) * (i + 0.5f) / samples));
+            int color = bitmap.getPixel(x, y);
+            int r = (color >> 16) & 0xff;
+            int g = (color >> 8) & 0xff;
+            int b = color & 0xff;
+            if (Math.max(r, Math.max(g, b)) <= 18) dark++;
+        }
+        return dark >= Math.ceil(samples * 0.94);
     }
 
     private class Client {

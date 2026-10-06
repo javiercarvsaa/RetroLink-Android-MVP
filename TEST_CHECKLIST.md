@@ -32,3 +32,12 @@
 - [ ] Mario Kart 64: recorte P1/P2 sigue correcto.
 - [ ] Editor de controles conserva posiciones/tamaño/opacidad.
 - [ ] Salir/minimizar/reabrir no muestra crash de Android.
+
+
+## v0.6.5 Remote View Parity
+- [ ] P2 inicia en FULL y muestra menús/pantallas completas.
+- [ ] Al entrar a carrera 2P, cambiar a PLAYER P2 y confirmar proporción 4:3 equivalente a P1.
+- [ ] Ocultar/mostrar barra superior de P2 con botón ⚙/×.
+- [ ] Verificar modo inmersivo sin barras Android persistentes.
+- [ ] Mover controles de P2 y confirmar persistencia independiente.
+- [ ] Revalidar P1 RACE, DK64 y carátulas.

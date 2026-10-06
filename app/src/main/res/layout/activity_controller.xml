@@ -12,26 +12,45 @@
         android:layout_height="match_parent" />
 
     <LinearLayout
+        android:id="@+id/controllerTopBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="top"
         android:background="@drawable/panel_overlay"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:padding="6dp">
+        android:paddingLeft="6dp"
+        android:paddingTop="6dp"
+        android:paddingRight="58dp"
+        android:paddingBottom="6dp">
         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
             <TextView android:id="@+id/txtControllerStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Desconectado" android:textColor="#FFFFFFFF" android:textSize="11sp" android:textStyle="bold" />
             <TextView android:id="@+id/txtVideoStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Video pendiente · misma Wi‑Fi/hotspot" android:textColor="#BBFFFFFF" android:textSize="8sp" android:maxLines="1" />
             <TextView android:id="@+id/txtInputStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Entrada directa al núcleo N64" android:textColor="#BBDDFFFF" android:textSize="8sp" android:maxLines="1" />
         </LinearLayout>
         <Button android:id="@+id/btnFindHost" android:layout_width="82dp" android:layout_height="42dp" android:text="CONECTAR" android:textSize="8sp" android:textColor="@color/retro_text" android:background="@drawable/btn_retro" />
-        <Button android:id="@+id/btnViewMode" android:layout_width="70dp" android:layout_height="42dp" android:layout_marginLeft="3dp" android:text="PLAYER" android:textSize="8sp" android:textColor="@color/retro_text" android:background="@drawable/btn_retro" />
+        <Button android:id="@+id/btnViewMode" android:layout_width="78dp" android:layout_height="42dp" android:layout_marginLeft="3dp" android:text="FULL" android:textSize="8sp" android:textColor="@color/retro_text" android:background="@drawable/btn_retro" />
+    <Button android:id="@+id/btnControllerEditControls" android:layout_width="66dp" android:layout_height="42dp" android:layout_marginLeft="3dp" android:text="MOVER" android:textSize="8sp" android:textColor="@color/retro_text" android:background="@drawable/btn_retro" />
     </LinearLayout>
 
-    <cl.retrolink.app.VirtualStickView android:id="@+id/virtualStick" android:layout_width="196dp" android:layout_height="196dp" android:layout_gravity="bottom|left" android:layout_marginLeft="16dp" android:layout_marginBottom="12dp" />
+    <Button
+        android:id="@+id/btnControllerHud"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_gravity="top|right"
+        android:layout_marginTop="7dp"
+        android:layout_marginRight="7dp"
+        android:alpha="0.72"
+        android:background="@drawable/btn_retro"
+        android:text="×"
+        android:textColor="@color/retro_text"
+        android:textSize="18sp"
+        android:contentDescription="Ocultar estado y conexión" />
+
+    <cl.retrolink.app.VirtualStickView android:id="@+id/virtualStick" android:layout_width="180dp" android:layout_height="180dp" android:layout_gravity="bottom|left" android:layout_marginLeft="16dp" android:layout_marginBottom="12dp" />
     <Button android:id="@+id/btnZ" android:layout_width="70dp" android:layout_height="70dp" android:layout_gravity="bottom|left" android:layout_marginLeft="200dp" android:layout_marginBottom="70dp" android:alpha="0.75" android:background="@drawable/btn_overlay" android:text="Z" android:textColor="#FFFFFFFF" android:textStyle="bold" />
-    <Button android:id="@+id/btnL" android:layout_width="66dp" android:layout_height="52dp" android:layout_gravity="top|left" android:layout_marginTop="74dp" android:layout_marginLeft="12dp" android:alpha="0.75" android:background="@drawable/btn_overlay" android:text="L" android:textColor="#FFFFFFFF" />
-    <Button android:id="@+id/btnR" android:layout_width="66dp" android:layout_height="52dp" android:layout_gravity="top|right" android:layout_marginTop="74dp" android:layout_marginRight="12dp" android:alpha="0.75" android:background="@drawable/btn_overlay" android:text="R" android:textColor="#FFFFFFFF" />
+    <Button android:id="@+id/btnL" android:layout_width="66dp" android:layout_height="52dp" android:layout_gravity="top|left" android:layout_marginTop="62dp" android:layout_marginLeft="12dp" android:alpha="0.75" android:background="@drawable/btn_overlay" android:text="L" android:textColor="#FFFFFFFF" />
+    <Button android:id="@+id/btnR" android:layout_width="66dp" android:layout_height="52dp" android:layout_gravity="top|right" android:layout_marginTop="62dp" android:layout_marginRight="12dp" android:alpha="0.75" android:background="@drawable/btn_overlay" android:text="R" android:textColor="#FFFFFFFF" />
     <Button android:id="@+id/btnStart" android:layout_width="88dp" android:layout_height="48dp" android:layout_gravity="bottom|center_horizontal" android:layout_marginBottom="16dp" android:alpha="0.72" android:background="@drawable/btn_retro" android:text="START" android:textSize="11sp" android:textColor="#FFFFFFFF" />
     <Button android:id="@+id/btnA" android:layout_width="82dp" android:layout_height="82dp" android:layout_gravity="bottom|right" android:layout_marginRight="34dp" android:layout_marginBottom="28dp" android:alpha="0.78" android:background="@drawable/btn_overlay" android:text="A" android:textSize="24sp" android:textColor="#FFFFFFFF" android:textStyle="bold" />
     <Button android:id="@+id/btnB" android:layout_width="72dp" android:layout_height="72dp" android:layout_gravity="bottom|right" android:layout_marginRight="122dp" android:layout_marginBottom="50dp" android:alpha="0.72" android:background="@drawable/btn_overlay" android:text="B" android:textSize="20sp" android:textColor="#FFFFFFFF" android:textStyle="bold" />

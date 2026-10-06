@@ -12,6 +12,7 @@ import android.widget.FrameLayout;
  */
 public final class ControlLayoutStore {
     public static final String SCOPE_N64_LANDSCAPE = "n64_landscape";
+    public static final String SCOPE_N64_REMOTE_LANDSCAPE = "n64_remote_landscape";
     private static final String PREFS = "retrolink_control_layout_v060";
 
     public static final int[] CONTROL_IDS = new int[]{

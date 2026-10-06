@@ -24,7 +24,7 @@ public class FrameStreamClient {
     private Thread thread;
     private DataOutputStream controlOut;
     private volatile int player = 1;
-    private volatile boolean playerView = true;
+    private volatile boolean playerView = false;
     private long statsStartMs;
     private int statsFrames;
 

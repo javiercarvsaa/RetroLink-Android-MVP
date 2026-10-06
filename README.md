@@ -1,4 +1,4 @@
-# RetroLink Android MVP — v0.6.4 RC1
+# RetroLink Android MVP — v0.6.5 RC1
 
 RetroLink es un frontend Android de juego retro local. Esta versión mantiene la baseline N64 validada e incorpora la primera biblioteca visual con búsqueda automática de carátulas.
 
@@ -13,3 +13,11 @@ RetroLink es un frontend Android de juego retro local. Esta versión mantiene la
 - Perfil simplificado a datos útiles y detección de mando físico sin dispositivos virtuales.
 
 RetroLink no incluye ROM, BIOS ni contenido comercial.
+
+
+## v0.6.5 Remote View Parity
+- P2–P4 HUD ocultable como P1.
+- Vista FULL por defecto al iniciar sesión remota para no recortar menús.
+- Vista PLAYER normalizada a 4:3 en 2P, igualando geometría de P1.
+- Controles remotos con layout movible independiente.
+- Modo inmersivo también en el cliente remoto.

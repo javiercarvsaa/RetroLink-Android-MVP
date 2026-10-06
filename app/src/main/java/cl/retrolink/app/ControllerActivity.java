@@ -6,6 +6,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.WindowManager;
+import android.view.View;
+import android.content.Intent;
+import android.widget.FrameLayout;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.widget.Button;
@@ -20,7 +23,9 @@ public class ControllerActivity extends Activity implements ControllerBleManager
     private FrameStreamClient video;
     private RemoteFrameView screen;
     private TextView status, videoStatus, inputStatus;
-    private Button viewButton;
+    private Button viewButton, hudButton;
+    private View topBar;
+    private FrameLayout controlRoot;
     private N64ControlBinder controls;
     private final Handler main = new Handler(Looper.getMainLooper());
     private int player;
@@ -30,13 +35,16 @@ public class ControllerActivity extends Activity implements ControllerBleManager
         super.onCreate(b);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_controller);
-        InsetHelper.apply(findViewById(R.id.controllerRoot));
+        hideSystemUi();
 
         status = findViewById(R.id.txtControllerStatus);
         videoStatus = findViewById(R.id.txtVideoStatus);
         inputStatus = findViewById(R.id.txtInputStatus);
         screen = findViewById(R.id.remoteFrameView);
         viewButton = findViewById(R.id.btnViewMode);
+        hudButton = findViewById(R.id.btnControllerHud);
+        topBar = findViewById(R.id.controllerTopBar);
+        controlRoot = findViewById(R.id.controllerRoot);
         ble = new ControllerBleManager(this, this);
         video = new FrameStreamClient(this);
         controls = new N64ControlBinder(this, (m, x, y) -> {
@@ -45,6 +53,17 @@ public class ControllerActivity extends Activity implements ControllerBleManager
         });
         findViewById(R.id.btnFindHost).setOnClickListener(v -> ble.startScan());
         viewButton.setOnClickListener(v -> toggleView());
+        hudButton.setOnClickListener(v -> setHudVisible(topBar == null || topBar.getVisibility() != View.VISIBLE, true));
+        findViewById(R.id.btnControllerEditControls).setOnClickListener(v -> {
+            Intent i = new Intent(this, ControlLayoutActivity.class);
+            i.putExtra(ControlLayoutActivity.EXTRA_SCOPE, ControlLayoutStore.SCOPE_N64_REMOTE_LANDSCAPE);
+            startActivity(i);
+        });
+        if (controlRoot != null) ControlLayoutStore.applyAll(this, controlRoot, ControlLayoutStore.SCOPE_N64_REMOTE_LANDSCAPE);
+        // Antes de enlazar necesitamos ver CONECTAR. Tras conectar se colapsa a HUD limpio.
+        setHudVisible(true, false);
+        screen.setPlayerView(false);
+        viewButton.setText("FULL");
         screen.refreshRetroSr();
     }
 
@@ -52,7 +71,7 @@ public class ControllerActivity extends Activity implements ControllerBleManager
         boolean next = !screen.isPlayerView();
         screen.setPlayerView(next);
         if (video != null) video.setPlayerView(next);
-        viewButton.setText(next ? "PLAYER" : "FULL");
+        viewButton.setText(next ? (player > 0 ? "PLAYER P" + player : "PLAYER") : "FULL");
     }
 
 
@@ -69,7 +88,10 @@ public class ControllerActivity extends Activity implements ControllerBleManager
 
     @Override protected void onResume() {
         super.onResume();
+        hideSystemUi();
         if (screen != null) screen.refreshRetroSr();
+        if (controlRoot != null) ControlLayoutStore.applyAll(this, controlRoot, ControlLayoutStore.SCOPE_N64_REMOTE_LANDSCAPE);
+        if (player > 0) setHudVisible(RetroPreferences.gameHudVisible(this), false);
     }
 
     @Override protected void onPause() {
@@ -93,6 +115,12 @@ public class ControllerActivity extends Activity implements ControllerBleManager
         inputStatus.setText("P" + p + " conectado al núcleo N64 del Host");
         videoStatus.setText("Solicitando IP del Host…");
         Toast.makeText(this, "Asignado como P" + p, Toast.LENGTH_SHORT).show();
+        // Vista FULL al iniciar evita recortar menús/pantallas compartidas antes de que
+        // el juego entre realmente en split-screen. PLAYER queda bajo control del usuario.
+        screen.setPlayerView(false);
+        if (video != null) video.setPlayerView(false);
+        viewButton.setText("FULL");
+        main.postDelayed(() -> setHudVisible(RetroPreferences.gameHudVisible(this), false), 1200);
     }
 
     @Override public void onHostInfo(String ip) {
@@ -112,12 +140,33 @@ public class ControllerActivity extends Activity implements ControllerBleManager
         if (video != null) video.stop();
         videoStatus.setText("Video desconectado");
         inputStatus.setText("Entrada N64 desconectada");
+        setHudVisible(true, false);
     }
 
     @Override public void onLog(String l) {}
     @Override public void onFrame(Bitmap b, int players, boolean preCropped, boolean dk64Raw) {
         screen.setDk64Raw(dk64Raw);
         screen.setFrame(b, players, preCropped);
+    }
+
+    private void setHudVisible(boolean visible, boolean persist) {
+        if (topBar != null) topBar.setVisibility(visible ? View.VISIBLE : View.GONE);
+        if (hudButton != null) {
+            hudButton.setText(visible ? "×" : "⚙");
+            hudButton.setContentDescription(visible ? "Ocultar estado de jugador" : "Mostrar estado y conexión");
+            hudButton.setAlpha(visible ? 0.92f : 0.72f);
+        }
+        if (persist && player > 0) RetroPreferences.setGameHudVisible(this, visible);
+    }
+
+    private void hideSystemUi() {
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY |
+                View.SYSTEM_UI_FLAG_FULLSCREEN |
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
+                View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
     }
 
     @Override public void onVideoStatus(String s) {

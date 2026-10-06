@@ -12,17 +12,24 @@ import android.widget.Toast;
 
 /** Editor visual del overlay N64. */
 public class ControlLayoutActivity extends Activity {
+    public static final String EXTRA_SCOPE = "control_scope";
     private FrameLayout root;
     private TextView selectedLabel;
     private SeekBar sizeBar, opacityBar;
     private View selected;
     private float downRawX, downRawY, startX, startY;
     private boolean programmaticBars;
+    private String scope = ControlLayoutStore.SCOPE_N64_LANDSCAPE;
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
         setContentView(R.layout.activity_control_layout);
         hideSystemUi();
+
+        String requestedScope = getIntent().getStringExtra(EXTRA_SCOPE);
+        if (ControlLayoutStore.SCOPE_N64_REMOTE_LANDSCAPE.equals(requestedScope)) {
+            scope = ControlLayoutStore.SCOPE_N64_REMOTE_LANDSCAPE;
+        }
 
         root = findViewById(R.id.controlEditorRoot);
         selectedLabel = findViewById(R.id.txtSelectedControl);
@@ -30,7 +37,7 @@ public class ControlLayoutActivity extends Activity {
         opacityBar = findViewById(R.id.seekControlOpacity);
 
         root.post(() -> {
-            ControlLayoutStore.applyAll(this, root, ControlLayoutStore.SCOPE_N64_LANDSCAPE);
+            ControlLayoutStore.applyAll(this, root, scope);
             bindDrags();
         });
 
@@ -59,12 +66,12 @@ public class ControlLayoutActivity extends Activity {
         });
 
         findViewById(R.id.btnControlSave).setOnClickListener(v -> {
-            ControlLayoutStore.saveAll(this, root, ControlLayoutStore.SCOPE_N64_LANDSCAPE);
+            ControlLayoutStore.saveAll(this, root, scope);
             Toast.makeText(this, "Layout de controles guardado", Toast.LENGTH_SHORT).show();
             finish();
         });
         findViewById(R.id.btnControlReset).setOnClickListener(v -> {
-            ControlLayoutStore.reset(this, ControlLayoutStore.SCOPE_N64_LANDSCAPE);
+            ControlLayoutStore.reset(this, scope);
             recreate();
         });
         findViewById(R.id.btnControlMirror).setOnClickListener(v -> {

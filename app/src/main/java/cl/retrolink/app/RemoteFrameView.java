@@ -15,7 +15,7 @@ public class RemoteFrameView extends View {
     private Bitmap previous;
     private int player = 1;
     private int playerCount = 1;
-    private boolean playerView = true;
+    private boolean playerView = false;
     private boolean preCropped;
     private boolean previousPreCropped;
     private boolean dk64Raw;
@@ -77,7 +77,12 @@ public class RemoteFrameView extends View {
         }
 
         Rect src = sourceFor(frame, preCropped);
-        Rect dst = fitRect(src.width(),src.height(),getWidth(),getHeight());
+        // v0.6.5: la vista PLAYER debe tener la misma geometría visual 4:3 que P1.
+        // En 2P el recorte ocupa media altura (8:3); se expande verticalmente a 4:3,
+        // igual que hace IntegratedN64Activity con RACE P1. En 3P/4P el recorte ya es 4:3.
+        Rect dst = (playerView && playerCount > 1)
+                ? fitRect(4, 3, getWidth(), getHeight())
+                : fitRect(src.width(), src.height(), getWidth(), getHeight());
 
         paint.setColor(Color.WHITE);
         paint.setAlpha(255);

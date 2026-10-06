@@ -28,3 +28,13 @@
 
 ## Gate para v0.7.0
 - [ ] Con v0.6.7 físicamente validado, congelar baseline N64 y comenzar MultiPlatform Foundation.
+
+
+## v0.6.8 Manual Player Viewport
+- [ ] P1 2P: PANTALLA abre panel y flechas desplazan el cuadro en vivo.
+- [ ] P2 PLAYER: PANTALLA abre panel y ajuste es independiente de P1.
+- [ ] P3/P4 conservan ajuste propio al reconectar.
+- [ ] Z-/Z+ ajustan zoom sin mostrar bordes negros.
+- [ ] CENTRO restablece X=0, Y=0, Z=100%.
+- [ ] Reiniciar app conserva encuadre manual.
+- [ ] FULL no se altera por los ajustes PLAYER.

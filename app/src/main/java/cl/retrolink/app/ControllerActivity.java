@@ -24,7 +24,8 @@ public class ControllerActivity extends Activity implements ControllerBleManager
     private RemoteFrameView screen;
     private TextView status, videoStatus, inputStatus;
     private Button viewButton, hudButton;
-    private View topBar;
+    private View topBar, viewportPanel;
+    private TextView viewportLabel;
     private FrameLayout controlRoot;
     private N64ControlBinder controls;
     private final Handler main = new Handler(Looper.getMainLooper());
@@ -44,6 +45,8 @@ public class ControllerActivity extends Activity implements ControllerBleManager
         viewButton = findViewById(R.id.btnViewMode);
         hudButton = findViewById(R.id.btnControllerHud);
         topBar = findViewById(R.id.controllerTopBar);
+        viewportPanel = findViewById(R.id.controllerViewportPanel);
+        viewportLabel = findViewById(R.id.txtControllerViewport);
         controlRoot = findViewById(R.id.controllerRoot);
         ble = new ControllerBleManager(this, this);
         video = new FrameStreamClient(this);
@@ -54,6 +57,15 @@ public class ControllerActivity extends Activity implements ControllerBleManager
         findViewById(R.id.btnFindHost).setOnClickListener(v -> ble.startScan());
         viewButton.setOnClickListener(v -> toggleView());
         hudButton.setOnClickListener(v -> setHudVisible(topBar == null || topBar.getVisibility() != View.VISIBLE, true));
+        findViewById(R.id.btnControllerViewport).setOnClickListener(v -> toggleViewportPanel());
+        findViewById(R.id.btnControllerViewLeft).setOnClickListener(v -> adjustViewport(-0.20f, 0f, 0f));
+        findViewById(R.id.btnControllerViewRight).setOnClickListener(v -> adjustViewport(0.20f, 0f, 0f));
+        findViewById(R.id.btnControllerViewUp).setOnClickListener(v -> adjustViewport(0f, -0.20f, 0f));
+        findViewById(R.id.btnControllerViewDown).setOnClickListener(v -> adjustViewport(0f, 0.20f, 0f));
+        findViewById(R.id.btnControllerViewZoomOut).setOnClickListener(v -> adjustViewport(0f, 0f, -0.02f));
+        findViewById(R.id.btnControllerViewZoomIn).setOnClickListener(v -> adjustViewport(0f, 0f, 0.02f));
+        findViewById(R.id.btnControllerViewReset).setOnClickListener(v -> { if (screen != null) screen.resetViewport(); updateViewportLabel(); });
+        findViewById(R.id.btnControllerViewDone).setOnClickListener(v -> { if (viewportPanel != null) viewportPanel.setVisibility(View.GONE); });
         findViewById(R.id.btnControllerEditControls).setOnClickListener(v -> {
             Intent i = new Intent(this, ControlLayoutActivity.class);
             i.putExtra(ControlLayoutActivity.EXTRA_SCOPE, ControlLayoutStore.SCOPE_N64_REMOTE_LANDSCAPE);
@@ -74,6 +86,29 @@ public class ControllerActivity extends Activity implements ControllerBleManager
         viewButton.setText(next ? (player > 0 ? "PLAYER P" + player : "PLAYER") : "FULL");
     }
 
+
+    private void toggleViewportPanel() {
+        if (screen == null || viewportPanel == null) return;
+        if (!screen.isPlayerView()) {
+            screen.setPlayerView(true);
+            if (video != null) video.setPlayerView(true);
+            viewButton.setText(player > 0 ? "PLAYER P" + player : "PLAYER");
+        }
+        boolean show = viewportPanel.getVisibility() != View.VISIBLE;
+        viewportPanel.setVisibility(show ? View.VISIBLE : View.GONE);
+        if (show) updateViewportLabel();
+    }
+
+    private void adjustViewport(float dx, float dy, float dz) {
+        if (screen == null) return;
+        if (dx != 0f || dy != 0f) screen.nudgeViewport(dx, dy);
+        if (dz != 0f) screen.changeViewportZoom(dz);
+        updateViewportLabel();
+    }
+
+    private void updateViewportLabel() {
+        if (viewportLabel != null && screen != null) viewportLabel.setText("AJUSTE DE PANTALLA · " + screen.viewportLabel());
+    }
 
     @Override public boolean dispatchKeyEvent(KeyEvent event) {
         if (AndroidGamepadMapper.handleKeyEvent(this, controls, event)) return true;
@@ -111,6 +146,7 @@ public class ControllerActivity extends Activity implements ControllerBleManager
     @Override public void onConnected(int p) {
         player = p;
         screen.setPlayer(p);
+        updateViewportLabel();
         status.setText("P" + p + " · BLE LISTO");
         inputStatus.setText("P" + p + " conectado al núcleo N64 del Host");
         videoStatus.setText("Solicitando IP del Host…");

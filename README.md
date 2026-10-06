@@ -20,3 +20,11 @@ RetroLink no incluye ROM, BIOS ni contenido comercial.
 ## Próxima línea de desarrollo
 
 La siguiente versión mayor será **v0.7.0 MultiPlatform Foundation**, orientada a desacoplar RetroLink de N64 y preparar cores adicionales para SNES, Game Boy/Game Boy Color, Atari y PlayStation 1 sin duplicar la aplicación por consola.
+
+
+## v0.6.8 Manual Player Viewport
+- Ajuste manual de pantalla PLAYER P1-P4.
+- Flechas para mover el encuadre, Z-/Z+ para zoom y CENTRO para restablecer.
+- Configuración persistente e independiente para Host/P1 y cada cliente remoto.
+- El ajuste manual se aplica sobre el enfoque automático de v0.6.7.
+- Próxima versión mayor: v0.7.0 MultiPlatform Foundation.

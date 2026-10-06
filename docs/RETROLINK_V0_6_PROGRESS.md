@@ -122,3 +122,10 @@ La sesión puede leer el repositorio GitHub, pero las operaciones de escritura (
 - El cliente respeta la geometría del frame ya normalizado.
 - RetroSR PLAYER usa reconstrucción espacial sin historia temporal y un refuerzo moderado de nitidez.
 - versionCode 21 / versionName 0.6.6-rc1.
+
+
+## v0.6.8 — Manual Player Viewport
+- Ajuste manual persistente por jugador: X/Y/zoom.
+- P1 y clientes P2-P4 disponen de panel PANTALLA.
+- Corrección manual se suma al enfoque automático, sin reemplazarlo.
+- Cierra la serie v0.6 antes de MultiPlatform Foundation v0.7.0.

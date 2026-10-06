@@ -31,7 +31,37 @@ public class RemoteFrameView extends View {
         refreshRetroSr();
     }
 
-    public void setPlayer(int p){ player=Math.max(1,Math.min(4,p)); postInvalidateOnAnimation(); }
+    public void setPlayer(int p){
+        player=Math.max(1,Math.min(4,p));
+        postInvalidateOnAnimation();
+    }
+
+    public void nudgeViewport(float dx, float dy) {
+        float x = PlayerViewportPreferences.offsetX(getContext(), true, player) + dx;
+        float y = PlayerViewportPreferences.offsetY(getContext(), true, player) + dy;
+        float z = PlayerViewportPreferences.zoom(getContext(), true, player);
+        // Un pequeño zoom automático deja margen para desplazar sin revelar bordes negros.
+        if ((Math.abs(x) > 0.001f || Math.abs(y) > 0.001f) && z < 1.04f) z = 1.04f;
+        PlayerViewportPreferences.set(getContext(), true, player, x, y, z);
+        postInvalidateOnAnimation();
+    }
+
+    public void changeViewportZoom(float delta) {
+        float x = PlayerViewportPreferences.offsetX(getContext(), true, player);
+        float y = PlayerViewportPreferences.offsetY(getContext(), true, player);
+        float z = PlayerViewportPreferences.zoom(getContext(), true, player) + delta;
+        PlayerViewportPreferences.set(getContext(), true, player, x, y, z);
+        postInvalidateOnAnimation();
+    }
+
+    public void resetViewport() {
+        PlayerViewportPreferences.reset(getContext(), true, player);
+        postInvalidateOnAnimation();
+    }
+
+    public String viewportLabel() {
+        return PlayerViewportPreferences.label(getContext(), true, player);
+    }
     public void setPlayerView(boolean v){
         if (playerView == v) return;
         playerView=v;
@@ -145,7 +175,7 @@ public class RemoteFrameView extends View {
             // del JPEG, pero la compresión puede convertir negro puro en near-black
             // y dejar una banda que v0.6.6 no lograba eliminar. Hacemos una segunda
             // medición sobre el frame decodificado y usamos solo el contenido visible.
-            return trimDecodedBlackBands(bitmap);
+            return manualViewportRect(trimDecodedBlackBands(bitmap));
         }
         if (cropped || !playerView) return new Rect(0,0,bitmap.getWidth(),bitmap.getHeight());
         return SplitScreenProfile.sourceRect(bitmap.getWidth(), bitmap.getHeight(), playerCount, player);
@@ -189,6 +219,33 @@ public class RemoteFrameView extends View {
         }
         return dark >= Math.ceil(samples * 0.90);
     }
+
+
+    /** Aplica ajuste manual persistente sobre el encuadre automático del player. */
+    private Rect manualViewportRect(Rect base) {
+        if (base == null || base.width() < 8 || base.height() < 8) return base;
+        float zoom = PlayerViewportPreferences.zoom(getContext(), true, player);
+        float ox = PlayerViewportPreferences.offsetX(getContext(), true, player);
+        float oy = PlayerViewportPreferences.offsetY(getContext(), true, player);
+
+        int bw = base.width(), bh = base.height();
+        int cw = Math.max(8, Math.round(bw / Math.max(1f, zoom)));
+        int ch = Math.max(8, Math.round(bh / Math.max(1f, zoom)));
+        // Mantener la proporción del frame ya normalizado por el Host.
+        float ar = bw / (float)Math.max(1, bh);
+        if (cw / (float)Math.max(1, ch) > ar) cw = Math.max(8, Math.round(ch * ar));
+        else ch = Math.max(8, Math.round(cw / ar));
+
+        int maxDx = Math.max(0, (bw - cw) / 2);
+        int maxDy = Math.max(0, (bh - ch) / 2);
+        int cx = base.centerX() + Math.round(ox * maxDx);
+        int cy = base.centerY() + Math.round(oy * maxDy);
+        int left = clampInt(cx - cw / 2, base.left, base.right - cw);
+        int top = clampInt(cy - ch / 2, base.top, base.bottom - ch);
+        return new Rect(left, top, left + cw, top + ch);
+    }
+
+    private static int clampInt(int v, int lo, int hi) { return Math.max(lo, Math.min(hi, v)); }
 
     private static float estimateMotion(Bitmap a, Bitmap b) {
         if (a == null || b == null || a.isRecycled() || b.isRecycled()) return 1f;

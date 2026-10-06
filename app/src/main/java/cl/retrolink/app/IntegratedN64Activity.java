@@ -30,7 +30,8 @@ public class IntegratedN64Activity extends Activity implements EmulatorSurfaceVi
     private EmulatorSurfaceView surface;
     private FrameLayout viewport, crop, controlRoot;
     private TextView status, stats;
-    private View topBar;
+    private View topBar, viewportPanel;
+    private TextView viewportLabel;
     private Button viewBtn, hudBtn, settingsBtn;
     private N64ControlBinder controls;
     private int playerCount = 1;
@@ -65,6 +66,8 @@ public class IntegratedN64Activity extends Activity implements EmulatorSurfaceVi
         status = findViewById(R.id.txtEmuStatus);
         stats = findViewById(R.id.txtEmuStats);
         topBar = findViewById(R.id.emuTopBar);
+        viewportPanel = findViewById(R.id.emuViewportPanel);
+        viewportLabel = findViewById(R.id.txtEmuViewport);
         viewBtn = findViewById(R.id.btnEmuView);
         hudBtn = findViewById(R.id.btnEmuHud);
         settingsBtn = findViewById(R.id.btnEmuSettings);
@@ -91,6 +94,15 @@ public class IntegratedN64Activity extends Activity implements EmulatorSurfaceVi
         viewBtn.setOnClickListener(v -> togglePlayerView());
         hudBtn.setOnClickListener(v -> setHudVisible(topBar == null || topBar.getVisibility() != View.VISIBLE));
         settingsBtn.setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
+        findViewById(R.id.btnEmuViewportAdjust).setOnClickListener(v -> toggleViewportPanel());
+        findViewById(R.id.btnEmuViewLeft).setOnClickListener(v -> adjustViewport(-0.20f, 0f, 0f));
+        findViewById(R.id.btnEmuViewRight).setOnClickListener(v -> adjustViewport(0.20f, 0f, 0f));
+        findViewById(R.id.btnEmuViewUp).setOnClickListener(v -> adjustViewport(0f, -0.20f, 0f));
+        findViewById(R.id.btnEmuViewDown).setOnClickListener(v -> adjustViewport(0f, 0.20f, 0f));
+        findViewById(R.id.btnEmuViewZoomOut).setOnClickListener(v -> adjustViewport(0f, 0f, -0.02f));
+        findViewById(R.id.btnEmuViewZoomIn).setOnClickListener(v -> adjustViewport(0f, 0f, 0.02f));
+        findViewById(R.id.btnEmuViewReset).setOnClickListener(v -> { PlayerViewportPreferences.reset(this, false, 1); applyPlayerTransform(); updateViewportLabel(); });
+        findViewById(R.id.btnEmuViewDone).setOnClickListener(v -> { if (viewportPanel != null) viewportPanel.setVisibility(View.GONE); });
         findViewById(R.id.btnEmuEditControls).setOnClickListener(v -> startActivity(new Intent(this, ControlLayoutActivity.class)));
         setHudVisible(RetroPreferences.gameHudVisible(this), false);
         updateViewButton();
@@ -160,6 +172,36 @@ public class IntegratedN64Activity extends Activity implements EmulatorSurfaceVi
     }
 
 
+    private void toggleViewportPanel() {
+        syncSessionPlayers();
+        if (playerCount <= 1) {
+            Toast.makeText(this, "El ajuste de pantalla se usa en vista PLAYER con 2P–4P.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (!playerView) {
+            playerView = true;
+            updateViewButton();
+            applyPlayerTransform();
+        }
+        boolean show = viewportPanel != null && viewportPanel.getVisibility() != View.VISIBLE;
+        if (viewportPanel != null) viewportPanel.setVisibility(show ? View.VISIBLE : View.GONE);
+        if (show) updateViewportLabel();
+    }
+
+    private void adjustViewport(float dx, float dy, float dz) {
+        float x = PlayerViewportPreferences.offsetX(this, false, 1) + dx;
+        float y = PlayerViewportPreferences.offsetY(this, false, 1) + dy;
+        float z = PlayerViewportPreferences.zoom(this, false, 1) + dz;
+        if ((Math.abs(x) > 0.001f || Math.abs(y) > 0.001f) && z < 1.04f) z = 1.04f;
+        PlayerViewportPreferences.set(this, false, 1, x, y, z);
+        applyPlayerTransform();
+        updateViewportLabel();
+    }
+
+    private void updateViewportLabel() {
+        if (viewportLabel != null) viewportLabel.setText("AJUSTE DE PANTALLA · " + PlayerViewportPreferences.label(this, false, 1));
+    }
+
     private void setHudVisible(boolean visible) {
         setHudVisible(visible, true);
     }
@@ -200,23 +242,26 @@ public class IntegratedN64Activity extends Activity implements EmulatorSurfaceVi
         }
 
         final float overscan = RetroPreferences.splitOverscan(this);
-        if (playerCount <= 2) {
-            // Mario Kart 64 2P: P1 ocupa la mitad superior.
-            // El contenedor emulatorCrop recorta exactamente el área 4:3.
-            surface.setScaleX(overscan);
-            surface.setScaleY(2f * overscan);
-        } else {
-            // 3P/4P: P1 es el cuadrante superior izquierdo.
-            surface.setScaleX(2f * overscan);
-            surface.setScaleY(2f * overscan);
-        }
+        final float manualZoom = PlayerViewportPreferences.zoom(this, false, 1);
+        final float manualX = PlayerViewportPreferences.offsetX(this, false, 1);
+        final float manualY = PlayerViewportPreferences.offsetY(this, false, 1);
+        final float baseScaleX = playerCount <= 2 ? overscan : 2f * overscan;
+        final float baseScaleY = 2f * overscan;
+        final float sx = baseScaleX * manualZoom;
+        final float sy = baseScaleY * manualZoom;
+        surface.setScaleX(sx);
+        surface.setScaleY(sy);
 
-        // Centra el pequeño overscan adicional dentro del crop sin desplazar P1
-        // hacia la región vecina.
+        // Base automática + ajuste manual persistente. Los offsets representan
+        // desplazamiento visual del cuadro; el zoom aporta margen para no mostrar bordes.
         float extraX = Math.max(0f, crop.getWidth() * (overscan - 1f) * 0.5f);
         float extraY = Math.max(0f, crop.getHeight() * (overscan - 1f) * 0.5f);
-        surface.setTranslationX(-extraX);
-        surface.setTranslationY(-extraY);
+        float zoomExtraX = crop.getWidth() * Math.max(0f, manualZoom - 1f) * 0.5f;
+        float zoomExtraY = crop.getHeight() * Math.max(0f, manualZoom - 1f) * 0.5f;
+        float panX = manualX * crop.getWidth() * 0.08f;
+        float panY = manualY * crop.getHeight() * 0.08f;
+        surface.setTranslationX(-extraX - zoomExtraX + panX);
+        surface.setTranslationY(-extraY - zoomExtraY + panY);
     }
 
     private void captureForRemotePlayers() {

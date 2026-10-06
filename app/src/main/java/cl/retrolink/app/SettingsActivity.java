@@ -117,6 +117,7 @@ public class SettingsActivity extends Activity {
 
         findViewById(R.id.btnSettingsReset).setOnClickListener(v -> {
             RetroPreferences.resetUserSettings(this);
+            PlayerViewportPreferences.resetAll(this);
             refresh();
             Toast.makeText(this, "Ajustes restablecidos", Toast.LENGTH_SHORT).show();
         });

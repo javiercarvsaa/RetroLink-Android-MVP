@@ -28,7 +28,7 @@
         <Button android:id="@+id/btnViewMode" android:layout_width="70dp" android:layout_height="42dp" android:layout_marginLeft="3dp" android:text="PLAYER" android:textSize="8sp" android:textColor="@color/retro_text" android:background="@drawable/btn_retro" />
     </LinearLayout>
 
-    <cl.retrolink.app.VirtualStickView android:id="@+id/virtualStick" android:layout_width="180dp" android:layout_height="180dp" android:layout_gravity="bottom|left" android:layout_marginLeft="16dp" android:layout_marginBottom="12dp" />
+    <cl.retrolink.app.VirtualStickView android:id="@+id/virtualStick" android:layout_width="196dp" android:layout_height="196dp" android:layout_gravity="bottom|left" android:layout_marginLeft="16dp" android:layout_marginBottom="12dp" />
     <Button android:id="@+id/btnZ" android:layout_width="70dp" android:layout_height="70dp" android:layout_gravity="bottom|left" android:layout_marginLeft="200dp" android:layout_marginBottom="70dp" android:alpha="0.75" android:background="@drawable/btn_overlay" android:text="Z" android:textColor="#FFFFFFFF" android:textStyle="bold" />
     <Button android:id="@+id/btnL" android:layout_width="66dp" android:layout_height="52dp" android:layout_gravity="top|left" android:layout_marginTop="74dp" android:layout_marginLeft="12dp" android:alpha="0.75" android:background="@drawable/btn_overlay" android:text="L" android:textColor="#FFFFFFFF" />
     <Button android:id="@+id/btnR" android:layout_width="66dp" android:layout_height="52dp" android:layout_gravity="top|right" android:layout_marginTop="74dp" android:layout_marginRight="12dp" android:alpha="0.75" android:background="@drawable/btn_overlay" android:text="R" android:textColor="#FFFFFFFF" />

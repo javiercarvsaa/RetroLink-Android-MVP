@@ -3,6 +3,7 @@ package cl.retrolink.app;
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.WindowManager;
 import android.widget.TextView;
 
@@ -19,14 +20,31 @@ public class ControlTestActivity extends Activity {
         InsetHelper.apply(findViewById(R.id.controlTestRoot));
         status = findViewById(R.id.txtControlTestStatus);
         physical = findViewById(R.id.txtPhysicalMappings);
-        physical.setText("VOL + → " + RetroPreferences.volumeUpMapping(this) + "    ·    VOL − → " + RetroPreferences.volumeDownMapping(this));
+        refreshPhysicalStatus();
         controls = new N64ControlBinder(this, (mask,x,y) -> status.setText("INPUT · " + BleProtocol.buttonsToText(mask) + " · Stick " + x + "," + y));
         findViewById(R.id.btnTestBack).setOnClickListener(v -> finish());
     }
 
     @Override public boolean dispatchKeyEvent(KeyEvent event) {
+        if (AndroidGamepadMapper.handleKeyEvent(this, controls, event)) { refreshPhysicalStatus(); return true; }
         if (HardwareButtonMapper.handle(this, controls, event)) return true;
         return super.dispatchKeyEvent(event);
+    }
+
+    @Override public boolean dispatchGenericMotionEvent(MotionEvent event) {
+        if (AndroidGamepadMapper.handleMotionEvent(this, controls, event)) { refreshPhysicalStatus(); return true; }
+        return super.dispatchGenericMotionEvent(event);
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        refreshPhysicalStatus();
+    }
+
+    private void refreshPhysicalStatus() {
+        if (physical != null) physical.setText(AndroidGamepadMapper.connectedGamepadsSummary()
+                + "\nVOL + → " + RetroPreferences.volumeUpMapping(this)
+                + "    ·    VOL − → " + RetroPreferences.volumeDownMapping(this));
     }
 
     @Override protected void onPause() {

@@ -71,3 +71,14 @@
 
 ## Bloqueo de publicación actual
 La sesión puede leer el repositorio GitHub, pero las operaciones de escritura (`create_branch`, `create_file`) responden HTTP 403 `Resource not accessible by integration`. La working copy RC1 queda preparada para publicar en cuanto el conector tenga escritura efectiva sobre `javiercarvsaa/RetroLink-Android-MVP`.
+
+## v0.6.1 RC1 — Input Foundation
+
+- Corregida doble inversión del eje Y analógico que afectaba arriba/abajo en Smash Bros.
+- VirtualStick v2: deadzone radial, sensibilidad, curva suave, multitouch y visual neón.
+- Soporte Android GAMEPAD/JOYSTICK HID para mandos Bluetooth y USB.
+- Stick izquierdo físico -> stick N64; D-pad -> D-pad; stick derecho -> C-buttons.
+- A/B, L1/R1, L2/R2, Start mapeados a controles N64.
+- Ajustes de deadzone, sensibilidad e inversión Y.
+- Editor de posiciones v0.6 preservado y compatible.
+- Pendiente validación física: Smash Bros arriba/abajo, mando BT/USB y multitouch.

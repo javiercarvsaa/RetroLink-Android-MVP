@@ -10,6 +10,7 @@ import android.os.Process;
 import android.content.Intent;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.PixelCopy;
 import android.view.View;
 import android.view.WindowManager;
@@ -104,8 +105,14 @@ public class IntegratedN64Activity extends Activity implements EmulatorSurfaceVi
     }
 
     @Override public boolean dispatchKeyEvent(KeyEvent event) {
+        if (AndroidGamepadMapper.handleKeyEvent(this, controls, event)) return true;
         if (HardwareButtonMapper.handle(this, controls, event)) return true;
         return super.dispatchKeyEvent(event);
+    }
+
+    @Override public boolean dispatchGenericMotionEvent(MotionEvent event) {
+        if (AndroidGamepadMapper.handleMotionEvent(this, controls, event)) return true;
+        return super.dispatchGenericMotionEvent(event);
     }
 
     private void fitSurfaceFourByThree() {

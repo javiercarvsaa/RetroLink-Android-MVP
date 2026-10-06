@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.WindowManager;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -56,8 +57,14 @@ public class ControllerActivity extends Activity implements ControllerBleManager
 
 
     @Override public boolean dispatchKeyEvent(KeyEvent event) {
+        if (AndroidGamepadMapper.handleKeyEvent(this, controls, event)) return true;
         if (HardwareButtonMapper.handle(this, controls, event)) return true;
         return super.dispatchKeyEvent(event);
+    }
+
+    @Override public boolean dispatchGenericMotionEvent(MotionEvent event) {
+        if (AndroidGamepadMapper.handleMotionEvent(this, controls, event)) return true;
+        return super.dispatchGenericMotionEvent(event);
     }
 
     @Override protected void onResume() {

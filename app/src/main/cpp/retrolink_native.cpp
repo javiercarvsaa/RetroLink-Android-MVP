@@ -403,7 +403,7 @@ int16_t input_state_cb(unsigned port, unsigned device, unsigned index, unsigned 
     if (device == RETRO_DEVICE_ANALOG) {
         if (index == RETRO_DEVICE_INDEX_ANALOG_LEFT) {
             if (id == RETRO_DEVICE_ID_ANALOG_X) return axis_to_libretro(in.x);
-            if (id == RETRO_DEVICE_ID_ANALOG_Y) return static_cast<int16_t>(-axis_to_libretro(in.y));
+            if (id == RETRO_DEVICE_ID_ANALOG_Y) return axis_to_libretro(in.y); // v0.6.1: Android/libretro comparten Y<0 arriba, Y>0 abajo
         }
         if (index == RETRO_DEVICE_INDEX_ANALOG_RIGHT) {
             if (id == RETRO_DEVICE_ID_ANALOG_X) {

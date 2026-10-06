@@ -25,6 +25,9 @@ public final class RetroPreferences {
     private static final String K_LAST_ROM_SUMMARY = "last_rom_summary";
     private static final String K_GAME_HUD = "game_hud_visible";
     private static final String K_SPLIT_CROP = "split_crop_mode_v060";
+    private static final String K_STICK_DEADZONE = "stick_deadzone_v061";
+    private static final String K_STICK_SENSITIVITY = "stick_sensitivity_v061";
+    private static final String K_STICK_INVERT_Y = "stick_invert_y_v061";
 
     public static final int RETRO_SR_OFF = 0;
     public static final int RETRO_SR_SPATIAL = 1;
@@ -193,6 +196,23 @@ public final class RetroPreferences {
             default: return 1.01f;
         }
     }
+
+
+    // Input v0.6.1: configuración común para stick táctil y mandos Android.
+    public static float stickDeadzone(Context c) {
+        return Math.max(0.02f, Math.min(0.30f, p(c).getFloat(K_STICK_DEADZONE, 0.12f)));
+    }
+    public static void setStickDeadzone(Context c, float v) {
+        p(c).edit().putFloat(K_STICK_DEADZONE, Math.max(0.02f, Math.min(0.30f, v))).apply();
+    }
+    public static float stickSensitivity(Context c) {
+        return Math.max(0.50f, Math.min(1.50f, p(c).getFloat(K_STICK_SENSITIVITY, 1.00f)));
+    }
+    public static void setStickSensitivity(Context c, float v) {
+        p(c).edit().putFloat(K_STICK_SENSITIVITY, Math.max(0.50f, Math.min(1.50f, v))).apply();
+    }
+    public static boolean stickInvertY(Context c) { return p(c).getBoolean(K_STICK_INVERT_Y, false); }
+    public static void setStickInvertY(Context c, boolean v) { p(c).edit().putBoolean(K_STICK_INVERT_Y, v).apply(); }
 
     public static int mappingToMask(String mapping) {
         if (mapping == null) return 0;

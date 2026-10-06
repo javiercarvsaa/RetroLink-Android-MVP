@@ -11,8 +11,9 @@ import android.widget.TextView;
 public class SettingsActivity extends Activity {
     private Button gfx, retroSrMode, volUp, volDown, stream, splitProfile;
     private Switch volumeButtons, blockVolume, haptic;
-    private SeekBar sharpness;
-    private TextView sharpValue, diagnostics;
+    private SeekBar sharpness, stickDeadzone, stickSensitivity;
+    private Switch invertStickY;
+    private TextView sharpValue, diagnostics, stickDeadzoneValue, stickSensitivityValue, gamepadStatus;
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
@@ -31,6 +32,12 @@ public class SettingsActivity extends Activity {
         stream = findViewById(R.id.btnStreamProfile);
         splitProfile = findViewById(R.id.btnSplitScreenProfile);
         diagnostics = findViewById(R.id.txtSettingsDiagnostics);
+        stickDeadzone = findViewById(R.id.seekStickDeadzone);
+        stickSensitivity = findViewById(R.id.seekStickSensitivity);
+        invertStickY = findViewById(R.id.swInvertStickY);
+        stickDeadzoneValue = findViewById(R.id.txtStickDeadzoneValue);
+        stickSensitivityValue = findViewById(R.id.txtStickSensitivityValue);
+        gamepadStatus = findViewById(R.id.txtGamepadStatus);
 
         gfx.setOnClickListener(v -> {
             RetroPreferences.setGraphicsProfile(this, (RetroPreferences.graphicsProfile(this) + 1) % 3);
@@ -52,6 +59,27 @@ public class SettingsActivity extends Activity {
         volumeButtons.setOnCheckedChangeListener((b1, checked) -> RetroPreferences.setVolumeButtonsEnabled(this, checked));
         blockVolume.setOnCheckedChangeListener((b1, checked) -> RetroPreferences.setBlockSystemVolume(this, checked));
         haptic.setOnCheckedChangeListener((b1, checked) -> RetroPreferences.setHardwareHaptic(this, checked));
+        stickDeadzone.setMax(28); // 2..30%
+        stickDeadzone.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                int percent = progress + 2;
+                stickDeadzoneValue.setText(percent + "%");
+                if (fromUser) RetroPreferences.setStickDeadzone(SettingsActivity.this, percent / 100f);
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+        stickSensitivity.setMax(100); // 50..150%
+        stickSensitivity.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                int percent = progress + 50;
+                stickSensitivityValue.setText(percent + "%");
+                if (fromUser) RetroPreferences.setStickSensitivity(SettingsActivity.this, percent / 100f);
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+        invertStickY.setOnCheckedChangeListener((b1, checked) -> RetroPreferences.setStickInvertY(this, checked));
         volUp.setOnClickListener(v -> { RetroPreferences.setVolumeUpMapping(this, nextMap(RetroPreferences.volumeUpMapping(this))); refresh(); });
         volDown.setOnClickListener(v -> { RetroPreferences.setVolumeDownMapping(this, nextMap(RetroPreferences.volumeDownMapping(this))); refresh(); });
         stream.setOnClickListener(v -> cycleStream());
@@ -66,6 +94,11 @@ public class SettingsActivity extends Activity {
         findViewById(R.id.navSettingsGames).setOnClickListener(v -> startActivity(new Intent(this, LibraryActivity.class)));
         findViewById(R.id.navSettingsRoom).setOnClickListener(v -> startActivity(new Intent(this, HostActivity.class)));
         findViewById(R.id.navSettingsProfile).setOnClickListener(v -> startActivity(new Intent(this, ProfileActivity.class)));
+        refresh();
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
         refresh();
     }
 
@@ -93,6 +126,14 @@ public class SettingsActivity extends Activity {
         volDown.setText("VOL −  →  " + RetroPreferences.volumeDownMapping(this));
         blockVolume.setChecked(RetroPreferences.blockSystemVolume(this));
         haptic.setChecked(RetroPreferences.hardwareHaptic(this));
+        int dz = Math.round(RetroPreferences.stickDeadzone(this) * 100f);
+        int sens = Math.round(RetroPreferences.stickSensitivity(this) * 100f);
+        stickDeadzone.setProgress(Math.max(0, dz - 2));
+        stickSensitivity.setProgress(Math.max(0, sens - 50));
+        stickDeadzoneValue.setText(dz + "%");
+        stickSensitivityValue.setText(sens + "%");
+        invertStickY.setChecked(RetroPreferences.stickInvertY(this));
+        gamepadStatus.setText(AndroidGamepadMapper.connectedGamepadsSummary());
         stream.setText(RetroPreferences.streamProfileLabel(this));
         splitProfile.setText("SPLIT: " + RetroPreferences.splitCropModeLabel(this));
         diagnostics.setText("RetroSR 2.2 " + RetroPreferences.retroSrModeLabel(this)

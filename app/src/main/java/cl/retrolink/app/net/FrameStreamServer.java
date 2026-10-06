@@ -190,20 +190,20 @@ public class FrameStreamServer {
 
     /**
      * Recorta únicamente bandas horizontales casi negras pegadas al borde.
-     * El recorte máximo es 22% por lado y exige >= 94% de muestras oscuras,
-     * por lo que una pista/túnel oscuro normal no debería activar el ajuste.
+     * v0.6.7 hace la detección algo más tolerante antes del JPEG para reducir
+     * letterbox residual; el cliente vuelve a verificar después de decodificar.
      */
     private static Rect trimUniformBlackBands(Bitmap bitmap) {
         if (bitmap == null || bitmap.isRecycled()) return new Rect(0, 0, 1, 1);
         int w = bitmap.getWidth();
         int h = bitmap.getHeight();
         if (w < 32 || h < 32) return new Rect(0, 0, w, h);
-        int maxTrim = Math.max(1, Math.round(h * 0.22f));
+        int maxTrim = Math.max(1, Math.round(h * 0.26f));
         int top = 0;
         int bottom = h;
         while (top < maxTrim && rowMostlyBlack(bitmap, top)) top++;
         while (bottom > h - maxTrim && bottom - 1 > top && rowMostlyBlack(bitmap, bottom - 1)) bottom--;
-        if (bottom - top < Math.round(h * 0.68f)) return new Rect(0, 0, w, h);
+        if (bottom - top < Math.round(h * 0.66f)) return new Rect(0, 0, w, h);
         return new Rect(0, top, w, bottom);
     }
 
@@ -217,9 +217,9 @@ public class FrameStreamServer {
             int r = (color >> 16) & 0xff;
             int g = (color >> 8) & 0xff;
             int b = color & 0xff;
-            if (Math.max(r, Math.max(g, b)) <= 18) dark++;
+            if (Math.max(r, Math.max(g, b)) <= 28 && (r + g + b) <= 62) dark++;
         }
-        return dark >= Math.ceil(samples * 0.94);
+        return dark >= Math.ceil(samples * 0.92);
     }
 
     private class Client {

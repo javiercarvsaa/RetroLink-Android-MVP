@@ -1,28 +1,30 @@
-# RetroLink v0.6.6 RC1 — Checklist
+# RetroLink v0.6.7 RC1 — Checklist
 
 ## Build
 - [ ] GitHub Actions termina SUCCESS.
 - [ ] APK contiene `libretro_n64.so`, `libretrolink_native.so` y `libc++_shared.so`.
-- [ ] `versionName` = `0.6.6-rc1`.
+- [ ] `versionName` = `0.6.7-rc1`.
 
-## Vista remota / Mario Kart 2P
-- [ ] P2 inicia en FULL y los menús se ven completos.
-- [ ] Al comenzar carrera, PLAYER P2 centra correctamente el viewport del jugador.
-- [ ] P2 no muestra línea/franja del viewport vecino.
-- [ ] P2 mantiene proporción equivalente a RACE P1 sin estiramiento adicional en el cliente.
-- [ ] PLAYER P2 se ve más nítido que v0.6.5, especialmente textos, bordes de pista y kart.
-- [ ] Movimiento rápido no agrega blur temporal visible.
-- [ ] HUD P2 puede ocultarse/mostrarse con ⚙/×.
-- [ ] Layout de controles P2 sigue persistiendo independientemente.
+## Remote Centering / Mario Kart 2P
+- [ ] P2 inicia en FULL y menús se ven completos.
+- [ ] PLAYER P2 muestra el cuadro del videojuego centrado verticalmente.
+- [ ] No queda una banda negra grande solo arriba o solo abajo.
+- [ ] El contenido visible mantiene un centro vertical estable entre frames.
+- [ ] No se recorta pista/HUD por detectar falsamente escenas oscuras.
+- [ ] PLAYER P2 conserva nitidez de v0.6.6 y JPEG HQ.
+- [ ] HUD remoto puede ocultarse/mostrarse con ⚙/×.
+- [ ] Layout remoto de controles persiste.
 
 ## Sala / biblioteca
 - [ ] Selector 1P–4P completo.
 - [ ] Carátulas automáticas siguen funcionando y cargan desde caché.
-- [ ] Sin Internet, la biblioteca sigue operativa.
 
 ## Regresión N64
 - [ ] Smash Bros: stick arriba/abajo/izquierda/derecha correcto.
 - [ ] Donkey Kong 64: sin ghosting histórico.
-- [ ] P1 RACE conserva su encuadre.
+- [ ] P1 RACE conserva comportamiento validado.
 - [ ] Gamepad Bluetooth/USB sigue operativo.
 - [ ] Salir/minimizar/reabrir no provoca crash.
+
+## Gate para v0.7.0
+- [ ] Con v0.6.7 físicamente validado, congelar baseline N64 y comenzar MultiPlatform Foundation.

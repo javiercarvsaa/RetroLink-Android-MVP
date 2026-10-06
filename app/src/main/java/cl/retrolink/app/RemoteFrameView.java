@@ -89,9 +89,9 @@ public class RemoteFrameView extends View {
         }
 
         Rect src = sourceFor(frame, preCropped);
-        // v0.6.6: PLAYER pre-recortado ya llega normalizado por el Host a 4:3.
-        // Se respeta su geometría real para no volver a estirar la imagen en P2.
-        // Solo conservamos el fallback 4:3 para un frame transitorio no normalizado.
+        // v0.6.7: sourceFor() puede retirar una banda residual post-JPEG. fitRect
+        // vuelve a centrar geométricamente ese contenido visible dentro de la pantalla,
+        // evitando que el cuadro del videojuego quede apoyado hacia abajo.
         Rect dst = (playerView && playerCount > 1 && !preCropped)
                 ? fitRect(4, 3, getWidth(), getHeight())
                 : fitRect(src.width(), src.height(), getWidth(), getHeight());
@@ -139,8 +139,55 @@ public class RemoteFrameView extends View {
     }
 
     private Rect sourceFor(Bitmap bitmap, boolean cropped) {
+        if (bitmap == null || bitmap.isRecycled()) return new Rect(0, 0, 1, 1);
+        if (cropped && playerView) {
+            // v0.6.7 Remote Centering: el Host ya intenta retirar letterbox antes
+            // del JPEG, pero la compresión puede convertir negro puro en near-black
+            // y dejar una banda que v0.6.6 no lograba eliminar. Hacemos una segunda
+            // medición sobre el frame decodificado y usamos solo el contenido visible.
+            return trimDecodedBlackBands(bitmap);
+        }
         if (cropped || !playerView) return new Rect(0,0,bitmap.getWidth(),bitmap.getHeight());
         return SplitScreenProfile.sourceRect(bitmap.getWidth(), bitmap.getHeight(), playerCount, player);
+    }
+
+    /**
+     * Recorte post-decode para centrar realmente PLAYER P2-P4.
+     * Solo analiza bandas pegadas al borde y limita el recorte a 26% por lado.
+     * El umbral es más tolerante que el del Host porque aquí ya existe JPEG.
+     */
+    private static Rect trimDecodedBlackBands(Bitmap bitmap) {
+        int w = bitmap.getWidth();
+        int h = bitmap.getHeight();
+        if (w < 32 || h < 32) return new Rect(0, 0, w, h);
+
+        int maxTrim = Math.max(1, Math.round(h * 0.26f));
+        int top = 0;
+        int bottom = h;
+        while (top < maxTrim && decodedRowMostlyBlack(bitmap, top)) top++;
+        while (bottom > h - maxTrim && bottom - 1 > top && decodedRowMostlyBlack(bitmap, bottom - 1)) bottom--;
+
+        // Mantener como mínimo 66% de la altura original. Evita falsos positivos
+        // en túneles, pantallas oscuras o transiciones del juego.
+        if (bottom - top < Math.round(h * 0.66f)) return new Rect(0, 0, w, h);
+        return new Rect(0, top, w, bottom);
+    }
+
+    private static boolean decodedRowMostlyBlack(Bitmap bitmap, int y) {
+        int w = bitmap.getWidth();
+        int samples = Math.min(64, Math.max(20, w / 10));
+        int dark = 0;
+        for (int i = 0; i < samples; i++) {
+            int x = Math.min(w - 1, Math.round((w - 1) * (i + 0.5f) / samples));
+            int color = bitmap.getPixel(x, y);
+            int r = (color >> 16) & 0xff;
+            int g = (color >> 8) & 0xff;
+            int b = color & 0xff;
+            int max = Math.max(r, Math.max(g, b));
+            int sum = r + g + b;
+            if (max <= 42 && sum <= 92) dark++;
+        }
+        return dark >= Math.ceil(samples * 0.90);
     }
 
     private static float estimateMotion(Bitmap a, Bitmap b) {

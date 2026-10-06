@@ -1,6 +1,6 @@
-# RetroLink Android MVP — v0.6.6 RC1
+# RetroLink Android MVP — v0.6.7 RC1
 
-RetroLink es un frontend Android de juego retro local. Esta versión mantiene la baseline N64 validada y mejora la paridad visual del jugador remoto.
+RetroLink es un frontend Android de juego retro local. Esta versión cierra la etapa N64 de ajuste visual remoto antes de iniciar la arquitectura multiplataforma.
 
 ## Incluye
 
@@ -9,10 +9,14 @@ RetroLink es un frontend Android de juego retro local. Esta versión mantiene la
 - Controles táctiles movibles y soporte gamepad Android Bluetooth/USB.
 - Biblioteca multi-ROM N64 con búsqueda automática de carátulas y caché local.
 - Sala P1–P4 y cliente remoto con HUD ocultable.
-- Vista PLAYER remota normalizada en el Host antes de comprimir para reducir deformación.
-- Calidad JPEG reforzada para PLAYER remoto.
-- Overscan/enfoque remoto alineado con RACE P1 y unión central recortada.
-- RetroSR remoto en PLAYER prioriza reconstrucción espacial para mayor nitidez en movimiento.
-- Layout de controles remoto independiente.
+- Calidad PLAYER remota heredada de v0.6.6: crop previo, JPEG HQ y RetroSR espacial.
+- **Remote Centering v0.6.7:** el cliente vuelve a medir bandas negras/near-black después de decodificar y centra el contenido visible antes de dibujarlo.
+- El centrado post-decode tolera artefactos JPEG que podían impedir que el recorte del Host detectara una banda negra completa.
+- El recorte está limitado para no confundir túneles/escenas oscuras con letterbox.
+- Se conserva FULL como modo inicial remoto y PLAYER como modo manual para carreras split-screen.
 
 RetroLink no incluye ROM, BIOS ni contenido comercial.
+
+## Próxima línea de desarrollo
+
+La siguiente versión mayor será **v0.7.0 MultiPlatform Foundation**, orientada a desacoplar RetroLink de N64 y preparar cores adicionales para SNES, Game Boy/Game Boy Color, Atari y PlayStation 1 sin duplicar la aplicación por consola.

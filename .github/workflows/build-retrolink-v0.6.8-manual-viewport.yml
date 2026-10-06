@@ -214,7 +214,7 @@ jobs:
           set -euxo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app README.md TEST_CHECKLIST.md docs .github/workflows/build-retrolink.yml
+          git add app README.md TEST_CHECKLIST.md docs
           if git diff --cached --quiet; then
             echo "v0.6.8 source already present."
           else

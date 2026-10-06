@@ -214,6 +214,19 @@ public final class RetroPreferences {
     public static boolean stickInvertY(Context c) { return p(c).getBoolean(K_STICK_INVERT_Y, false); }
     public static void setStickInvertY(Context c, boolean v) { p(c).edit().putBoolean(K_STICK_INVERT_Y, v).apply(); }
 
+    /** Restablece solo ajustes del usuario; conserva ROM reciente y datos de biblioteca. */
+    public static void resetUserSettings(Context c) {
+        SharedPreferences.Editor e = p(c).edit();
+        String[] keys = new String[]{
+                K_GFX, K_RETRO_SR, K_RETRO_SR_TEMPORAL, K_RETRO_SR_MODE, K_RETRO_SR_MIGRATION, K_SHARP,
+                K_VOL, K_VOL_UP, K_VOL_DOWN, K_BLOCK_VOL, K_HAPTIC,
+                K_STREAM_FPS, K_STREAM_Q, K_STREAM_TUNING, K_GAME_HUD, K_SPLIT_CROP,
+                K_STICK_DEADZONE, K_STICK_SENSITIVITY, K_STICK_INVERT_Y
+        };
+        for (String k : keys) e.remove(k);
+        e.apply();
+    }
+
     public static int mappingToMask(String mapping) {
         if (mapping == null) return 0;
         switch (mapping) {

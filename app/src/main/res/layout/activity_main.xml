@@ -12,59 +12,271 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:paddingLeft="18dp"
-        android:paddingTop="12dp"
+        android:paddingTop="10dp"
         android:paddingRight="18dp"
-        android:paddingBottom="10dp">
+        android:paddingBottom="12dp">
 
-        <!-- Header -->
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
-            <TextView android:layout_width="52dp" android:layout_height="52dp" android:background="@drawable/card_cyan_active" android:gravity="center" android:text="✚\n••" android:textColor="@color/retro_cyan" android:textSize="13sp" android:textStyle="bold" />
-            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginLeft="12dp" android:orientation="vertical">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="RetroLink" android:textColor="@color/retro_text" android:textSize="30sp" android:textStyle="bold" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="LOCAL MULTIPLAYER RETRO GAMING" android:textColor="@color/retro_cyan" android:textSize="9sp" android:textStyle="bold" android:letterSpacing="0.16" />
+        <!-- Header real: marca + estado del dispositivo -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="58dp"
+                android:layout_height="58dp"
+                android:contentDescription="RetroLink"
+                android:scaleType="fitCenter"
+                android:src="@mipmap/ic_launcher" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginLeft="10dp"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="RetroLink"
+                    android:textColor="@color/retro_text"
+                    android:textSize="29sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="LOCAL MULTIPLAYER RETRO GAMING"
+                    android:textColor="@color/retro_cyan"
+                    android:textSize="8sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.16" />
             </LinearLayout>
-            <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="right" android:orientation="vertical">
-                <TextView android:id="@+id/txtMainStatus" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/card_status_green" android:text="●  Dispositivo listo · RetroLink local" android:textColor="#BFD8F1" android:textSize="10sp" android:textStyle="bold" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="7dp" android:gravity="right" android:text="JUEGA   •   CONECTA   •   REVIVE" android:textColor="#7FA2CA" android:textSize="9sp" android:letterSpacing="0.20" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="right"
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/txtMainStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/card_status_green"
+                    android:text="RetroLink listo"
+                    android:textColor="#BFD8F1"
+                    android:textSize="9sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:gravity="right"
+                    android:text="JUEGA   •   CONECTA   •   REVIVE"
+                    android:textColor="#6F91B7"
+                    android:textSize="8sp"
+                    android:letterSpacing="0.19" />
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Main dashboard -->
-        <LinearLayout android:layout_width="match_parent" android:layout_height="238dp" android:layout_marginTop="12dp" android:orientation="horizontal">
-            <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.18" android:background="@drawable/hero_neon" android:orientation="vertical" android:padding="18dp">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ÚLTIMA SESIÓN" android:textColor="#B8DAF4" android:textSize="9sp" android:textStyle="bold" android:letterSpacing="0.18" />
-                <TextView android:id="@+id/txtLastGame" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="7dp" android:text="N64 integrado · listo para importar tu ROM" android:textColor="@color/retro_text" android:textSize="19sp" android:textStyle="bold" android:maxLines="2" />
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="7dp" android:text="PresentSync · RetroSR 2.2 · pantalla distribuida · P1–P4" android:textColor="#A8C1DF" android:textSize="10sp" />
-                <TextView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center_vertical" android:text="◉  N64 integrado\n⌁  Red local de baja latencia\n✦  Mejora gráfica adaptativa" android:textColor="#7FB5D9" android:textSize="10sp" android:lineSpacingExtra="3dp" />
-                <TextView android:id="@+id/btnQuickPlay" android:layout_width="match_parent" android:layout_height="52dp" android:background="@drawable/btn_primary_gradient" android:clickable="true" android:focusable="true" android:gravity="center" android:text="▶   CONTINUAR / JUGAR" android:textColor="@color/retro_text" android:textSize="13sp" android:textStyle="bold" />
+        <!-- Dashboard -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="232dp"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <!-- Última partida: solo información real -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1.18"
+                android:background="@drawable/hero_neon"
+                android:orientation="vertical"
+                android:padding="18dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ÚLTIMA PARTIDA"
+                    android:textColor="#B8DAF4"
+                    android:textSize="8sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.18" />
+                <TextView
+                    android:id="@+id/txtLastGame"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="7dp"
+                    android:maxLines="2"
+                    android:text="Sin juego reciente"
+                    android:textColor="@color/retro_text"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/txtLastGameMeta"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="Importa una ROM N64"
+                    android:textColor="#A8C1DF"
+                    android:textSize="9sp" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:text="Nintendo 64 integrado\nPresentSync · RetroSR · controles táctiles y físicos"
+                    android:textColor="#7FA9C9"
+                    android:textSize="9sp"
+                    android:lineSpacingExtra="3dp" />
+                <TextView
+                    android:id="@+id/btnQuickPlay"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/btn_primary_gradient"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:text="▶  CONTINUAR"
+                    android:textColor="@color/retro_text"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
             </LinearLayout>
 
-            <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginLeft="12dp" android:orientation="vertical">
-                <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal">
-                    <TextView android:id="@+id/btnHostMode" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/card_cyan_active" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:paddingLeft="18dp" android:text="▸\nJUGAR AHORA\nPartida local     ›" android:textColor="@color/retro_text" android:textSize="12sp" android:textStyle="bold" />
-                    <TextView android:id="@+id/btnLibraryMode" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginLeft="8dp" android:background="@drawable/card_purple" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:paddingLeft="18dp" android:text="▣\nBIBLIOTECA\nTus juegos retro     ›" android:textColor="@color/retro_text" android:textSize="12sp" android:textStyle="bold" />
+            <!-- Accesos principales -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginLeft="10dp"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:id="@+id/btnPlayNow"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@drawable/card_cyan_active"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:paddingLeft="18dp"
+                        android:text="▶\nJUGAR AHORA\nElegir ROM N64     ›"
+                        android:textColor="@color/retro_text"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+                    <TextView
+                        android:id="@+id/btnLibraryMode"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:layout_marginLeft="8dp"
+                        android:background="@drawable/card_purple"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:paddingLeft="18dp"
+                        android:text="▣\nBIBLIOTECA\nJuego seleccionado     ›"
+                        android:textColor="@color/retro_text"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
-                <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="8dp" android:orientation="horizontal">
-                    <TextView android:id="@+id/btnHostLocalMode" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/card_blue" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:paddingLeft="18dp" android:text="⌁\nHOST LOCAL\nCrear sala     ›" android:textColor="@color/retro_text" android:textSize="12sp" android:textStyle="bold" />
-                    <TextView android:id="@+id/btnControllerMode" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginLeft="8dp" android:background="@drawable/card_magenta_active" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:paddingLeft="18dp" android:text="∞\nUNIRSE\nPantalla + control     ›" android:textColor="@color/retro_text" android:textSize="12sp" android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:id="@+id/btnHostLocalMode"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@drawable/card_blue"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:paddingLeft="18dp"
+                        android:text="⌁\nHOST LOCAL\nCrear sala BLE/Wi‑Fi     ›"
+                        android:textColor="@color/retro_text"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+                    <TextView
+                        android:id="@+id/btnControllerMode"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:layout_marginLeft="8dp"
+                        android:background="@drawable/card_magenta_active"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:paddingLeft="18dp"
+                        android:text="∞\nUNIRSE\nTeléfono como mando     ›"
+                        android:textColor="@color/retro_text"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Secondary cards -->
-        <LinearLayout android:layout_width="match_parent" android:layout_height="62dp" android:layout_marginTop="10dp" android:orientation="horizontal">
-            <TextView android:id="@+id/btnControlsMode" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/card_cyan_active" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:paddingLeft="18dp" android:text="✦   CONTROLES\n      Configura y prueba tu dispositivo                                        ›" android:textColor="@color/retro_text" android:textSize="11sp" android:textStyle="bold" />
-            <TextView android:id="@+id/btnSettingsMode" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginLeft="10dp" android:background="@drawable/card_magenta_active" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:paddingLeft="18dp" android:text="⚙   AJUSTES\n      Video · RetroSR 2.2 · Streaming                                      ›" android:textColor="@color/retro_text" android:textSize="11sp" android:textStyle="bold" />
+        <!-- Opciones secundarias, ambas funcionales -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/btnControlsMode"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/card_cyan_active"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:paddingLeft="18dp"
+                android:text="✦   CONTROLES\n      Probar touch, mando Bluetooth/USB y botones físicos     ›"
+                android:textColor="@color/retro_text"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/btnSettingsMode"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginLeft="10dp"
+                android:background="@drawable/card_magenta_active"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:paddingLeft="18dp"
+                android:text="⚙   AJUSTES\n      Video · streaming · controles · multijugador     ›"
+                android:textColor="@color/retro_text"
+                android:textSize="10sp"
+                android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Bottom nav -->
-        <LinearLayout android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="10dp" android:background="@drawable/nav_bar" android:gravity="center" android:orientation="horizontal">
+        <!-- Navegación -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/nav_bar"
+            android:gravity="center"
+            android:orientation="horizontal">
             <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="⌂\nInicio" android:textColor="@color/retro_cyan" android:textSize="9sp" android:textStyle="bold" />
             <TextView android:id="@+id/navGames" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:clickable="true" android:focusable="true" android:gravity="center" android:text="▣\nJuegos" android:textColor="#A3B8D2" android:textSize="9sp" />
             <TextView android:id="@+id/navRoom" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:clickable="true" android:focusable="true" android:gravity="center" android:text="♟\nSala" android:textColor="#A3B8D2" android:textSize="9sp" />
             <TextView android:id="@+id/navProfile" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:clickable="true" android:focusable="true" android:gravity="center" android:text="◯\nPerfil" android:textColor="#A3B8D2" android:textSize="9sp" />
             <TextView android:id="@+id/navSettings" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:clickable="true" android:focusable="true" android:gravity="center" android:text="⚙\nAjustes" android:textColor="#A3B8D2" android:textSize="9sp" />
-            <TextView android:layout_width="wrap_content" android:layout_height="match_parent" android:gravity="center" android:paddingLeft="16dp" android:paddingRight="16dp" android:text="v0.5.0\nLOS CLÁSICOS NOS UNEN" android:textColor="#58789D" android:textSize="7sp" android:letterSpacing="0.08" />
+            <TextView android:layout_width="wrap_content" android:layout_height="match_parent" android:gravity="center" android:paddingLeft="15dp" android:paddingRight="15dp" android:text="v0.6.2 RC1\nFUNCIONAL UI" android:textColor="#58789D" android:textSize="7sp" android:letterSpacing="0.08" />
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

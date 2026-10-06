@@ -7,43 +7,39 @@
     android:fillViewport="true"
     android:scrollbars="none">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp"
-        android:paddingBottom="28dp">
-
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp" android:paddingBottom="24dp">
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
-            <TextView android:layout_width="58dp" android:layout_height="58dp" android:background="@drawable/card_cyan_active" android:gravity="center" android:text="◉" android:textColor="@color/retro_cyan" android:textSize="26sp" android:textStyle="bold" />
+            <ImageView android:layout_width="56dp" android:layout_height="56dp" android:contentDescription="RetroLink" android:src="@mipmap/ic_launcher" />
             <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginLeft="12dp" android:orientation="vertical">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Perfil" android:textColor="@color/retro_text" android:textSize="25sp" android:textStyle="bold" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Tu dispositivo · tus controles · tus partidas" android:textColor="@color/retro_cyan" android:textSize="10sp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Perfil del dispositivo" android:textColor="@color/retro_text" android:textSize="24sp" android:textStyle="bold" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Estado real de este teléfono y sus controles" android:textColor="@color/retro_cyan" android:textSize="9sp" />
             </LinearLayout>
-            <TextView android:id="@+id/txtProfileVersion" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/card_magenta_active" android:text="RetroLink v0.6.0 RC1" android:textColor="@color/retro_text" android:textSize="9sp" android:textStyle="bold" />
+            <TextView android:id="@+id/txtProfileVersion" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/card_magenta_active" android:text="RetroLink v0.6.2 RC1" android:textColor="@color/retro_text" android:textSize="8sp" android:textStyle="bold" />
         </LinearLayout>
 
-        <LinearLayout android:layout_width="match_parent" android:layout_height="190dp" android:layout_marginTop="12dp" android:orientation="horizontal">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="205dp" android:layout_marginTop="12dp" android:orientation="horizontal">
             <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/card_cyan_active" android:orientation="vertical">
                 <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="DISPOSITIVO" android:textColor="@color/retro_cyan" android:textSize="9sp" android:textStyle="bold" android:letterSpacing="0.12" />
-                <TextView android:id="@+id/txtProfileDevice" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="Android" android:textColor="@color/retro_text" android:textSize="15sp" android:textStyle="bold" />
-                <TextView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="8dp" android:text="✓ Controles táctiles\n✓ Control físico\n✓ BLE + Wi‑Fi local\n✓ PresentSync" android:textColor="#A8C1DF" android:textSize="9sp" android:lineSpacingExtra="3dp" />
+                <TextView android:id="@+id/txtProfileDevice" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="9dp" android:text="Android" android:textColor="@color/retro_text" android:textSize="14sp" android:textStyle="bold" />
+                <TextView android:id="@+id/txtProfileCapabilities" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="8dp" android:text="Capacidades" android:textColor="#A8C1DF" android:textSize="8sp" android:lineSpacingExtra="3dp" />
             </LinearLayout>
 
-            <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.2" android:layout_marginLeft="10dp" android:background="@drawable/hero_neon" android:orientation="vertical" android:padding="18dp">
+            <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.15" android:layout_marginLeft="10dp" android:background="@drawable/hero_neon" android:orientation="vertical" android:padding="18dp">
                 <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="ÚLTIMA PARTIDA" android:textColor="#B8DAF4" android:textSize="9sp" android:textStyle="bold" android:letterSpacing="0.13" />
-                <TextView android:id="@+id/txtProfileLastGame" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Sin partida reciente" android:textColor="@color/retro_text" android:textSize="17sp" android:textStyle="bold" android:maxLines="2" />
-                <TextView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="8dp" android:text="Tus ROM permanecen en tu dispositivo. RetroLink no incluye contenido comercial." android:textColor="#8AA8C8" android:textSize="9sp" />
+                <TextView android:id="@+id/txtProfileLastGame" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:maxLines="3" android:text="Sin partida reciente" android:textColor="@color/retro_text" android:textSize="16sp" android:textStyle="bold" />
+                <TextView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="8dp" android:text="La biblioteca usa el archivo importado por el usuario; RetroLink no incluye contenido comercial." android:textColor="#8AA8C8" android:textSize="8sp" />
             </LinearLayout>
 
-            <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.9" android:layout_marginLeft="10dp" android:background="@drawable/card_magenta_active" android:orientation="vertical">
+            <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginLeft="10dp" android:background="@drawable/card_magenta_active" android:orientation="vertical">
                 <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="CONTROLES" android:textColor="@color/retro_magenta" android:textSize="9sp" android:textStyle="bold" />
-                <TextView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="7dp" android:text="Personaliza posición, tamaño y opacidad del mando táctil N64." android:textColor="#C1B0D6" android:textSize="9sp" />
-                <Button android:id="@+id/btnProfileControls" android:layout_width="match_parent" android:layout_height="44dp" android:background="@drawable/btn_primary_gradient" android:text="EDITAR CONTROLES" android:textColor="@color/retro_text" android:textSize="8sp" android:textStyle="bold" />
+                <TextView android:id="@+id/txtProfileGamepad" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="7dp" android:text="Sin mando físico" android:textColor="@color/retro_cyan" android:textSize="8sp" android:textStyle="bold" />
+                <TextView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="7dp" android:text="Posición, tamaño, opacidad, deadzone y sensibilidad son configurables." android:textColor="#C1B0D6" android:textSize="8sp" />
+                <Button android:id="@+id/btnProfileControls" android:layout_width="match_parent" android:layout_height="42dp" android:background="@drawable/btn_primary_gradient" android:text="EDITAR POSICIONES" android:textColor="@color/retro_text" android:textSize="8sp" android:textStyle="bold" />
+                <Button android:id="@+id/btnProfileTestControls" android:layout_width="match_parent" android:layout_height="38dp" android:layout_marginTop="5dp" android:background="@drawable/btn_secondary_neon" android:text="PROBAR CONTROLES" android:textColor="@color/retro_text" android:textSize="8sp" />
             </LinearLayout>
         </LinearLayout>
 
-        <LinearLayout android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="12dp" android:background="@drawable/nav_bar" android:gravity="center" android:orientation="horizontal">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="54dp" android:layout_marginTop="12dp" android:background="@drawable/nav_bar" android:gravity="center" android:orientation="horizontal">
             <TextView android:id="@+id/navProfileHome" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:clickable="true" android:focusable="true" android:gravity="center" android:text="⌂\nInicio" android:textColor="#A3B8D2" android:textSize="9sp" />
             <TextView android:id="@+id/navProfileGames" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:clickable="true" android:focusable="true" android:gravity="center" android:text="▣\nJuegos" android:textColor="#A3B8D2" android:textSize="9sp" />
             <TextView android:id="@+id/navProfileRoom" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:clickable="true" android:focusable="true" android:gravity="center" android:text="♟\nSala" android:textColor="#A3B8D2" android:textSize="9sp" />

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="retro_bg">#050914</color>
+    <color name="retro_bg2">#071326</color>
+    <color name="retro_panel">#101A2B</color>
+    <color name="retro_panel2">#151129</color>
+    <color name="retro_text">#F4FAFF</color>
+    <color name="retro_muted">#8AA6C8</color>
+    <color name="retro_cyan">#00D8FF</color>
+    <color name="retro_accent">#00D8FF</color>
+    <color name="retro_blue">#247BFF</color>
+    <color name="retro_magenta">#FF36C7</color>
+    <color name="retro_violet">#8A46FF</color>
+    <color name="retro_green">#39F58A</color>
+    <color name="retro_yellow">#FFC857</color>
+    <color name="retro_button">#151F30</color>
+    <color name="retro_danger">#FF557A</color>
+</resources>

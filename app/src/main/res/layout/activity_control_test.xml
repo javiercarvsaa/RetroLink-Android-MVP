@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/controlTestRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_neon"
+    android:splitMotionEvents="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:background="@drawable/card_blue"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="10dp">
+        <Button
+            android:id="@+id/btnTestBack"
+            android:layout_width="56dp"
+            android:layout_height="44dp"
+            android:background="@drawable/btn_secondary_neon"
+            android:text="←"
+            android:textColor="@color/retro_text" />
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginLeft="12dp"
+            android:orientation="vertical">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PROBAR CONTROLES"
+                android:textColor="@color/retro_text"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/txtPhysicalMappings"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="VOL + → A · VOL − → B"
+                android:textColor="@color/retro_cyan"
+                android:textSize="11sp" />
+        </LinearLayout>
+        <TextView
+            android:id="@+id/txtControlTestStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/pill_status"
+            android:padding="10dp"
+            android:text="INPUT · —"
+            android:textColor="@color/retro_green"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:text="Pulsa cualquier control táctil o botón de volumen"
+        android:textColor="#6F90B2"
+        android:textSize="14sp" />
+
+    <cl.retrolink.app.VirtualStickView
+        android:id="@+id/virtualStick"
+        android:layout_width="190dp"
+        android:layout_height="190dp"
+        android:layout_gravity="bottom|left"
+        android:layout_marginLeft="20dp"
+        android:layout_marginBottom="16dp" />
+
+    <Button android:id="@+id/btnZ" android:layout_width="72dp" android:layout_height="72dp" android:layout_gravity="bottom|left" android:layout_marginLeft="215dp" android:layout_marginBottom="78dp" android:alpha="0.82" android:background="@drawable/btn_overlay" android:text="Z" android:textColor="#FFFFFFFF" android:textStyle="bold" />
+    <Button android:id="@+id/btnL" android:layout_width="70dp" android:layout_height="52dp" android:layout_gravity="top|left" android:layout_marginTop="78dp" android:layout_marginLeft="14dp" android:alpha="0.82" android:background="@drawable/btn_overlay" android:text="L" android:textColor="#FFFFFFFF" />
+    <Button android:id="@+id/btnR" android:layout_width="70dp" android:layout_height="52dp" android:layout_gravity="top|right" android:layout_marginTop="78dp" android:layout_marginRight="14dp" android:alpha="0.82" android:background="@drawable/btn_overlay" android:text="R" android:textColor="#FFFFFFFF" />
+    <Button android:id="@+id/btnStart" android:layout_width="94dp" android:layout_height="50dp" android:layout_gravity="bottom|center_horizontal" android:layout_marginBottom="18dp" android:alpha="0.82" android:background="@drawable/btn_retro" android:text="START" android:textColor="#FFFFFFFF" />
+    <Button android:id="@+id/btnA" android:layout_width="86dp" android:layout_height="86dp" android:layout_gravity="bottom|right" android:layout_marginRight="34dp" android:layout_marginBottom="30dp" android:alpha="0.82" android:background="@drawable/btn_overlay" android:text="A" android:textSize="24sp" android:textColor="#FFFFFFFF" android:textStyle="bold" />
+    <Button android:id="@+id/btnB" android:layout_width="76dp" android:layout_height="76dp" android:layout_gravity="bottom|right" android:layout_marginRight="128dp" android:layout_marginBottom="54dp" android:alpha="0.78" android:background="@drawable/btn_overlay" android:text="B" android:textSize="20sp" android:textColor="#FFFFFFFF" android:textStyle="bold" />
+    <Button android:id="@+id/btnCUp" android:layout_width="56dp" android:layout_height="56dp" android:layout_gravity="bottom|right" android:layout_marginRight="94dp" android:layout_marginBottom="172dp" android:alpha="0.76" android:background="@drawable/btn_overlay" android:text="C▲" android:textColor="#FFFFFFFF" />
+    <Button android:id="@+id/btnCDown" android:layout_width="56dp" android:layout_height="56dp" android:layout_gravity="bottom|right" android:layout_marginRight="94dp" android:layout_marginBottom="110dp" android:alpha="0.76" android:background="@drawable/btn_overlay" android:text="C▼" android:textColor="#FFFFFFFF" />
+    <Button android:id="@+id/btnCLeft" android:layout_width="56dp" android:layout_height="56dp" android:layout_gravity="bottom|right" android:layout_marginRight="154dp" android:layout_marginBottom="141dp" android:alpha="0.76" android:background="@drawable/btn_overlay" android:text="C◀" android:textColor="#FFFFFFFF" />
+    <Button android:id="@+id/btnCRight" android:layout_width="56dp" android:layout_height="56dp" android:layout_gravity="bottom|right" android:layout_marginRight="34dp" android:layout_marginBottom="141dp" android:alpha="0.76" android:background="@drawable/btn_overlay" android:text="C▶" android:textColor="#FFFFFFFF" />
+</FrameLayout>

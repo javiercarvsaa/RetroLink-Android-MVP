@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.RetroLink" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:windowBackground">@color/retro_bg</item>
+        <item name="android:colorAccent">@color/retro_cyan</item>
+        <item name="android:navigationBarColor">@color/retro_bg</item>
+        <item name="android:statusBarColor">@color/retro_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowActionModeOverlay">true</item>
+    </style>
+</resources>

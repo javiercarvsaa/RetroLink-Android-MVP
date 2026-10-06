@@ -1,0 +1,10 @@
+.gradle/
+.idea/
+local.properties
+**/build/
+app/src/main/jniLibs/arm64-v8a/libretro_n64.so
+app/src/main/cpp/libretro.h
+*.apk
+*.aab
+*.sha256
+n64core/

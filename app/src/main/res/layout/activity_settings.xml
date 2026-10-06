@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/settingsRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_neon"
+    android:fillViewport="true"
+    android:scrollbars="none">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="14dp" android:paddingBottom="28dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
+            <Button android:id="@+id/btnSettingsBack" android:layout_width="48dp" android:layout_height="42dp" android:background="@drawable/btn_secondary_neon" android:text="←" android:textColor="@color/retro_text" android:textSize="20sp" />
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginLeft="10dp" android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Ajustes" android:textColor="@color/retro_text" android:textSize="24sp" android:textStyle="bold" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Personaliza tu experiencia de juego" android:textColor="@color/retro_cyan" android:textSize="10sp" />
+            </LinearLayout>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/card_magenta_active" android:text="Rendimiento. Nostalgia. Sin límites.\nRetroSR 2.2 · Clear Motion" android:textColor="@color/retro_text" android:textSize="9sp" android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:baselineAligned="false" android:orientation="horizontal">
+            <!-- VIDEO -->
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:minHeight="246dp" android:layout_weight="1" android:background="@drawable/card_purple" android:orientation="vertical">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="▣  VIDEO\nCalidad visual y escalado" android:textColor="@color/retro_text" android:textSize="12sp" android:textStyle="bold" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Perfil gráfico" android:textColor="@color/retro_muted" android:textSize="9sp" />
+                <Button android:id="@+id/btnGraphicsProfile" android:layout_width="match_parent" android:layout_height="40dp" android:layout_marginTop="4dp" android:background="@drawable/btn_secondary_neon" android:text="EQUILIBRADO · 640×480" android:textColor="@color/retro_text" android:textSize="9sp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Reconstrucción inteligente" android:textColor="@color/retro_muted" android:textSize="9sp" />
+                <Button android:id="@+id/btnRetroSrMode" android:layout_width="match_parent" android:layout_height="42dp" android:layout_marginTop="4dp" android:background="@drawable/segment_selected" android:text="RETROSR 2.1 · AUTO CLEAR" android:textColor="@color/retro_text" android:textSize="9sp" android:textStyle="bold" />
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="7dp" android:gravity="center_vertical" android:orientation="horizontal">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Nitidez" android:textColor="@color/retro_muted" android:textSize="9sp" />
+                    <SeekBar android:id="@+id/seekSharpness" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginLeft="4dp" android:max="100" android:progress="30" />
+                    <TextView android:id="@+id/txtSharpnessValue" android:layout_width="38dp" android:layout_height="wrap_content" android:gravity="right" android:text="30%" android:textColor="@color/retro_magenta" android:textSize="9sp" />
+                </LinearLayout>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="AUTO CLEAR corta la historia temporal al detectar movimiento para evitar ghosting." android:textColor="#799BBD" android:textSize="8sp" />
+            </LinearLayout>
+
+            <!-- PERFORMANCE -->
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:minHeight="246dp" android:layout_weight="1" android:layout_marginLeft="8dp" android:background="@drawable/card_cyan_active" android:orientation="vertical">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="◴  RENDIMIENTO\nOptimiza la fluidez" android:textColor="@color/retro_text" android:textSize="12sp" android:textStyle="bold" />
+                <TextView android:layout_width="match_parent" android:layout_height="42dp" android:layout_marginTop="10dp" android:background="@drawable/btn_secondary_neon" android:gravity="center" android:text="AUTOMÁTICO · CADENCIA DEL CORE" android:textColor="@color/retro_text" android:textSize="9sp" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="✓ EGL VSync\n✓ 50/60 Hz según juego\n✓ input sin cola\n✓ Hybrid Filter OFF\n✓ FXAA solo en Equilibrado" android:textColor="#A6C4DF" android:textSize="9sp" android:lineSpacingExtra="4dp" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:gravity="bottom" android:text="CLEAR MOTION\nPrioriza nitidez durante paneos y giros." android:textColor="@color/retro_green" android:textSize="8sp" android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- STREAMING -->
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:minHeight="246dp" android:layout_weight="1" android:layout_marginLeft="8dp" android:background="@drawable/card_blue" android:orientation="vertical">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="☁  STREAMING\nTransmisión y red" android:textColor="@color/retro_text" android:textSize="12sp" android:textStyle="bold" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Cadencia de transmisión" android:textColor="@color/retro_muted" android:textSize="9sp" />
+                <Button android:id="@+id/btnStreamProfile" android:layout_width="match_parent" android:layout_height="42dp" android:layout_marginTop="4dp" android:background="@drawable/btn_secondary_neon" android:text="AUTO SMOOTH" android:textColor="@color/retro_text" android:textSize="9sp" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="9dp" android:text="Resolución remota\n640×480 / 960×720\n\nCompresión\nJPEG adaptativo Q80\n\nModo\nBaja latencia" android:textColor="#A0B9D5" android:textSize="9sp" android:lineSpacingExtra="2dp" />
+            </LinearLayout>
+
+            <!-- CONTROLS -->
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:minHeight="246dp" android:layout_weight="1" android:layout_marginLeft="8dp" android:background="@drawable/card_magenta_active" android:orientation="vertical">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="✦  CONTROLES\nPantalla y entrada física" android:textColor="@color/retro_text" android:textSize="12sp" android:textStyle="bold" />
+                <Switch android:id="@+id/swVolumeButtons" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Botones de volumen" android:textColor="@color/retro_text" android:textSize="9sp" />
+                <Button android:id="@+id/btnVolumeUpMap" android:layout_width="match_parent" android:layout_height="36dp" android:background="@drawable/btn_secondary_neon" android:text="VOL + → A" android:textColor="@color/retro_text" android:textSize="9sp" />
+                <Button android:id="@+id/btnVolumeDownMap" android:layout_width="match_parent" android:layout_height="36dp" android:layout_marginTop="3dp" android:background="@drawable/btn_secondary_neon" android:text="VOL − → B" android:textColor="@color/retro_text" android:textSize="9sp" />
+                <Switch android:id="@+id/swBlockVolume" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Bloquear volumen real" android:textColor="@color/retro_text" android:textSize="8sp" />
+                <Switch android:id="@+id/swHaptic" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Vibración háptica" android:textColor="@color/retro_text" android:textSize="8sp" />
+                <Button android:id="@+id/btnEditControls" android:layout_width="match_parent" android:layout_height="38dp" android:layout_marginTop="3dp" android:background="@drawable/btn_primary_gradient" android:text="EDITAR POSICIONES" android:textColor="@color/retro_text" android:textSize="8sp" android:textStyle="bold" />
+                <Button android:id="@+id/btnSplitScreenProfile" android:layout_width="match_parent" android:layout_height="36dp" android:layout_marginTop="3dp" android:background="@drawable/btn_secondary_neon" android:text="SPLIT: AUTOMÁTICO" android:textColor="@color/retro_text" android:textSize="8sp" />
+                <Button android:id="@+id/btnTestControls" android:layout_width="match_parent" android:layout_height="38dp" android:layout_marginTop="3dp" android:background="@drawable/btn_secondary_neon" android:text="PROBAR CONTROLES" android:textColor="@color/retro_text" android:textSize="8sp" android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="46dp" android:layout_marginTop="9dp" android:background="@drawable/card_glass" android:gravity="center_vertical" android:orientation="horizontal" android:paddingLeft="14dp" android:paddingRight="14dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⌁  DIAGNÓSTICO" android:textColor="@color/retro_cyan" android:textSize="10sp" android:textStyle="bold" />
+            <TextView android:id="@+id/txtSettingsDiagnostics" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginLeft="12dp" android:text="RetroSR 2.2 AUTO CLEAR" android:textColor="#B3C9DF" android:textSize="9sp" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Los cambios se guardan automáticamente" android:textColor="#607F9F" android:textSize="8sp" />
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="50dp" android:layout_marginTop="8dp" android:background="@drawable/nav_bar" android:gravity="center" android:orientation="horizontal">
+            <TextView android:id="@+id/navSettingsHome" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:clickable="true" android:focusable="true" android:gravity="center" android:text="⌂\nInicio" android:textColor="#A3B8D2" android:textSize="9sp" />
+            <TextView android:id="@+id/navSettingsGames" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:clickable="true" android:focusable="true" android:gravity="center" android:text="▣\nJuegos" android:textColor="#A3B8D2" android:textSize="9sp" />
+            <TextView android:id="@+id/navSettingsRoom" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:clickable="true" android:focusable="true" android:gravity="center" android:text="♟\nSala" android:textColor="#A3B8D2" android:textSize="9sp" />
+            <TextView android:id="@+id/navSettingsProfile" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:clickable="true" android:focusable="true" android:gravity="center" android:text="◯\nPerfil" android:textColor="#A3B8D2" android:textSize="9sp" />
+            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="⚙\nAjustes" android:textColor="@color/retro_cyan" android:textSize="9sp" android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

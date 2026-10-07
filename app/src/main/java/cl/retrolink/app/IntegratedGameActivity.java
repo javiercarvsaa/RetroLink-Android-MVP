@@ -3,26 +3,23 @@ package cl.retrolink.app;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
 
-/** Emulador genérico 1P para cores libretro multiplataforma. */
+/** Emulador 2D genérico para cores libretro por software. */
 public class IntegratedGameActivity extends Activity implements EmulatorSurfaceView.Listener {
     public static final String EXTRA_CORE_ID = "core_id";
     public static final String EXTRA_ROM_PATH = "rom_path";
     public static final String EXTRA_GAME_TITLE = "game_title";
 
-    private EmulatorSurfaceView surface;
-    private FrameLayout viewport, crop;
+    private SoftwareCoreView surface;
     private TextView title, status, stats;
     private View topBar;
     private Button hud;
@@ -46,8 +43,6 @@ public class IntegratedGameActivity extends Activity implements EmulatorSurfaceV
         }
 
         surface = findViewById(R.id.genericEmulatorSurface);
-        viewport = findViewById(R.id.genericViewport);
-        crop = findViewById(R.id.genericCrop);
         title = findViewById(R.id.txtGenericTitle);
         status = findViewById(R.id.txtGenericStatus);
         stats = findViewById(R.id.txtGenericStats);
@@ -55,7 +50,7 @@ public class IntegratedGameActivity extends Activity implements EmulatorSurfaceV
         hud = findViewById(R.id.btnGenericHud);
 
         title.setText(core.shortSystem + " · " + (gameTitle == null || gameTitle.trim().isEmpty() ? "JUEGO" : gameTitle));
-        status.setText(core.system + " · preparando núcleo…");
+        status.setText(core.system + " · preparando núcleo seguro…");
 
         SessionState.reset();
         SessionState.setConfiguredPlayers(1);
@@ -74,8 +69,6 @@ public class IntegratedGameActivity extends Activity implements EmulatorSurfaceV
         systemDir.mkdirs();
         saveDir.mkdirs();
 
-        surface.setPerformanceProfile(RetroPreferences.graphicsProfile(this));
-        viewport.post(this::fitFourByThree);
         String corePath = getApplicationInfo().nativeLibraryDir + "/" + core.libraryFile;
         surface.configure(core, corePath, romPath, systemDir.getAbsolutePath(), saveDir.getAbsolutePath(), this);
         setHudVisible(false);
@@ -83,16 +76,6 @@ public class IntegratedGameActivity extends Activity implements EmulatorSurfaceV
 
     private String safeCoreDir(String id) {
         return id == null ? "generic" : id.replaceAll("[^A-Za-z0-9._-]+", "_");
-    }
-
-    private void fitFourByThree() {
-        if (viewport == null || crop == null || surface == null) return;
-        int pw = viewport.getWidth(), ph = viewport.getHeight();
-        if (pw <= 0 || ph <= 0) return;
-        int w = Math.min(pw, Math.round(ph * 4f / 3f));
-        int h = Math.min(ph, Math.round(w * 3f / 4f));
-        crop.setLayoutParams(new FrameLayout.LayoutParams(w, h, Gravity.CENTER));
-        surface.setLayoutParams(new FrameLayout.LayoutParams(w, h, Gravity.CENTER));
     }
 
     private void setHudVisible(boolean visible) {
@@ -116,12 +99,13 @@ public class IntegratedGameActivity extends Activity implements EmulatorSurfaceV
 
     @Override public void onCoreReady(String coreInfo, double fps, int sampleRate) {
         status.setText(core.system + " · " + coreInfo);
-        stats.setText(String.format(java.util.Locale.US, "%.2f FPS · %d Hz · PresentSync", fps, sampleRate));
+        stats.setText(String.format(java.util.Locale.US, "%.2f FPS · %d Hz · SOFTWARE SAFE", fps, sampleRate));
         Toast.makeText(this, core.shortSystem + " listo", Toast.LENGTH_SHORT).show();
     }
 
     @Override public void onCoreError(String error) {
         status.setText("ERROR · " + error);
+        setHudVisible(true);
         Toast.makeText(this, error, Toast.LENGTH_LONG).show();
     }
 
@@ -130,24 +114,21 @@ public class IntegratedGameActivity extends Activity implements EmulatorSurfaceV
     @Override protected void onResume() {
         super.onResume();
         hideSystemUi();
-        if (surface != null && !coreShutdown) {
-            surface.setPerformanceProfile(RetroPreferences.graphicsProfile(this));
-            surface.onResume();
-        }
+        if (surface != null && !coreShutdown) surface.onResumeCore();
     }
 
     @Override protected void onPause() {
         if (controls != null) controls.release();
+        if (surface != null) surface.onPauseCore();
         if (surface != null && isFinishing() && !coreShutdown)
             coreShutdown = surface.shutdownCoreAndWait(1800L);
-        if (surface != null) surface.onPause();
         super.onPause();
     }
 
     @Override protected void onDestroy() {
         InputHub.resetAll();
         if (surface != null && !coreShutdown)
-            coreShutdown = surface.shutdownCoreAndWait(1200L);
+            coreShutdown = surface.shutdownCoreAndWait(1800L);
         super.onDestroy();
     }
 

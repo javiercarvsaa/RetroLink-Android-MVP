@@ -2,23 +2,27 @@ package cl.retrolink.app;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Gravity;
-import android.view.View;
 import android.widget.GridLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
 import java.util.List;
 
-/** Biblioteca funcional Game Boy / Game Boy Color. */
+/** Biblioteca funcional Game Boy / Game Boy Color con carátulas automáticas. */
 public class GameBoyLibraryActivity extends Activity {
     private static final int REQ_ROM = 271;
     private GridLayout grid;
-    private TextView count, title, meta, state;
+    private TextView count, title, meta, state, coverStatus;
+    private ImageView selectedCover;
     private GameBoyRomRepository.ImportedGame selected;
     private List<GameBoyRomRepository.ImportedGame> games;
 
@@ -31,10 +35,16 @@ public class GameBoyLibraryActivity extends Activity {
         title = findViewById(R.id.txtGbTitle);
         meta = findViewById(R.id.txtGbMeta);
         state = findViewById(R.id.txtGbState);
+        selectedCover = findViewById(R.id.imgGbSelectedCover);
+        coverStatus = findViewById(R.id.txtGbCoverStatus);
 
         findViewById(R.id.btnGbBack).setOnClickListener(v -> finish());
         findViewById(R.id.btnGbImport).setOnClickListener(v -> pickRom());
         findViewById(R.id.btnGbPlay).setOnClickListener(v -> play());
+        findViewById(R.id.btnGbRefreshCovers).setOnClickListener(v -> {
+            GameBoyCoverArtManager.invalidateIndexes(this);
+            refresh();
+        });
         refresh();
     }
 
@@ -45,13 +55,13 @@ public class GameBoyLibraryActivity extends Activity {
         GameBoyRomRepository.ImportedGame last = GameBoyRomRepository.lastGame(this);
         selected = null;
         if (last != null) {
-            for (GameBoyRomRepository.ImportedGame g : games) {
+            for (GameBoyRomRepository.ImportedGame g : games)
                 if (last.file.equals(g.file)) { selected = g; break; }
-            }
         }
         if (selected == null && !games.isEmpty()) selected = games.get(0);
         count.setText(games.size() + (games.size() == 1 ? " juego" : " juegos"));
         refreshSelected();
+        refreshCoverStatus();
         grid.post(this::rebuildGrid);
     }
 
@@ -60,7 +70,7 @@ public class GameBoyLibraryActivity extends Activity {
         int available = grid.getWidth() > 0 ? grid.getWidth() : dp(620);
         int cardW = Math.max(dp(180), (available - dp(10)) / 2);
         if (games.isEmpty()) {
-            TextView empty = card("＋\nIMPORTAR PRIMER JUEGO\n.gb / .gbc", true);
+            TextView empty = simpleCard("＋\nIMPORTAR PRIMER JUEGO\n.gb / .gbc", true);
             GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
             lp.width = available; lp.height = dp(150);
             empty.setLayoutParams(lp);
@@ -68,28 +78,71 @@ public class GameBoyLibraryActivity extends Activity {
             grid.addView(empty);
             return;
         }
+
         for (GameBoyRomRepository.ImportedGame game : games) {
             boolean active = selected != null && selected.file.equals(game.file);
-            TextView v = card("▣\n" + game.title + "\n" + game.systemLabel, active);
+            LinearLayout card = gameCard(game, active);
             GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
-            lp.width = cardW; lp.height = dp(150); lp.setMargins(0, 0, dp(10), dp(10));
-            v.setLayoutParams(lp);
-            v.setOnClickListener(x -> {
+            lp.width = cardW; lp.height = dp(172); lp.setMargins(0, 0, dp(10), dp(10));
+            card.setLayoutParams(lp);
+            card.setOnClickListener(x -> {
                 selected = game;
                 GameBoyRomRepository.select(this, game);
                 refresh();
             });
-            grid.addView(v);
+            grid.addView(card);
         }
-        TextView add = card("＋\nIMPORTAR ROM\nGame Boy / Color", false);
+
+        TextView add = simpleCard("＋\nIMPORTAR ROM\nGame Boy / Color", false);
         GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
-        lp.width = cardW; lp.height = dp(150); lp.setMargins(0, 0, dp(10), dp(10));
+        lp.width = cardW; lp.height = dp(172); lp.setMargins(0, 0, dp(10), dp(10));
         add.setLayoutParams(lp);
         add.setOnClickListener(v -> pickRom());
         grid.addView(add);
     }
 
-    private TextView card(String text, boolean active) {
+    private LinearLayout gameCard(GameBoyRomRepository.ImportedGame game, boolean active) {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(dp(7), dp(7), dp(7), dp(7));
+        card.setBackgroundResource(active ? R.drawable.card_cyan_active : R.drawable.card_glass);
+        card.setClickable(true);
+        card.setFocusable(true);
+
+        ImageView image = new ImageView(this);
+        image.setBackgroundResource(R.drawable.card_blue);
+        image.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        image.setTag(game.file.getAbsolutePath());
+        image.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
+        setPlaceholder(image);
+
+        File cached = GameBoyCoverArtManager.cachedCover(this, game);
+        if (cached != null) setCover(image, cached);
+        else GameBoyCoverArtManager.request(this, game, (file, matched) -> {
+            if (isFinishing() || isDestroyed()) return;
+            Object tag = image.getTag();
+            if (tag == null || !game.file.getAbsolutePath().equals(tag.toString())) return;
+            if (file != null) setCover(image, file);
+            refreshCoverStatus();
+            if (selected != null && selected.file.equals(game.file)) refreshSelectedCoverOnly();
+        });
+
+        TextView label = new TextView(this);
+        label.setText(game.title + "\n" + game.systemLabel);
+        label.setTextColor(getColor(R.color.retro_text));
+        label.setTextSize(8.5f);
+        label.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        label.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+        label.setMaxLines(2);
+        label.setPadding(dp(5), dp(4), dp(5), 0);
+        label.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(42)));
+
+        card.addView(image);
+        card.addView(label);
+        return card;
+    }
+
+    private TextView simpleCard(String text, boolean active) {
         TextView v = new TextView(this);
         v.setText(text);
         v.setGravity(Gravity.CENTER);
@@ -109,6 +162,49 @@ public class GameBoyLibraryActivity extends Activity {
         state.setText(has ? "● LISTO PARA JUGAR" : "○ SIN JUEGO SELECCIONADO");
         findViewById(R.id.btnGbPlay).setEnabled(has);
         findViewById(R.id.btnGbPlay).setAlpha(has ? 1f : 0.42f);
+        refreshSelectedCoverOnly();
+    }
+
+    private void refreshSelectedCoverOnly() {
+        if (selectedCover == null) return;
+        if (selected == null) { setPlaceholder(selectedCover); return; }
+        selectedCover.setTag(selected.file.getAbsolutePath());
+        File cached = GameBoyCoverArtManager.cachedCover(this, selected);
+        if (cached != null) { setCover(selectedCover, cached); return; }
+        setPlaceholder(selectedCover);
+        GameBoyRomRepository.ImportedGame requested = selected;
+        GameBoyCoverArtManager.request(this, requested, (file, matched) -> {
+            if (isFinishing() || isDestroyed() || selected == null) return;
+            if (!selected.file.equals(requested.file)) return;
+            if (file != null) setCover(selectedCover, file);
+            refreshCoverStatus();
+        });
+    }
+
+    private void refreshCoverStatus() {
+        if (coverStatus == null || games == null) return;
+        int found = GameBoyCoverArtManager.cachedCount(this, games);
+        int total = games.size();
+        if (total == 0) coverStatus.setText("Carátulas GB/GBC · se buscan al importar");
+        else if (found >= total) coverStatus.setText("✓ Carátulas " + found + "/" + total + " · caché local");
+        else coverStatus.setText("Carátulas " + found + "/" + total + " · búsqueda automática activa");
+    }
+
+    private void setPlaceholder(ImageView image) {
+        image.setImageResource(R.mipmap.ic_launcher);
+        image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        image.setPadding(dp(18), dp(12), dp(18), dp(12));
+        image.setAlpha(0.30f);
+    }
+
+    private void setCover(ImageView image, File file) {
+        if (image == null || file == null || !file.isFile()) return;
+        Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
+        if (bitmap == null) return;
+        image.setPadding(0, 0, 0, 0);
+        image.setAlpha(1f);
+        image.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        image.setImageBitmap(bitmap);
     }
 
     private void pickRom() {
@@ -136,7 +232,7 @@ public class GameBoyLibraryActivity extends Activity {
         catch (Exception ignored) {}
         try {
             selected = GameBoyRomRepository.importRom(this, uri);
-            Toast.makeText(this, selected.systemLabel + " añadido a RetroLink", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, selected.systemLabel + " añadido · buscando carátula", Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
             Toast.makeText(this, "ROM GB/GBC no válida: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }

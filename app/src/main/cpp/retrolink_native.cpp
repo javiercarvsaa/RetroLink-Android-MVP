@@ -70,6 +70,12 @@ GLuint g_sw_texture = 0;
 GLuint g_sw_vao = 0;
 std::vector<uint8_t> g_sw_rgba;
 
+std::mutex g_video_mutex;
+std::vector<jint> g_software_argb;
+int g_software_width = 0;
+int g_software_height = 0;
+uint64_t g_software_serial = 0;
+
 using retro_init_fn = void (*)(void);
 using retro_deinit_fn = void (*)(void);
 using retro_api_version_fn = unsigned (*)(void);
@@ -439,7 +445,50 @@ void render_software_frame(const void* data, unsigned width, unsigned height, si
 
 void video_cb(const void* data, unsigned width, unsigned height, size_t pitch) {
     if (data == nullptr) return;
-    if (data != RETRO_HW_FRAME_BUFFER_VALID) render_software_frame(data, width, height, pitch);
+
+    if (data == RETRO_HW_FRAME_BUFFER_VALID) {
+        g_video_frames.fetch_add(1, std::memory_order_relaxed);
+        return;
+    }
+
+    if (width == 0 || height == 0 || width > 2048 || height > 2048) return;
+
+    std::lock_guard<std::mutex> lock(g_video_mutex);
+    const size_t pixels = static_cast<size_t>(width) * static_cast<size_t>(height);
+    g_software_argb.resize(pixels);
+
+    for (unsigned y = 0; y < height; ++y) {
+        const uint8_t* row = static_cast<const uint8_t*>(data) + static_cast<size_t>(y) * pitch;
+        for (unsigned x = 0; x < width; ++x) {
+            uint8_t r = 0, g = 0, b = 0;
+            if (g_pixel_format == RETRO_PIXEL_FORMAT_RGB565) {
+                uint16_t px = 0;
+                std::memcpy(&px, row + static_cast<size_t>(x) * 2, 2);
+                r = static_cast<uint8_t>(((px >> 11) & 31) * 255 / 31);
+                g = static_cast<uint8_t>(((px >> 5) & 63) * 255 / 63);
+                b = static_cast<uint8_t>((px & 31) * 255 / 31);
+            } else if (g_pixel_format == RETRO_PIXEL_FORMAT_0RGB1555) {
+                uint16_t px = 0;
+                std::memcpy(&px, row + static_cast<size_t>(x) * 2, 2);
+                r = static_cast<uint8_t>(((px >> 10) & 31) * 255 / 31);
+                g = static_cast<uint8_t>(((px >> 5) & 31) * 255 / 31);
+                b = static_cast<uint8_t>((px & 31) * 255 / 31);
+            } else {
+                uint32_t px = 0;
+                std::memcpy(&px, row + static_cast<size_t>(x) * 4, 4);
+                r = static_cast<uint8_t>((px >> 16) & 0xff);
+                g = static_cast<uint8_t>((px >> 8) & 0xff);
+                b = static_cast<uint8_t>(px & 0xff);
+            }
+            g_software_argb[static_cast<size_t>(y) * width + x] =
+                    static_cast<jint>(0xff000000u | (static_cast<uint32_t>(r) << 16)
+                    | (static_cast<uint32_t>(g) << 8) | static_cast<uint32_t>(b));
+        }
+    }
+
+    g_software_width = static_cast<int>(width);
+    g_software_height = static_cast<int>(height);
+    ++g_software_serial;
     g_video_frames.fetch_add(1, std::memory_order_relaxed);
 }
 
@@ -624,6 +673,13 @@ void shutdown_core() {
     g_options.clear();
     reset_software_renderer();
     {
+        std::lock_guard<std::mutex> video_lock(g_video_mutex);
+        g_software_argb.clear();
+        g_software_width = 0;
+        g_software_height = 0;
+        g_software_serial = 0;
+    }
+    {
         std::lock_guard<std::mutex> lock(g_audio_mutex);
         g_audio_head = g_audio_tail = g_audio_count = 0;
     }
@@ -663,7 +719,8 @@ Java_cl_retrolink_app_NativeLibretro_nativeInit(JNIEnv* env, jclass,
     g_last_error.clear();
     g_stage = "start";
     g_video_frames.store(0, std::memory_order_relaxed);
-    update_frontend_fbo();
+    if (eglGetCurrentContext() != EGL_NO_CONTEXT) update_frontend_fbo();
+    else g_frontend_fbo = 0;
 
     const char* core_c = env->GetStringUTFChars(corePath, nullptr);
     const char* rom_c = env->GetStringUTFChars(romPath, nullptr);
@@ -763,6 +820,28 @@ extern "C" JNIEXPORT void JNICALL
 Java_cl_retrolink_app_NativeLibretro_nativeSetOutputSize(JNIEnv*, jclass, jint width, jint height) {
     g_output_width = std::max(1, static_cast<int>(width));
     g_output_height = std::max(1, static_cast<int>(height));
+}
+
+extern "C" JNIEXPORT jint JNICALL
+Java_cl_retrolink_app_NativeLibretro_nativeGetVideoWidth(JNIEnv*, jclass) {
+    std::lock_guard<std::mutex> lock(g_video_mutex);
+    return static_cast<jint>(g_software_width);
+}
+
+extern "C" JNIEXPORT jint JNICALL
+Java_cl_retrolink_app_NativeLibretro_nativeGetVideoHeight(JNIEnv*, jclass) {
+    std::lock_guard<std::mutex> lock(g_video_mutex);
+    return static_cast<jint>(g_software_height);
+}
+
+extern "C" JNIEXPORT jlong JNICALL
+Java_cl_retrolink_app_NativeLibretro_nativeCopyVideoFrame(JNIEnv* env, jclass, jintArray out) {
+    if (!out) return 0;
+    std::lock_guard<std::mutex> lock(g_video_mutex);
+    const jsize need = static_cast<jsize>(g_software_argb.size());
+    if (need <= 0 || env->GetArrayLength(out) < need) return 0;
+    env->SetIntArrayRegion(out, 0, need, g_software_argb.data());
+    return static_cast<jlong>(g_software_serial);
 }
 
 extern "C" JNIEXPORT jboolean JNICALL

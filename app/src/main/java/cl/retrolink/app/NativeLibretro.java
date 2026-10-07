@@ -12,6 +12,9 @@ public final class NativeLibretro {
     public static native String nativeInit(String corePath, String romPath, String systemDir, String saveDir);
     public static native void nativeSetInput(int player, int mask, int axisX, int axisY);
     public static native void nativeSetOutputSize(int width, int height);
+    public static native int nativeGetVideoWidth();
+    public static native int nativeGetVideoHeight();
+    public static native long nativeCopyVideoFrame(int[] outArgb);
     public static native boolean nativeRunFrame();
     public static native void nativeReset();
     public static native void nativeSetCheat(int index, boolean enabled, String code);

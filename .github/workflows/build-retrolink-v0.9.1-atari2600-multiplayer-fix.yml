@@ -1,0 +1,462 @@
+name: RetroLink v0.9.1 Atari 2600 Multiplayer Fix
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/build-retrolink-v0.9.1-atari2600-multiplayer-fix.yml"
+
+permissions:
+  contents: write
+
+env:
+  BRANCH_NAME: codex/v0.6-ui-controls
+  ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+  ANDROID_HOME: /usr/local/lib/android/sdk
+  NDK_VERSION: 28.2.13676358
+  N64_CORE_SHA: 12edd2c74a517ff86dfa8cfc71ad75e4c10486d5
+  GAMBATTE_SHA: d9d6cd06382d1ced30de34d56d3609452323dab1
+  SNES9X_SHA: fae2fea08f74180759ef540ee94259213f503480
+  STELLA_SHA: 7d1361e407e63f29e52892655069e5fb4096e691
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Switch to development branch
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git fetch origin "${BRANCH_NAME}"
+          git switch -C "${BRANCH_NAME}" "origin/${BRANCH_NAME}"
+          grep -Eq 'versionName "0\.9\.(0|1)-rc1"' app/build.gradle
+
+      - name: Apply v0.9.1 Atari multiplayer fix
+        shell: bash
+        run: |
+          set -euxo pipefail
+          if grep -q 'versionName "0.9.1-rc1"' app/build.gradle \
+             && grep -q 'Arrays.copyOfRange(full, offset, full.length)' app/src/main/java/cl/retrolink/app/ble/HostBleManager.java; then
+            echo "v0.9.1 Atari multiplayer fix already present."
+            exit 0
+          fi
+
+          cat > "$RUNNER_TEMP/v091_patch.b64" <<'PATCH'
+          ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCgoKZGVmIHJlcGxhY2Vfb25jZShwYXRoLCBvbGQsIG5ldywgbGFiZWwpOgogICAgcCA9IFBhdGgocGF0aCkKICAg
+          IHMgPSBwLnJlYWRfdGV4dCgpCiAgICBpZiBuZXcgaW4gczoKICAgICAgICByZXR1cm4KICAgIGlmIG9sZCBub3QgaW4gczoKICAgICAgICByYWlzZSBTeXN0
+          ZW1FeGl0KGYie2xhYmVsfTogbWFya2VyIG1pc3NpbmcgaW4ge3BhdGh9IikKICAgIHAud3JpdGVfdGV4dChzLnJlcGxhY2Uob2xkLCBuZXcsIDEpKQoKCiMg
+          MSkgSG9zdCBCTEU6IHJlc3BlY3QgQVRUIHJlYWQgb2Zmc2V0IGZvciBsb25nIEhPU1RfSU5GTyB2YWx1ZXMuCnAgPSBQYXRoKCJhcHAvc3JjL21haW4vamF2
+          YS9jbC9yZXRyb2xpbmsvYXBwL2JsZS9Ib3N0QmxlTWFuYWdlci5qYXZhIikKcyA9IHAucmVhZF90ZXh0KCkKaWYgImltcG9ydCBqYXZhLnV0aWwuQXJyYXlz
+          OyIgbm90IGluIHM6CiAgICBtYXJrZXIgPSAiaW1wb3J0IGphdmEudXRpbC5Db2xsZWN0aW9ucztcbiIKICAgIGlmIG1hcmtlciBub3QgaW4gczoKICAgICAg
+          ICByYWlzZSBTeXN0ZW1FeGl0KCJIb3N0QmxlTWFuYWdlciBpbXBvcnQgbWFya2VyIG1pc3NpbmciKQogICAgcyA9IHMucmVwbGFjZShtYXJrZXIsIG1hcmtl
+          ciArICJpbXBvcnQgamF2YS51dGlsLkFycmF5cztcbiIsIDEpCiAgICBwLndyaXRlX3RleHQocykKCnJlcGxhY2Vfb25jZSgKICAgICJhcHAvc3JjL21haW4v
+          amF2YS9jbC9yZXRyb2xpbmsvYXBwL2JsZS9Ib3N0QmxlTWFuYWdlci5qYXZhIiwKICAgICcnJyAgICAgICAgQE92ZXJyaWRlIEBTdXBwcmVzc0xpbnQoIk1p
+          c3NpbmdQZXJtaXNzaW9uIikgcHVibGljIHZvaWQgb25DaGFyYWN0ZXJpc3RpY1JlYWRSZXF1ZXN0KEJsdWV0b290aERldmljZSBkZXZpY2UsIGludCByZXF1
+          ZXN0SWQsIGludCBvZmZzZXQsIEJsdWV0b290aEdhdHRDaGFyYWN0ZXJpc3RpYyBjaGFyYWN0ZXJpc3RpYykgewogICAgICAgICAgICBieXRlW10gdmFsdWU7
+          CiAgICAgICAgICAgIGlmIChCbGVQcm90b2NvbC5QTEFZRVJfVVVJRC5lcXVhbHMoY2hhcmFjdGVyaXN0aWMuZ2V0VXVpZCgpKSkgewogICAgICAgICAgICAg
+          ICAgSW50ZWdlciBwbGF5ZXIgPSBwbGF5ZXJzLmdldChkZXZpY2UpOyB2YWx1ZSA9IG5ldyBieXRlW117KGJ5dGUpKHBsYXllciA9PSBudWxsID8gMCA6IHBs
+          YXllcil9OwogICAgICAgICAgICB9IGVsc2UgaWYgKEJsZVByb3RvY29sLkhPU1RfSU5GT19VVUlELmVxdWFscyhjaGFyYWN0ZXJpc3RpYy5nZXRVdWlkKCkp
+          KSB7CiAgICAgICAgICAgICAgICBTdHJpbmcgaXAgPSBOZXR3b3JrVXRpbHMubG9jYWxJcHY0KCk7CiAgICAgICAgICAgICAgICBTdHJpbmcgcGF5bG9hZCA9
+          IHNlc3Npb25UeXBlICsgInwiICsgaXA7CiAgICAgICAgICAgICAgICB2YWx1ZSA9IHBheWxvYWQuZ2V0Qnl0ZXMoU3RhbmRhcmRDaGFyc2V0cy5VVEZfOCk7
+          CiAgICAgICAgICAgIH0gZWxzZSB7IGlmIChnYXR0U2VydmVyICE9IG51bGwpIGdhdHRTZXJ2ZXIuc2VuZFJlc3BvbnNlKGRldmljZSwgcmVxdWVzdElkLCBC
+          bHVldG9vdGhHYXR0LkdBVFRfUkVRVUVTVF9OT1RfU1VQUE9SVEVELCAwLCBudWxsKTsgcmV0dXJuOyB9CiAgICAgICAgICAgIGlmIChnYXR0U2VydmVyICE9
+          IG51bGwpIGdhdHRTZXJ2ZXIuc2VuZFJlc3BvbnNlKGRldmljZSwgcmVxdWVzdElkLCBCbHVldG9vdGhHYXR0LkdBVFRfU1VDQ0VTUywgMCwgdmFsdWUpOwog
+          ICAgICAgIH0KJycnLAogICAgJycnICAgICAgICBAT3ZlcnJpZGUgQFN1cHByZXNzTGludCgiTWlzc2luZ1Blcm1pc3Npb24iKSBwdWJsaWMgdm9pZCBvbkNo
+          YXJhY3RlcmlzdGljUmVhZFJlcXVlc3QoQmx1ZXRvb3RoRGV2aWNlIGRldmljZSwgaW50IHJlcXVlc3RJZCwgaW50IG9mZnNldCwgQmx1ZXRvb3RoR2F0dENo
+          YXJhY3RlcmlzdGljIGNoYXJhY3RlcmlzdGljKSB7CiAgICAgICAgICAgIGJ5dGVbXSBmdWxsOwogICAgICAgICAgICBpZiAoQmxlUHJvdG9jb2wuUExBWUVS
+          X1VVSUQuZXF1YWxzKGNoYXJhY3RlcmlzdGljLmdldFV1aWQoKSkpIHsKICAgICAgICAgICAgICAgIEludGVnZXIgcGxheWVyID0gcGxheWVycy5nZXQoZGV2
+          aWNlKTsKICAgICAgICAgICAgICAgIGZ1bGwgPSBuZXcgYnl0ZVtdeyhieXRlKShwbGF5ZXIgPT0gbnVsbCA/IDAgOiBwbGF5ZXIpfTsKICAgICAgICAgICAg
+          fSBlbHNlIGlmIChCbGVQcm90b2NvbC5IT1NUX0lORk9fVVVJRC5lcXVhbHMoY2hhcmFjdGVyaXN0aWMuZ2V0VXVpZCgpKSkgewogICAgICAgICAgICAgICAg
+          U3RyaW5nIGlwID0gTmV0d29ya1V0aWxzLmxvY2FsSXB2NCgpOwogICAgICAgICAgICAgICAgU3RyaW5nIHBheWxvYWQgPSBzZXNzaW9uVHlwZSArICJ8IiAr
+          IGlwOwogICAgICAgICAgICAgICAgZnVsbCA9IHBheWxvYWQuZ2V0Qnl0ZXMoU3RhbmRhcmRDaGFyc2V0cy5VVEZfOCk7CiAgICAgICAgICAgIH0gZWxzZSB7
+          CiAgICAgICAgICAgICAgICBpZiAoZ2F0dFNlcnZlciAhPSBudWxsKQogICAgICAgICAgICAgICAgICAgIGdhdHRTZXJ2ZXIuc2VuZFJlc3BvbnNlKGRldmlj
+          ZSwgcmVxdWVzdElkLCBCbHVldG9vdGhHYXR0LkdBVFRfUkVRVUVTVF9OT1RfU1VQUE9SVEVELCBvZmZzZXQsIG51bGwpOwogICAgICAgICAgICAgICAgcmV0
+          dXJuOwogICAgICAgICAgICB9CgogICAgICAgICAgICBpZiAob2Zmc2V0IDwgMCB8fCBvZmZzZXQgPiBmdWxsLmxlbmd0aCkgewogICAgICAgICAgICAgICAg
+          aWYgKGdhdHRTZXJ2ZXIgIT0gbnVsbCkKICAgICAgICAgICAgICAgICAgICBnYXR0U2VydmVyLnNlbmRSZXNwb25zZShkZXZpY2UsIHJlcXVlc3RJZCwgQmx1
+          ZXRvb3RoR2F0dC5HQVRUX0lOVkFMSURfT0ZGU0VULCBvZmZzZXQsIG51bGwpOwogICAgICAgICAgICAgICAgcmV0dXJuOwogICAgICAgICAgICB9CgogICAg
+          ICAgICAgICBieXRlW10gdmFsdWUgPSBvZmZzZXQgPT0gZnVsbC5sZW5ndGgKICAgICAgICAgICAgICAgICAgICA/IG5ldyBieXRlWzBdCiAgICAgICAgICAg
+          ICAgICAgICAgOiBBcnJheXMuY29weU9mUmFuZ2UoZnVsbCwgb2Zmc2V0LCBmdWxsLmxlbmd0aCk7CgogICAgICAgICAgICBpZiAoZ2F0dFNlcnZlciAhPSBu
+          dWxsKQogICAgICAgICAgICAgICAgZ2F0dFNlcnZlci5zZW5kUmVzcG9uc2UoZGV2aWNlLCByZXF1ZXN0SWQsIEJsdWV0b290aEdhdHQuR0FUVF9TVUNDRVNT
+          LCBvZmZzZXQsIHZhbHVlKTsKICAgICAgICB9CicnJywKICAgICJIb3N0IEJMRSBvZmZzZXQgcmVhZCIsCikKCgojIDIpIENvbnRyb2xsZXIgQkxFOiByZW1l
+          bWJlciBzZXNzaW9uIG1vZGUgYW5kIHVzZSByZWxpYWJsZSB3cml0ZXMgZm9yIEF0YXJpLgpwID0gUGF0aCgiYXBwL3NyYy9tYWluL2phdmEvY2wvcmV0cm9s
+          aW5rL2FwcC9ibGUvQ29udHJvbGxlckJsZU1hbmFnZXIuamF2YSIpCnMgPSBwLnJlYWRfdGV4dCgpCmlmICdwcml2YXRlIFN0cmluZyBhY3RpdmVTZXNzaW9u
+          VHlwZSA9ICJONjQiOycgbm90IGluIHM6CiAgICBvbGQgPSAnJycgICAgcHJpdmF0ZSBib29sZWFuIGhvc3RJbmZvUmVhZHk7CiAgICBwcml2YXRlIGludCBz
+          ZXF1ZW5jZTsKJycnCiAgICBuZXcgPSAnJycgICAgcHJpdmF0ZSBib29sZWFuIGhvc3RJbmZvUmVhZHk7CiAgICBwcml2YXRlIFN0cmluZyBhY3RpdmVTZXNz
+          aW9uVHlwZSA9ICJONjQiOwogICAgcHJpdmF0ZSBpbnQgc2VxdWVuY2U7CicnJwogICAgaWYgb2xkIG5vdCBpbiBzOgogICAgICAgIHJhaXNlIFN5c3RlbUV4
+          aXQoIkNvbnRyb2xsZXIgZmllbGQgbWFya2VyIG1pc3NpbmciKQogICAgcyA9IHMucmVwbGFjZShvbGQsIG5ldywgMSkKICAgIHAud3JpdGVfdGV4dChzKQoK
+          cCA9IFBhdGgoImFwcC9zcmMvbWFpbi9qYXZhL2NsL3JldHJvbGluay9hcHAvYmxlL0NvbnRyb2xsZXJCbGVNYW5hZ2VyLmphdmEiKQpzID0gcC5yZWFkX3Rl
+          eHQoKQppZiAicHJpdmF0ZSBmaW5hbCBSdW5uYWJsZSBpbnB1dFdyaXRlV2F0Y2hkb2ciIG5vdCBpbiBzOgogICAgb2xkID0gJycnICAgIHByaXZhdGUgZmlu
+          YWwgUnVubmFibGUgcmV0cnlIb3N0SW5mbyA9IHRoaXM6OnJlcXVlc3RIb3N0SW5mbzsKCicnJwogICAgbmV3ID0gJycnICAgIHByaXZhdGUgZmluYWwgUnVu
+          bmFibGUgcmV0cnlIb3N0SW5mbyA9IHRoaXM6OnJlcXVlc3RIb3N0SW5mbzsKCiAgICBwcml2YXRlIGZpbmFsIFJ1bm5hYmxlIGlucHV0V3JpdGVXYXRjaGRv
+          ZyA9ICgpIC0+IHsKICAgICAgICBzeW5jaHJvbml6ZWQgKENvbnRyb2xsZXJCbGVNYW5hZ2VyLnRoaXMpIHsKICAgICAgICAgICAgaWYgKCF3cml0ZUluRmxp
+          Z2h0KSByZXR1cm47CiAgICAgICAgICAgIHdyaXRlSW5GbGlnaHQgPSBmYWxzZTsKICAgICAgICAgICAgaW5GbGlnaHRTdGF0ZSA9IG51bGw7CiAgICAgICAg
+          fQogICAgICAgIGxvZygiQkxFIGlucHV0IHdhdGNoZG9nOiBsaWJlcmFuZG8gZXNjcml0dXJhIHNpbiBjYWxsYmFjay4iKTsKICAgICAgICBwdW1wT3BlcmF0
+          aW9ucygpOwogICAgfTsKCicnJwogICAgaWYgb2xkIG5vdCBpbiBzOgogICAgICAgIHJhaXNlIFN5c3RlbUV4aXQoIkNvbnRyb2xsZXIgd2F0Y2hkb2cgbWFy
+          a2VyIG1pc3NpbmciKQogICAgcyA9IHMucmVwbGFjZShvbGQsIG5ldywgMSkKICAgIHAud3JpdGVfdGV4dChzKQoKcmVwbGFjZV9vbmNlKAogICAgImFwcC9z
+          cmMvbWFpbi9qYXZhL2NsL3JldHJvbGluay9hcHAvYmxlL0NvbnRyb2xsZXJCbGVNYW5hZ2VyLmphdmEiLAogICAgJycnICAgICAgICBtYWluLnJlbW92ZUNh
+          bGxiYWNrcyhyZXRyeUhvc3RJbmZvKTsKICAgICAgICBpbnB1dENoYXJhY3RlcmlzdGljID0gcGxheWVyQ2hhcmFjdGVyaXN0aWMgPSBob3N0SW5mb0NoYXJh
+          Y3RlcmlzdGljID0gbnVsbDsKJycnLAogICAgJycnICAgICAgICBtYWluLnJlbW92ZUNhbGxiYWNrcyhyZXRyeUhvc3RJbmZvKTsKICAgICAgICBtYWluLnJl
+          bW92ZUNhbGxiYWNrcyhpbnB1dFdyaXRlV2F0Y2hkb2cpOwogICAgICAgIGlucHV0Q2hhcmFjdGVyaXN0aWMgPSBwbGF5ZXJDaGFyYWN0ZXJpc3RpYyA9IGhv
+          c3RJbmZvQ2hhcmFjdGVyaXN0aWMgPSBudWxsOwonJycsCiAgICAiQ29udHJvbGxlciBkaXNjb25uZWN0IHdhdGNoZG9nIGNsZWFudXAiLAopCgpyZXBsYWNl
+          X29uY2UoCiAgICAiYXBwL3NyYy9tYWluL2phdmEvY2wvcmV0cm9saW5rL2FwcC9ibGUvQ29udHJvbGxlckJsZU1hbmFnZXIuamF2YSIsCiAgICAnJycgICAg
+          ICAgICAgICBob3N0SW5mb05lZWRlZCA9IGZhbHNlOwogICAgICAgICAgICBob3N0SW5mb1JlYWR5ID0gZmFsc2U7CiAgICAgICAgfQogICAgICAgIGlmIChn
+          YXR0ICE9IG51bGwpIHsKJycnLAogICAgJycnICAgICAgICAgICAgaG9zdEluZm9OZWVkZWQgPSBmYWxzZTsKICAgICAgICAgICAgaG9zdEluZm9SZWFkeSA9
+          IGZhbHNlOwogICAgICAgICAgICBhY3RpdmVTZXNzaW9uVHlwZSA9ICJONjQiOwogICAgICAgIH0KICAgICAgICBpZiAoZ2F0dCAhPSBudWxsKSB7CicnJywK
+          ICAgICJDb250cm9sbGVyIHJlc2V0IGFjdGl2ZSBzZXNzaW9uIiwKKQoKcmVwbGFjZV9vbmNlKAogICAgImFwcC9zcmMvbWFpbi9qYXZhL2NsL3JldHJvbGlu
+          ay9hcHAvYmxlL0NvbnRyb2xsZXJCbGVNYW5hZ2VyLmphdmEiLAogICAgJycnICAgICAgICBJbnB1dFN0YXRlIHN0ID0gcXVldWUucmVtb3ZlRmlyc3QoKTsK
+          ICAgICAgICBieXRlW10gdiA9IEJsZVByb3RvY29sLnBhY2tldChzZXF1ZW5jZSsrLCBzdC5tYXNrLCBzdC54LCBzdC55KTsKICAgICAgICBib29sZWFuIHN0
+          YXJ0ZWQ7CiAgICAgICAgaWYgKEJ1aWxkLlZFUlNJT04uU0RLX0lOVCA+PSBCdWlsZC5WRVJTSU9OX0NPREVTLlRJUkFNSVNVKSB7CiAgICAgICAgICAgIHN0
+          YXJ0ZWQgPSBnYXR0LndyaXRlQ2hhcmFjdGVyaXN0aWMoaW5wdXRDaGFyYWN0ZXJpc3RpYywgdiwgQmx1ZXRvb3RoR2F0dENoYXJhY3RlcmlzdGljLldSSVRF
+          X1RZUEVfTk9fUkVTUE9OU0UpID09IDA7CiAgICAgICAgfSBlbHNlIHsKICAgICAgICAgICAgaW5wdXRDaGFyYWN0ZXJpc3RpYy5zZXRXcml0ZVR5cGUoQmx1
+          ZXRvb3RoR2F0dENoYXJhY3RlcmlzdGljLldSSVRFX1RZUEVfTk9fUkVTUE9OU0UpOwogICAgICAgICAgICBpbnB1dENoYXJhY3RlcmlzdGljLnNldFZhbHVl
+          KHYpOwogICAgICAgICAgICBzdGFydGVkID0gZ2F0dC53cml0ZUNoYXJhY3RlcmlzdGljKGlucHV0Q2hhcmFjdGVyaXN0aWMpOwogICAgICAgIH0KICAgICAg
+          ICBpZiAoc3RhcnRlZCkgewogICAgICAgICAgICB3cml0ZUluRmxpZ2h0ID0gdHJ1ZTsKICAgICAgICAgICAgaW5GbGlnaHRTdGF0ZSA9IHN0OwogICAgICAg
+          IH0gZWxzZSB7CiAgICAgICAgICAgIC8vIFNpIHlhIGxsZWfDsyB1biBlc3RhZG8gbcOhcyByZWNpZW50ZSwgbm8gcmVpbnNlcnRhbW9zIHVubyBhbnRpZ3Vv
+          LgogICAgICAgICAgICBpZiAocXVldWUuaXNFbXB0eSgpKSBxdWV1ZS5hZGRGaXJzdChzdCk7CiAgICAgICAgICAgIG1haW4ucG9zdERlbGF5ZWQodGhpczo6
+          cmV0cnlPcGVyYXRpb25zLCA2KTsKICAgICAgICB9CicnJywKICAgICcnJyAgICAgICAgSW5wdXRTdGF0ZSBzdCA9IHF1ZXVlLnJlbW92ZUZpcnN0KCk7CiAg
+          ICAgICAgYnl0ZVtdIHYgPSBCbGVQcm90b2NvbC5wYWNrZXQoc2VxdWVuY2UrKywgc3QubWFzaywgc3QueCwgc3QueSk7CgogICAgICAgIGJvb2xlYW4gcmVs
+          aWFibGUgPSAiQVRBUkkyNjAwIi5lcXVhbHMoYWN0aXZlU2Vzc2lvblR5cGUpOwogICAgICAgIGludCB3cml0ZVR5cGUgPSByZWxpYWJsZQogICAgICAgICAg
+          ICAgICAgPyBCbHVldG9vdGhHYXR0Q2hhcmFjdGVyaXN0aWMuV1JJVEVfVFlQRV9ERUZBVUxUCiAgICAgICAgICAgICAgICA6IEJsdWV0b290aEdhdHRDaGFy
+          YWN0ZXJpc3RpYy5XUklURV9UWVBFX05PX1JFU1BPTlNFOwoKICAgICAgICBib29sZWFuIHN0YXJ0ZWQ7CiAgICAgICAgaWYgKEJ1aWxkLlZFUlNJT04uU0RL
+          X0lOVCA+PSBCdWlsZC5WRVJTSU9OX0NPREVTLlRJUkFNSVNVKSB7CiAgICAgICAgICAgIHN0YXJ0ZWQgPSBnYXR0LndyaXRlQ2hhcmFjdGVyaXN0aWMoaW5w
+          dXRDaGFyYWN0ZXJpc3RpYywgdiwgd3JpdGVUeXBlKSA9PSAwOwogICAgICAgIH0gZWxzZSB7CiAgICAgICAgICAgIGlucHV0Q2hhcmFjdGVyaXN0aWMuc2V0
+          V3JpdGVUeXBlKHdyaXRlVHlwZSk7CiAgICAgICAgICAgIGlucHV0Q2hhcmFjdGVyaXN0aWMuc2V0VmFsdWUodik7CiAgICAgICAgICAgIHN0YXJ0ZWQgPSBn
+          YXR0LndyaXRlQ2hhcmFjdGVyaXN0aWMoaW5wdXRDaGFyYWN0ZXJpc3RpYyk7CiAgICAgICAgfQoKICAgICAgICBpZiAoc3RhcnRlZCkgewogICAgICAgICAg
+          ICB3cml0ZUluRmxpZ2h0ID0gdHJ1ZTsKICAgICAgICAgICAgaW5GbGlnaHRTdGF0ZSA9IHN0OwogICAgICAgICAgICBtYWluLnJlbW92ZUNhbGxiYWNrcyhp
+          bnB1dFdyaXRlV2F0Y2hkb2cpOwogICAgICAgICAgICBtYWluLnBvc3REZWxheWVkKGlucHV0V3JpdGVXYXRjaGRvZywgcmVsaWFibGUgPyAyNTAgOiA5MCk7
+          CiAgICAgICAgfSBlbHNlIHsKICAgICAgICAgICAgaWYgKHF1ZXVlLmlzRW1wdHkoKSkgcXVldWUuYWRkRmlyc3Qoc3QpOwogICAgICAgICAgICBtYWluLnBv
+          c3REZWxheWVkKHRoaXM6OnJldHJ5T3BlcmF0aW9ucywgNik7CiAgICAgICAgfQonJycsCiAgICAiQ29udHJvbGxlciByZWxpYWJsZSBBdGFyaSBpbnB1dCB3
+          cml0ZSIsCikKCnJlcGxhY2Vfb25jZSgKICAgICJhcHAvc3JjL21haW4vamF2YS9jbC9yZXRyb2xpbmsvYXBwL2JsZS9Db250cm9sbGVyQmxlTWFuYWdlci5q
+          YXZhIiwKICAgICcnJyAgICAgICAgcHVibGljIHZvaWQgb25DaGFyYWN0ZXJpc3RpY1dyaXRlKEJsdWV0b290aEdhdHQgZywgQmx1ZXRvb3RoR2F0dENoYXJh
+          Y3RlcmlzdGljIGMsIGludCBzdGF0dXNDb2RlKSB7CiAgICAgICAgICAgIHN5bmNocm9uaXplZCAoQ29udHJvbGxlckJsZU1hbmFnZXIudGhpcykgeyB3cml0
+          ZUluRmxpZ2h0ID0gZmFsc2U7IGluRmxpZ2h0U3RhdGUgPSBudWxsOyB9CiAgICAgICAgICAgIHB1bXBPcGVyYXRpb25zKCk7CiAgICAgICAgfQonJycsCiAg
+          ICAnJycgICAgICAgIHB1YmxpYyB2b2lkIG9uQ2hhcmFjdGVyaXN0aWNXcml0ZShCbHVldG9vdGhHYXR0IGcsIEJsdWV0b290aEdhdHRDaGFyYWN0ZXJpc3Rp
+          YyBjLCBpbnQgc3RhdHVzQ29kZSkgewogICAgICAgICAgICBtYWluLnJlbW92ZUNhbGxiYWNrcyhpbnB1dFdyaXRlV2F0Y2hkb2cpOwogICAgICAgICAgICBz
+          eW5jaHJvbml6ZWQgKENvbnRyb2xsZXJCbGVNYW5hZ2VyLnRoaXMpIHsKICAgICAgICAgICAgICAgIHdyaXRlSW5GbGlnaHQgPSBmYWxzZTsKICAgICAgICAg
+          ICAgICAgIGluRmxpZ2h0U3RhdGUgPSBudWxsOwogICAgICAgICAgICB9CiAgICAgICAgICAgIHB1bXBPcGVyYXRpb25zKCk7CiAgICAgICAgfQonJycsCiAg
+          ICAiQ29udHJvbGxlciB3cml0ZSBjYWxsYmFjayBjbGVhbnVwIiwKKQoKcmVwbGFjZV9vbmNlKAogICAgImFwcC9zcmMvbWFpbi9qYXZhL2NsL3JldHJvbGlu
+          ay9hcHAvYmxlL0NvbnRyb2xsZXJCbGVNYW5hZ2VyLmphdmEiLAogICAgJycnICAgICAgICAgICAgICAgIG1haW4ucmVtb3ZlQ2FsbGJhY2tzKHJldHJ5SG9z
+          dEluZm8pOwogICAgICAgICAgICAgICAgc3RhdHVzKCJEZXNjb25lY3RhZG8gZGVsIEhvc3QuIik7CicnJywKICAgICcnJyAgICAgICAgICAgICAgICBtYWlu
+          LnJlbW92ZUNhbGxiYWNrcyhyZXRyeUhvc3RJbmZvKTsKICAgICAgICAgICAgICAgIG1haW4ucmVtb3ZlQ2FsbGJhY2tzKGlucHV0V3JpdGVXYXRjaGRvZyk7
+          CiAgICAgICAgICAgICAgICBzdGF0dXMoIkRlc2NvbmVjdGFkbyBkZWwgSG9zdC4iKTsKJycnLAogICAgIkNvbnRyb2xsZXIgdW5leHBlY3RlZCBkaXNjb25u
+          ZWN0IGNsZWFudXAiLAopCgpwID0gUGF0aCgiYXBwL3NyYy9tYWluL2phdmEvY2wvcmV0cm9saW5rL2FwcC9ibGUvQ29udHJvbGxlckJsZU1hbmFnZXIuamF2
+          YSIpCnMgPSBwLnJlYWRfdGV4dCgpCmlmICJwcml2YXRlIHN0YXRpYyBTdHJpbmcgZXh0cmFjdElwdjQiIG5vdCBpbiBzOgogICAgbWFya2VyID0gJycnICAg
+          IHB1YmxpYyBCbHVldG9vdGhEZXZpY2UgZ2V0SG9zdERldmljZSgpIHsgcmV0dXJuIGhvc3REZXZpY2U7IH0KJycnCiAgICBoZWxwZXIgPSAnJycgICAgcHJp
+          dmF0ZSBzdGF0aWMgU3RyaW5nIGV4dHJhY3RJcHY0KFN0cmluZyB0ZXh0KSB7CiAgICAgICAgaWYgKHRleHQgPT0gbnVsbCkgcmV0dXJuICIiOwogICAgICAg
+          IGphdmEudXRpbC5yZWdleC5NYXRjaGVyIG0gPSBqYXZhLnV0aWwucmVnZXguUGF0dGVybgogICAgICAgICAgICAgICAgLmNvbXBpbGUoIig/PCFbMC05XSko
+          PzpbMC05XXsxLDN9XFxcXC4pezN9WzAtOV17MSwzfSg/IVswLTldKSIpCiAgICAgICAgICAgICAgICAubWF0Y2hlcih0ZXh0KTsKICAgICAgICB3aGlsZSAo
+          bS5maW5kKCkpIHsKICAgICAgICAgICAgU3RyaW5nIGNhbmRpZGF0ZSA9IG0uZ3JvdXAoKTsKICAgICAgICAgICAgU3RyaW5nW10gcGFydHMgPSBjYW5kaWRh
+          dGUuc3BsaXQoIlxcXFwuIik7CiAgICAgICAgICAgIGJvb2xlYW4gb2sgPSBwYXJ0cy5sZW5ndGggPT0gNDsKICAgICAgICAgICAgZm9yIChTdHJpbmcgcGFy
+          dCA6IHBhcnRzKSB7CiAgICAgICAgICAgICAgICB0cnkgewogICAgICAgICAgICAgICAgICAgIGludCB2ID0gSW50ZWdlci5wYXJzZUludChwYXJ0KTsKICAg
+          ICAgICAgICAgICAgICAgICBpZiAodiA8IDAgfHwgdiA+IDI1NSkgb2sgPSBmYWxzZTsKICAgICAgICAgICAgICAgIH0gY2F0Y2ggKEV4Y2VwdGlvbiBlKSB7
+          CiAgICAgICAgICAgICAgICAgICAgb2sgPSBmYWxzZTsKICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgfQogICAgICAgICAgICBpZiAob2spIHJldHVy
+          biBjYW5kaWRhdGU7CiAgICAgICAgfQogICAgICAgIHJldHVybiAiIjsKICAgIH0KCicnJwogICAgaWYgbWFya2VyIG5vdCBpbiBzOgogICAgICAgIHJhaXNl
+          IFN5c3RlbUV4aXQoIkNvbnRyb2xsZXIgaGVscGVyIG1hcmtlciBtaXNzaW5nIikKICAgIHMgPSBzLnJlcGxhY2UobWFya2VyLCBoZWxwZXIgKyBtYXJrZXIs
+          IDEpCiAgICBwLndyaXRlX3RleHQocykKCnJlcGxhY2Vfb25jZSgKICAgICJhcHAvc3JjL21haW4vamF2YS9jbC9yZXRyb2xpbmsvYXBwL2JsZS9Db250cm9s
+          bGVyQmxlTWFuYWdlci5qYXZhIiwKICAgICcnJyAgICAgICAgICAgIGlmIChpcC5pc0VtcHR5KCkpIHsKJycnLAogICAgJycnICAgICAgICAgICAgaXAgPSBl
+          eHRyYWN0SXB2NChpcCk7CgogICAgICAgICAgICBpZiAoaXAuaXNFbXB0eSgpKSB7CicnJywKICAgICJDb250cm9sbGVyIElQdjQgdmFsaWRhdGlvbiIsCikK
+          CnJlcGxhY2Vfb25jZSgKICAgICJhcHAvc3JjL21haW4vamF2YS9jbC9yZXRyb2xpbmsvYXBwL2JsZS9Db250cm9sbGVyQmxlTWFuYWdlci5qYXZhIiwKICAg
+          ICcnJyAgICAgICAgICAgICAgICBzeW5jaHJvbml6ZWQgKHRoaXMpIHsKICAgICAgICAgICAgICAgICAgICBob3N0SW5mb1JlYWR5ID0gdHJ1ZTsKICAgICAg
+          ICAgICAgICAgICAgICBob3N0SW5mb05lZWRlZCA9IGZhbHNlOwogICAgICAgICAgICAgICAgfQogICAgICAgICAgICAgICAgZmluYWwgU3RyaW5nIG1vZGUg
+          PSBzZXNzaW9uVHlwZTsKJycnLAogICAgJycnICAgICAgICAgICAgICAgIHN5bmNocm9uaXplZCAodGhpcykgewogICAgICAgICAgICAgICAgICAgIGhvc3RJ
+          bmZvUmVhZHkgPSB0cnVlOwogICAgICAgICAgICAgICAgICAgIGhvc3RJbmZvTmVlZGVkID0gZmFsc2U7CiAgICAgICAgICAgICAgICAgICAgYWN0aXZlU2Vz
+          c2lvblR5cGUgPSBzZXNzaW9uVHlwZTsKICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgICAgIGZpbmFsIFN0cmluZyBtb2RlID0gc2Vzc2lvblR5cGU7
+          CicnJywKICAgICJDb250cm9sbGVyIHJlbWVtYmVyIHNlc3Npb24gdHlwZSIsCikKCgojIDMpIFZlcnNpb24gYnVtcC4KcCA9IFBhdGgoImFwcC9idWlsZC5n
+          cmFkbGUiKQpzID0gcC5yZWFkX3RleHQoKQppZiAndmVyc2lvbk5hbWUgIjAuOS4wLXJjMSInIGluIHM6CiAgICBzID0gcy5yZXBsYWNlKCJ2ZXJzaW9uQ29k
+          ZSA1MCIsICJ2ZXJzaW9uQ29kZSA1MSIsIDEpCiAgICBzID0gcy5yZXBsYWNlKCd2ZXJzaW9uTmFtZSAiMC45LjAtcmMxIicsICd2ZXJzaW9uTmFtZSAiMC45
+          LjEtcmMxIicsIDEpCmVsaWYgJ3ZlcnNpb25OYW1lICIwLjkuMS1yYzEiJyBub3QgaW4gczoKICAgIHJhaXNlIFN5c3RlbUV4aXQoIlVuZXhwZWN0ZWQgYmFz
+          ZSB2ZXJzaW9uIikKcC53cml0ZV90ZXh0KHMpCgpwID0gUGF0aCgiYXBwL3NyYy9tYWluL3Jlcy9sYXlvdXQvYWN0aXZpdHlfbWFpbi54bWwiKQpzID0gcC5y
+          ZWFkX3RleHQoKQppZiAnYW5kcm9pZDp0ZXh0PSJ2MC45LjAgUkMxXFxuTjY0IMK3IEdCIMK3IFNORVMgwrcgQTI2MDAiJyBpbiBzOgogICAgcyA9IHMucmVw
+          bGFjZSgKICAgICAgICAnYW5kcm9pZDp0ZXh0PSJ2MC45LjAgUkMxXFxuTjY0IMK3IEdCIMK3IFNORVMgwrcgQTI2MDAiJywKICAgICAgICAnYW5kcm9pZDp0
+          ZXh0PSJ2MC45LjEgUkMxXFxuQTI2MDAgTVVMVEkgRklYIicsCiAgICAgICAgMSwKICAgICkKcC53cml0ZV90ZXh0KHMpCgpwcmludCgidjAuOS4xIEF0YXJp
+          IG11bHRpcGxheWVyIEJMRS92aWRlbyBmaXggYXBwbGllZCIpCg==
+          PATCH
+          base64 -d "$RUNNER_TEMP/v091_patch.b64" > "$RUNNER_TEMP/apply_v091.py"
+          python3 "$RUNNER_TEMP/apply_v091.py"
+
+      - name: Static v0.9.1 multiplayer validation
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          host = Path("app/src/main/java/cl/retrolink/app/ble/HostBleManager.java").read_text()
+          ctl = Path("app/src/main/java/cl/retrolink/app/ble/ControllerBleManager.java").read_text()
+          atari = Path("app/src/main/java/cl/retrolink/app/Atari2600ControllerActivity.java").read_text()
+          build = Path("app/build.gradle").read_text()
+
+          assert 'Arrays.copyOfRange(full, offset, full.length)' in host
+          assert 'BluetoothGatt.GATT_INVALID_OFFSET' in host
+          assert 'gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, value)' in host
+          assert '"ATARI2600".equals(activeSessionType)' in ctl
+          assert 'BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT' in ctl
+          assert 'inputWriteWatchdog' in ctl
+          assert 'extractIpv4' in ctl
+          assert 'activeSessionType = sessionType' in ctl
+          assert 'video.start(hostIp, 2, false)' in atari
+          assert 'versionCode 51' in build
+          assert 'versionName "0.9.1-rc1"' in build
+
+          ET.parse("app/src/main/AndroidManifest.xml")
+          for p in Path("app/src/main/res").rglob("*.xml"):
+              ET.parse(p)
+
+          print("v0.9.1 Atari multiplayer validation PASS")
+          PY
+
+      - name: Commit v0.9.1 source
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app
+          if git diff --cached --quiet; then
+            echo "v0.9.1 source already committed."
+          else
+            git commit -m "fix(v0.9.1): repair Atari 2600 BLE host info and P2 input"
+            git push origin "${BRANCH_NAME}"
+          fi
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle 9.4.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.4.1"
+
+      - name: Install Android SDK NDK CMake
+        shell: bash
+        run: |
+          set -euxo pipefail
+          SDKMANAGER=/usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" \
+            "platform-tools" \
+            "platforms;android-36" \
+            "build-tools;36.0.0" \
+            "ndk;${NDK_VERSION}" \
+            "cmake;3.22.1"
+
+      - name: Build pinned N64 core
+        shell: bash
+        run: |
+          set -euxo pipefail
+          rm -rf n64core
+          git init n64core
+          cd n64core
+          git remote add origin https://github.com/libretro/mupen64plus-libretro-nx.git
+          git fetch --depth 1 origin "${N64_CORE_SHA}"
+          git checkout --detach FETCH_HEAD
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("libretro/jni/Android.mk")
+          s=p.read_text()
+          old="LOCAL_MODULE           := retro"
+          assert old in s
+          p.write_text(s.replace(old,"LOCAL_MODULE           := retro_n64",1))
+          PY
+          export NDK_ROOT="${ANDROID_SDK_ROOT}/ndk/${NDK_VERSION}"
+          cd libretro/jni
+          "${NDK_ROOT}/ndk-build" -j2 \
+            NDK_PROJECT_PATH=. \
+            NDK_APPLICATION_MK=Application.mk \
+            APP_BUILD_SCRIPT=Android.mk \
+            APP_ABI=arm64-v8a \
+            GLES3=1
+          test -s libs/arm64-v8a/libretro_n64.so
+
+      - name: Install N64 core and libretro ABI
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p app/src/main/jniLibs/arm64-v8a app/src/main/cpp
+          cp n64core/libretro/jni/libs/arm64-v8a/libretro_n64.so \
+             app/src/main/jniLibs/arm64-v8a/libretro_n64.so
+          cp n64core/libretro-common/include/libretro.h app/src/main/cpp/libretro.h
+
+      - name: Build pinned Gambatte core
+        shell: bash
+        run: |
+          set -euxo pipefail
+          rm -rf gambattecore
+          git init gambattecore
+          cd gambattecore
+          git remote add origin https://github.com/libretro/gambatte-libretro.git
+          git fetch --depth 1 origin "${GAMBATTE_SHA}"
+          git checkout --detach FETCH_HEAD
+          test "$(git rev-parse HEAD)" = "${GAMBATTE_SHA}"
+          grep -q 'HAVE_NETWORK := 1' libgambatte/libretro/jni/Android.mk
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("libgambatte/libretro/jni/Android.mk")
+          s=p.read_text()
+          old="LOCAL_MODULE    := retro"
+          assert old in s
+          p.write_text(s.replace(old,"LOCAL_MODULE    := retro_gambatte",1))
+          PY
+          export NDK_ROOT="${ANDROID_SDK_ROOT}/ndk/${NDK_VERSION}"
+          cd libgambatte/libretro/jni
+          "${NDK_ROOT}/ndk-build" -j2 \
+            NDK_PROJECT_PATH=. \
+            NDK_APPLICATION_MK=Application.mk \
+            APP_BUILD_SCRIPT=Android.mk \
+            APP_ABI=arm64-v8a
+          test -s libs/arm64-v8a/libretro_gambatte.so
+
+      - name: Install Gambatte core
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cp gambattecore/libgambatte/libretro/jni/libs/arm64-v8a/libretro_gambatte.so \
+             app/src/main/jniLibs/arm64-v8a/libretro_gambatte.so
+
+      - name: Build pinned Snes9x core
+        shell: bash
+        run: |
+          set -euxo pipefail
+          rm -rf snes9xcore
+          git init snes9xcore
+          cd snes9xcore
+          git remote add origin https://github.com/libretro/snes9x.git
+          git fetch --depth 1 origin "${SNES9X_SHA}"
+          git checkout --detach FETCH_HEAD
+          test "$(git rev-parse HEAD)" = "${SNES9X_SHA}"
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("libretro/jni/Android.mk")
+          s=p.read_text()
+          old="LOCAL_MODULE    := retro"
+          assert old in s
+          p.write_text(s.replace(old,"LOCAL_MODULE    := retro_snes9x",1))
+          PY
+          export NDK_ROOT="${ANDROID_SDK_ROOT}/ndk/${NDK_VERSION}"
+          cd libretro/jni
+          "${NDK_ROOT}/ndk-build" -j2 \
+            NDK_PROJECT_PATH=. \
+            NDK_APPLICATION_MK=Application.mk \
+            APP_BUILD_SCRIPT=Android.mk \
+            APP_ABI=arm64-v8a
+          test -s libs/arm64-v8a/libretro_snes9x.so
+
+      - name: Install Snes9x core
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cp snes9xcore/libretro/jni/libs/arm64-v8a/libretro_snes9x.so \
+             app/src/main/jniLibs/arm64-v8a/libretro_snes9x.so
+
+      - name: Fetch pinned Stella 2014
+        shell: bash
+        run: |
+          set -euxo pipefail
+          rm -rf stellacore
+          git init stellacore
+          cd stellacore
+          git remote add origin https://github.com/libretro/stella2014-libretro.git
+          git fetch --depth 1 origin "${STELLA_SHA}"
+          git checkout --detach FETCH_HEAD
+          test "$(git rev-parse HEAD)" = "${STELLA_SHA}"
+          test -f jni/Android.mk
+          test -f jni/Application.mk
+          grep -F 'valid_extensions = "a26|bin|mvc"' libretro.cxx
+
+      - name: Build Stella 2014 ARM64
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path("stellacore/jni/Android.mk")
+          s=p.read_text()
+          s2,n=re.subn(r'LOCAL_MODULE\s*:=\s*retro\b',
+                       'LOCAL_MODULE       := retro_atari2600',
+                       s, count=1)
+          assert n == 1
+          p.write_text(s2)
+          PY
+
+          export NDK_ROOT="${ANDROID_SDK_ROOT}/ndk/${NDK_VERSION}"
+          cd stellacore/jni
+          "${NDK_ROOT}/ndk-build" -j2 \
+            NDK_PROJECT_PATH=. \
+            NDK_APPLICATION_MK=Application.mk \
+            APP_BUILD_SCRIPT=Android.mk \
+            APP_ABI=arm64-v8a
+
+          test -s libs/arm64-v8a/libretro_atari2600.so
+          strings libs/arm64-v8a/libretro_atari2600.so > "$RUNNER_TEMP/stella.strings"
+          grep -qi 'stella' "$RUNNER_TEMP/stella.strings"
+
+      - name: Install Stella core
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p app/src/main/jniLibs/arm64-v8a
+          cp stellacore/jni/libs/arm64-v8a/libretro_atari2600.so \
+             app/src/main/jniLibs/arm64-v8a/libretro_atari2600.so
+          test -s app/src/main/jniLibs/arm64-v8a/libretro_atari2600.so
+
+      - name: Build APK
+        shell: bash
+        run: |
+          set -euxo pipefail
+          gradle --no-daemon :app:assembleDebug --stacktrace
+
+      - name: Validate APK
+        shell: bash
+        run: |
+          set -euxo pipefail
+          APK=app/build/outputs/apk/debug/app-debug.apk
+          test -f "$APK"
+          unzip -l "$APK" | grep 'lib/arm64-v8a/libretro_n64.so'
+          unzip -l "$APK" | grep 'lib/arm64-v8a/libretro_gambatte.so'
+          unzip -l "$APK" | grep 'lib/arm64-v8a/libretro_snes9x.so'
+          unzip -l "$APK" | grep 'lib/arm64-v8a/libretro_atari2600.so'
+          unzip -l "$APK" | grep 'lib/arm64-v8a/libretrolink_native.so'
+          grep -q 'versionName "0.9.1-rc1"' app/build.gradle
+          grep -q 'setSessionType("ATARI2600")' \
+             app/src/main/java/cl/retrolink/app/Atari2600RoomActivity.java
+          grep -q 'video.start(hostIp, 2, false)' \
+             app/src/main/java/cl/retrolink/app/Atari2600ControllerActivity.java
+          grep -q 'Arrays.copyOfRange(full, offset, full.length)' \
+             app/src/main/java/cl/retrolink/app/ble/HostBleManager.java
+          grep -q 'WRITE_TYPE_DEFAULT' \
+             app/src/main/java/cl/retrolink/app/ble/ControllerBleManager.java
+
+      - name: Prepare APK
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cp app/build/outputs/apk/debug/app-debug.apk \
+             RetroLink-v0.9.1-atari2600-multiplayer-fix-rc1-debug.apk
+          sha256sum RetroLink-v0.9.1-atari2600-multiplayer-fix-rc1-debug.apk \
+            | tee RetroLink-v0.9.1-atari2600-multiplayer-fix-rc1-debug.sha256
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: RetroLink-v0.9.1-atari2600-multiplayer-fix-rc1
+          path: |
+            RetroLink-v0.9.1-atari2600-multiplayer-fix-rc1-debug.apk
+            RetroLink-v0.9.1-atari2600-multiplayer-fix-rc1-debug.sha256
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,609 @@
+name: RetroLink v0.7.4 Platform-Aware Multiplayer Routing FINAL
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/build-retrolink-v0.7.4-platform-aware-multiplayer-FIX.yml"
+
+permissions:
+  contents: write
+
+env:
+  BRANCH_NAME: codex/v0.6-ui-controls
+  ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+  ANDROID_HOME: /usr/local/lib/android/sdk
+  NDK_VERSION: 28.2.13676358
+  N64_CORE_SHA: 12edd2c74a517ff86dfa8cfc71ad75e4c10486d5
+  GAMBATTE_SHA: d9d6cd06382d1ced30de34d56d3609452323dab1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Switch to development branch
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git fetch origin "${BRANCH_NAME}"
+          git switch -C "${BRANCH_NAME}" "origin/${BRANCH_NAME}"
+          grep -Eq 'versionName "0\.7\.(3|4)-rc1"' app/build.gradle
+
+      - name: Apply v0.7.4 platform-aware multiplayer routing
+        shell: bash
+        run: |
+          set -euxo pipefail
+          if grep -q 'versionName "0.7.4-rc1"' app/build.gradle; then
+            echo "v0.7.4 source already present."
+            exit 0
+          fi
+          cat > "$RUNNER_TEMP/apply_v074.py" <<'PY'
+          from pathlib import Path
+
+          # ------------------------------------------------------------------
+          # Host BLE: advertise session type in host-info payload.
+          # ------------------------------------------------------------------
+          p = Path("app/src/main/java/cl/retrolink/app/ble/HostBleManager.java")
+          s = p.read_text()
+
+          if 'private String sessionType = "N64";' not in s:
+              marker = "    private int maxPlayerNumber = 4;\n"
+              if marker not in s:
+                  raise SystemExit("HostBleManager maxPlayerNumber marker missing")
+              s = s.replace(marker, marker + '    private String sessionType = "N64";\n', 1)
+
+          if "public void setSessionType" not in s:
+              marker = '''    public void setMaxPlayerNumber(int maxPlayerNumber) {
+                  this.maxPlayerNumber = Math.max(2, Math.min(4, maxPlayerNumber));
+              }
+
+          '''
+              method = marker + '''    public void setSessionType(String sessionType) {
+                  String value = sessionType == null ? "" : sessionType.trim().toUpperCase(java.util.Locale.US);
+                  this.sessionType = "GBLINK".equals(value) ? "GBLINK" : "N64";
+              }
+
+          '''
+              if marker not in s:
+                  raise SystemExit("HostBleManager setter marker missing")
+              s = s.replace(marker, method, 1)
+
+          old = '''            } else if (BleProtocol.HOST_INFO_UUID.equals(characteristic.getUuid())) {
+                          value = NetworkUtils.localIpv4().getBytes(StandardCharsets.UTF_8);
+          '''
+          new = '''            } else if (BleProtocol.HOST_INFO_UUID.equals(characteristic.getUuid())) {
+                          String ip = NetworkUtils.localIpv4();
+                          String payload = sessionType + "|" + ip;
+                          value = payload.getBytes(StandardCharsets.UTF_8);
+          '''
+          if old in s:
+              s = s.replace(old, new, 1)
+          elif 'String payload = sessionType + "|" + ip;' not in s:
+              raise SystemExit("HostBleManager host info baseline missing")
+
+          old = 'status("Host activo · BLE + pantalla distribuida");'
+          new = 'status("GBLINK".equals(sessionType) ? "Host activo · Game Boy Link P1" : "Host activo · BLE + pantalla distribuida");'
+          if old in s:
+              s = s.replace(old, new, 1)
+
+          p.write_text(s)
+
+          # ------------------------------------------------------------------
+          # Controller BLE: decode session type before delivering IP.
+          # ------------------------------------------------------------------
+          p = Path("app/src/main/java/cl/retrolink/app/ble/ControllerBleManager.java")
+          s = p.read_text()
+
+          if "default void onSessionInfo" not in s:
+              marker = '''        void onConnected(int player);
+                  void onHostInfo(String ip);
+          '''
+              repl = '''        void onConnected(int player);
+                  default void onSessionInfo(String sessionType, String ip) {}
+                  void onHostInfo(String ip);
+          '''
+              if marker not in s:
+                  raise SystemExit("ControllerBleManager listener marker missing")
+              s = s.replace(marker, repl, 1)
+
+          old = '''        } else if (BleProtocol.HOST_INFO_UUID.equals(c.getUuid())) {
+                      String ip = value == null ? "" : new String(value, StandardCharsets.UTF_8).trim();
+                      if (ip.isEmpty()) {
+                          synchronized (this) {
+                              hostInfoReady = false;
+                              hostInfoNeeded = true;
+                          }
+                          main.post(() -> listener.onHostInfo(""));
+                          main.removeCallbacks(retryHostInfo);
+                          main.postDelayed(retryHostInfo, 1200);
+                      } else {
+                          synchronized (this) {
+                              hostInfoReady = true;
+                              hostInfoNeeded = false;
+                          }
+                          log("IP Host recibida: " + ip);
+                          main.post(() -> listener.onHostInfo(ip));
+                          sendInput(0, 0, 0);
+                          pumpOperations();
+                      }
+                  }
+          '''
+          new = '''        } else if (BleProtocol.HOST_INFO_UUID.equals(c.getUuid())) {
+                      String raw = value == null ? "" : new String(value, StandardCharsets.UTF_8).trim();
+                      String sessionType = "N64";
+                      String ip = raw;
+
+                      int split = raw.indexOf('|');
+                      if (split > 0) {
+                          sessionType = raw.substring(0, split).trim().toUpperCase(java.util.Locale.US);
+                          ip = raw.substring(split + 1).trim();
+                      }
+
+                      if (ip.isEmpty()) {
+                          synchronized (this) {
+                              hostInfoReady = false;
+                              hostInfoNeeded = true;
+                          }
+                          final String mode = sessionType;
+                          main.post(() -> {
+                              listener.onSessionInfo(mode, "");
+                              listener.onHostInfo("");
+                          });
+                          main.removeCallbacks(retryHostInfo);
+                          main.postDelayed(retryHostInfo, 1200);
+                      } else {
+                          synchronized (this) {
+                              hostInfoReady = true;
+                              hostInfoNeeded = false;
+                          }
+                          final String mode = sessionType;
+                          final String hostIp = ip;
+                          log("Host " + mode + " recibido: " + hostIp);
+                          main.post(() -> {
+                              listener.onSessionInfo(mode, hostIp);
+                              listener.onHostInfo(hostIp);
+                          });
+                          if (!"GBLINK".equals(mode)) sendInput(0, 0, 0);
+                          pumpOperations();
+                      }
+                  }
+          '''
+          if old in s:
+              s = s.replace(old, new, 1)
+          elif 'listener.onSessionInfo(mode, hostIp);' not in s:
+              raise SystemExit("ControllerBleManager host parsing baseline missing")
+
+          p.write_text(s)
+
+          # ------------------------------------------------------------------
+          # Game Boy room: GBLINK session + automatic local Gambatte launch.
+          # ------------------------------------------------------------------
+          p = Path("app/src/main/java/cl/retrolink/app/GameBoyLinkActivity.java")
+          s = p.read_text()
+
+          if "private boolean linkLaunchStarted;" not in s:
+              marker = '    private String hostIp = "";\n'
+              if marker not in s:
+                  raise SystemExit("GameBoyLinkActivity hostIp marker missing")
+              s = s.replace(marker, marker + '    private boolean linkLaunchStarted;\n    private String remoteSessionType = "";\n', 1)
+
+          old = '''        hostBle = new HostBleManager(this, this);
+                  hostBle.setMaxPlayerNumber(2);
+          '''
+          new = '''        hostBle = new HostBleManager(this, this);
+                  hostBle.setMaxPlayerNumber(2);
+                  hostBle.setSessionType("GBLINK");
+          '''
+          if old in s:
+              s = s.replace(old, new, 1)
+          elif 'hostBle.setSessionType("GBLINK");' not in s:
+              raise SystemExit("GameBoyLinkActivity host setup baseline missing")
+
+          old = '''        role = ROLE_HOST;
+                  p2Connected = false;
+                  hostIp = NetworkUtils.localIpv4();
+          '''
+          new = '''        role = ROLE_HOST;
+                  p2Connected = false;
+                  linkLaunchStarted = false;
+                  remoteSessionType = "GBLINK";
+                  hostIp = NetworkUtils.localIpv4();
+          '''
+          if old in s:
+              s = s.replace(old, new, 1)
+
+          old = '''        role = ROLE_CLIENT;
+                  p2Connected = false;
+                  hostIp = "";
+          '''
+          new = '''        role = ROLE_CLIENT;
+                  p2Connected = false;
+                  linkLaunchStarted = false;
+                  remoteSessionType = "";
+                  hostIp = "";
+          '''
+          if old in s:
+              s = s.replace(old, new, 1)
+
+          old = '''    private void launchLink() {
+                  if (role == ROLE_HOST && !p2Connected) {
+          '''
+          new = '''    private void launchLink() {
+                  if (linkLaunchStarted) return;
+                  if (role == ROLE_HOST && !p2Connected) {
+          '''
+          if old in s:
+              s = s.replace(old, new, 1)
+          elif "if (linkLaunchStarted) return;" not in s:
+              raise SystemExit("GameBoyLinkActivity launch marker missing")
+
+          old = '''        if (role == ROLE_NONE) return;
+
+                  Intent i = new Intent(this, IntegratedGameActivity.class);
+          '''
+          new = '''        if (role == ROLE_NONE) return;
+                  if (role == ROLE_CLIENT && !"GBLINK".equals(remoteSessionType)) {
+                      Toast.makeText(this, "El Host encontrado no es una sala Game Boy Link", Toast.LENGTH_LONG).show();
+                      return;
+                  }
+
+                  linkLaunchStarted = true;
+                  status.setText(role == ROLE_HOST
+                          ? "Abriendo Gambatte local · P1 SERVER…"
+                          : "Abriendo Gambatte local · P2 CLIENT…");
+
+                  Intent i = new Intent(this, IntegratedGameActivity.class);
+          '''
+          if old in s:
+              s = s.replace(old, new, 1)
+
+          old = '''            p2Connected = true;
+                      status.setText("Player 2 listo · inicia Game Link en ambos dispositivos");
+                      refresh();
+          '''
+          new = '''            p2Connected = true;
+                      status.setText("Player 2 listo · abriendo Game Link local…");
+                      refresh();
+                      launch.postDelayed(this::launchLink, 700);
+          '''
+          if old in s:
+              s = s.replace(old, new, 1)
+
+          if "onSessionInfo(String sessionType" not in s:
+              marker = '''    @Override public void onHostInfo(String ip) {
+          '''
+              callback = '''    @Override public void onSessionInfo(String sessionType, String ip) {
+                  if (role != ROLE_CLIENT) return;
+                  remoteSessionType = sessionType == null ? "" : sessionType.trim().toUpperCase(java.util.Locale.US);
+                  if (!remoteSessionType.isEmpty() && !"GBLINK".equals(remoteSessionType)) {
+                      status.setText("Host incompatible · esta sala no es Game Boy Link");
+                      launch.setEnabled(false);
+                      launch.setAlpha(0.42f);
+                  }
+              }
+
+          '''
+              if marker not in s:
+                  raise SystemExit("GameBoyLinkActivity onHostInfo marker missing")
+              s = s.replace(marker, callback + marker, 1)
+
+          old = '''        status.setText(hostIp.isEmpty()
+                          ? "BLE conectado · esperando IP Wi-Fi del Host…"
+                          : "P2 listo · Host " + hostIp + " · puedes iniciar");
+                  refresh();
+          '''
+          new = '''        status.setText(hostIp.isEmpty()
+                          ? "BLE conectado · esperando IP Wi-Fi del Host…"
+                          : ("GBLINK".equals(remoteSessionType)
+                              ? "P2 listo · abriendo Gambatte local…"
+                              : "P2 detectado · validando tipo de sala…"));
+                  refresh();
+                  if (!hostIp.isEmpty() && "GBLINK".equals(remoteSessionType)) {
+                      launch.postDelayed(this::launchLink, 350);
+                  }
+          '''
+          if old in s:
+              s = s.replace(old, new, 1)
+
+          p.write_text(s)
+
+          # ------------------------------------------------------------------
+          # N64 controller: if host is GBLINK, route straight to local Gambatte.
+          # ------------------------------------------------------------------
+          p = Path("app/src/main/java/cl/retrolink/app/ControllerActivity.java")
+          s = p.read_text()
+
+          if "private boolean redirectingToGameBoy;" not in s:
+              marker = '    private String lastHostIp = "";\n'
+              if marker not in s:
+                  raise SystemExit("ControllerActivity lastHostIp marker missing")
+              s = s.replace(marker, marker + '    private boolean redirectingToGameBoy;\n', 1)
+
+          if "onSessionInfo(String sessionType" not in s:
+              marker = '''    @Override public void onHostInfo(String ip) {
+          '''
+              callback = '''    @Override public void onSessionInfo(String sessionType, String ip) {
+                  if (!"GBLINK".equalsIgnoreCase(sessionType) || redirectingToGameBoy) return;
+
+                  redirectingToGameBoy = true;
+                  if (video != null) video.stop();
+
+                  GameBoyRomRepository.ImportedGame gb = GameBoyRomRepository.lastGame(this);
+                  if (gb == null || !gb.file.isFile()) {
+                      status.setText("Sala Game Boy Link detectada");
+                      videoStatus.setText("Selecciona el mismo juego GB/GBC para entrar como P2");
+                      inputStatus.setText("No se usará la pantalla remota N64");
+                      Toast.makeText(this,
+                              "Sala GB/GBC detectada. Selecciona el mismo juego en Biblioteca Game Boy.",
+                              Toast.LENGTH_LONG).show();
+                      if (ble != null) ble.disconnect();
+                      startActivity(new Intent(this, GameBoyLibraryActivity.class));
+                      finish();
+                      return;
+                  }
+
+                  status.setText("P2 · GAME BOY LINK");
+                  videoStatus.setText("Host " + ip + " · abriendo Gambatte local…");
+                  inputStatus.setText("A/B · START · SELECT · control local");
+
+                  Intent i = new Intent(this, IntegratedGameActivity.class);
+                  i.putExtra(IntegratedGameActivity.EXTRA_CORE_ID, CoreRegistry.GAME_BOY.id);
+                  i.putExtra(IntegratedGameActivity.EXTRA_ROM_PATH, gb.file.getAbsolutePath());
+                  i.putExtra(IntegratedGameActivity.EXTRA_GAME_TITLE, gb.title);
+                  i.putExtra(IntegratedGameActivity.EXTRA_GB_LINK_MODE, "Network Client");
+                  i.putExtra(IntegratedGameActivity.EXTRA_GB_LINK_HOST, ip == null ? "" : ip.trim());
+                  i.putExtra(IntegratedGameActivity.EXTRA_GB_LINK_PORT, 56400);
+
+                  if (ble != null) ble.disconnect();
+                  startActivity(i);
+                  finish();
+              }
+
+          '''
+              if marker not in s:
+                  raise SystemExit("ControllerActivity onHostInfo marker missing")
+              s = s.replace(marker, callback + marker, 1)
+
+          old = '''    @Override public void onHostInfo(String ip) {
+                  if (ip == null || ip.trim().isEmpty()) {
+          '''
+          new = '''    @Override public void onHostInfo(String ip) {
+                  if (redirectingToGameBoy) return;
+                  if (ip == null || ip.trim().isEmpty()) {
+          '''
+          if old in s:
+              s = s.replace(old, new, 1)
+
+          p.write_text(s)
+
+          # ------------------------------------------------------------------
+          # N64 host explicitly identifies itself.
+          # ------------------------------------------------------------------
+          p = Path("app/src/main/java/cl/retrolink/app/HostActivity.java")
+          s = p.read_text()
+          old = '''        ble = new HostBleManager(this, this);
+                  stream = new FrameStreamServer(this, engine, this);
+          '''
+          new = '''        ble = new HostBleManager(this, this);
+                  ble.setSessionType("N64");
+                  stream = new FrameStreamServer(this, engine, this);
+          '''
+          if old in s:
+              s = s.replace(old, new, 1)
+          elif 'ble.setSessionType("N64");' not in s:
+              raise SystemExit("HostActivity BLE marker missing")
+          p.write_text(s)
+
+          # ------------------------------------------------------------------
+          # Version.
+          # ------------------------------------------------------------------
+          p = Path("app/build.gradle")
+          s = p.read_text()
+          if 'versionName "0.7.3-rc1"' in s:
+              s = s.replace("versionCode 33", "versionCode 34", 1)
+              s = s.replace('versionName "0.7.3-rc1"', 'versionName "0.7.4-rc1"', 1)
+          elif 'versionName "0.7.4-rc1"' not in s:
+              raise SystemExit("Unexpected base version")
+          p.write_text(s)
+
+          print("v0.7.4 platform-aware multiplayer routing applied")
+          PY
+          python3 "$RUNNER_TEMP/apply_v074.py"
+
+      - name: Static routing validation
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, xml.etree.ElementTree as ET
+
+          for p in Path("app/src/main/res").rglob("*.xml"):
+              ET.parse(p)
+          ET.parse("app/src/main/AndroidManifest.xml")
+
+          host = Path("app/src/main/java/cl/retrolink/app/ble/HostBleManager.java").read_text()
+          client = Path("app/src/main/java/cl/retrolink/app/ble/ControllerBleManager.java").read_text()
+          controller = Path("app/src/main/java/cl/retrolink/app/ControllerActivity.java").read_text()
+          gb = Path("app/src/main/java/cl/retrolink/app/GameBoyLinkActivity.java").read_text()
+          n64 = Path("app/src/main/java/cl/retrolink/app/HostActivity.java").read_text()
+          build = Path("app/build.gradle").read_text()
+
+          assert 'private String sessionType = "N64";' in host
+          assert 'setSessionType("GBLINK")' in gb
+          assert 'setSessionType("N64")' in n64
+          assert 'sessionType + "|" + ip' in host
+          assert 'default void onSessionInfo' in client
+          assert 'listener.onSessionInfo(mode, hostIp)' in client
+          assert 'if (!"GBLINK".equals(mode)) sendInput' in client
+          assert 'redirectingToGameBoy' in controller
+          assert 'EXTRA_GB_LINK_MODE, "Network Client"' in controller
+          assert 'video.start(lastHostIp' in controller
+          assert 'if (redirectingToGameBoy) return;' in controller
+          assert 'launch.postDelayed(this::launchLink, 700)' in gb
+          assert 'launch.postDelayed(this::launchLink, 350)' in gb
+          assert 'versionCode 34' in build
+          assert 'versionName "0.7.4-rc1"' in build
+
+          ids=set()
+          for p in Path("app/src/main/res").rglob("*.xml"):
+              ids.update(re.findall(r'@\+id/([A-Za-z0-9_]+)', p.read_text(errors="ignore")))
+          refs=set()
+          for p in Path("app/src/main/java").rglob("*.java"):
+              refs.update(re.findall(r'R\.id\.([A-Za-z0-9_]+)', p.read_text(errors="ignore")))
+          missing=sorted(refs-ids)
+          assert not missing, f"Missing R.id: {missing}"
+          print("v0.7.4 platform-aware multiplayer routing PASS")
+          PY
+
+      - name: Commit v0.7.4 source
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app
+          if git diff --cached --quiet; then
+            echo "v0.7.4 already committed."
+          else
+            git commit -m "fix(v0.7.4): route Game Boy multiplayer to local Gambatte"
+            git push origin "${BRANCH_NAME}"
+          fi
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle 9.4.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.4.1"
+
+      - name: Install Android SDK NDK CMake
+        shell: bash
+        run: |
+          set -euxo pipefail
+          SDKMANAGER=/usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER"             "platform-tools"             "platforms;android-36"             "build-tools;36.0.0"             "ndk;${NDK_VERSION}"             "cmake;3.22.1"
+
+      - name: Build pinned N64 core
+        shell: bash
+        run: |
+          set -euxo pipefail
+          rm -rf n64core
+          git init n64core
+          cd n64core
+          git remote add origin https://github.com/libretro/mupen64plus-libretro-nx.git
+          git fetch --depth 1 origin "${N64_CORE_SHA}"
+          git checkout --detach FETCH_HEAD
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("libretro/jni/Android.mk")
+          s=p.read_text()
+          old="LOCAL_MODULE           := retro"
+          assert old in s
+          p.write_text(s.replace(old,"LOCAL_MODULE           := retro_n64",1))
+          PY
+          export NDK_ROOT="${ANDROID_SDK_ROOT}/ndk/${NDK_VERSION}"
+          cd libretro/jni
+          "${NDK_ROOT}/ndk-build" -j2             NDK_PROJECT_PATH=.             NDK_APPLICATION_MK=Application.mk             APP_BUILD_SCRIPT=Android.mk             APP_ABI=arm64-v8a             GLES3=1
+          test -f libs/arm64-v8a/libretro_n64.so
+
+      - name: Install N64 core and libretro ABI
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p app/src/main/jniLibs/arm64-v8a app/src/main/cpp
+          cp n64core/libretro/jni/libs/arm64-v8a/libretro_n64.so app/src/main/jniLibs/arm64-v8a/libretro_n64.so
+          cp n64core/libretro-common/include/libretro.h app/src/main/cpp/libretro.h
+
+      - name: Fetch pinned Gambatte
+        shell: bash
+        run: |
+          set -euxo pipefail
+          rm -rf gambattecore
+          git init gambattecore
+          cd gambattecore
+          git remote add origin https://github.com/libretro/gambatte-libretro.git
+          git fetch --depth 1 origin "${GAMBATTE_SHA}"
+          git checkout --detach FETCH_HEAD
+          test "$(git rev-parse HEAD)" = "${GAMBATTE_SHA}"
+          test -f libgambatte/libretro/jni/Android.mk
+          grep -q 'HAVE_NETWORK := 1' libgambatte/libretro/jni/Android.mk
+          grep -q 'net_serial.cpp' Makefile.common
+
+      - name: Build network-enabled Gambatte ARM64
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("gambattecore/libgambatte/libretro/jni/Android.mk")
+          s=p.read_text()
+          old="LOCAL_MODULE    := retro"
+          assert old in s
+          p.write_text(s.replace(old,"LOCAL_MODULE    := retro_gambatte",1))
+          PY
+          export NDK_ROOT="${ANDROID_SDK_ROOT}/ndk/${NDK_VERSION}"
+          cd gambattecore/libgambatte/libretro/jni
+          "${NDK_ROOT}/ndk-build" -j2             NDK_PROJECT_PATH=.             NDK_APPLICATION_MK=Application.mk             APP_BUILD_SCRIPT=Android.mk             APP_ABI=arm64-v8a
+          test -s libs/arm64-v8a/libretro_gambatte.so
+          strings libs/arm64-v8a/libretro_gambatte.so | grep -F 'gambatte_gb_link_mode'
+          strings libs/arm64-v8a/libretro_gambatte.so | grep -F 'Network Server'
+          strings libs/arm64-v8a/libretro_gambatte.so | grep -F 'Network Client'
+          strings libs/arm64-v8a/libretro_gambatte.so | grep -F 'GameLink network server started'
+
+      - name: Install Gambatte core
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cp gambattecore/libgambatte/libretro/jni/libs/arm64-v8a/libretro_gambatte.so              app/src/main/jniLibs/arm64-v8a/libretro_gambatte.so
+
+      - name: Build APK
+        shell: bash
+        run: |
+          set -euxo pipefail
+          gradle --no-daemon :app:assembleDebug --stacktrace
+
+      - name: Validate APK
+        shell: bash
+        run: |
+          set -euxo pipefail
+          APK=app/build/outputs/apk/debug/app-debug.apk
+          test -f "$APK"
+          unzip -l "$APK" | grep 'lib/arm64-v8a/libretro_n64.so'
+          unzip -l "$APK" | grep 'lib/arm64-v8a/libretro_gambatte.so'
+          unzip -l "$APK" | grep 'lib/arm64-v8a/libretrolink_native.so'
+          grep -q 'versionName "0.7.4-rc1"' app/build.gradle
+          grep -q 'setSessionType("GBLINK")' app/src/main/java/cl/retrolink/app/GameBoyLinkActivity.java
+          grep -q 'redirectingToGameBoy' app/src/main/java/cl/retrolink/app/ControllerActivity.java
+          grep -q 'sessionType + "|" + ip' app/src/main/java/cl/retrolink/app/ble/HostBleManager.java
+
+      - name: Prepare APK
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cp app/build/outputs/apk/debug/app-debug.apk RetroLink-v0.7.4-platform-aware-multiplayer-rc1-debug.apk
+          sha256sum RetroLink-v0.7.4-platform-aware-multiplayer-rc1-debug.apk             | tee RetroLink-v0.7.4-platform-aware-multiplayer-rc1-debug.sha256
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: RetroLink-v0.7.4-platform-aware-multiplayer-rc1
+          path: |
+            RetroLink-v0.7.4-platform-aware-multiplayer-rc1-debug.apk
+            RetroLink-v0.7.4-platform-aware-multiplayer-rc1-debug.sha256
+          if-no-files-found: error
+          retention-days: 14

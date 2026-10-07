@@ -439,18 +439,30 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;${NDK_VERSION}" "cmake;3.22.1"
+          SDKMANAGER=/usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" \
+            "platform-tools" \
+            "platforms;android-36" \
+            "build-tools;36.0.0" \
+            "ndk;${NDK_VERSION}" \
+            "cmake;3.22.1"
 
       - name: Fetch pinned Mupen64Plus-Next core
         shell: bash
         run: |
           set -euxo pipefail
           rm -rf n64core
-          git clone --filter=blob:none https://github.com/libretro/mupen64plus-libretro-nx.git n64core
+          git init n64core
           cd n64core
-          git checkout "${N64_CORE_SHA}"
-          git submodule update --init --recursive
+          git remote add origin https://github.com/libretro/mupen64plus-libretro-nx.git
+          git fetch --depth 1 origin "${N64_CORE_SHA}"
+          git checkout --detach FETCH_HEAD
+          test "$(git rev-parse HEAD)" = "${N64_CORE_SHA}"
+          test -f libretro/jni/Android.mk
+          test -f libretro/jni/Application.mk
+          test -f libretro-common/include/libretro.h
 
       - name: Give N64 core a stable Android library name
         shell: bash

@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ps1GameRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:clipChildren="true"
+    android:splitMotionEvents="true">
+
+    <cl.retrolink.app.SoftwareCoreView
+        android:id="@+id/ps1EmulatorSurface"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <Button
+        android:id="@+id/btnL2"
+        android:layout_width="74dp"
+        android:layout_height="44dp"
+        android:layout_gravity="top|left"
+        android:layout_marginLeft="12dp"
+        android:layout_marginTop="64dp"
+        android:alpha="0.72"
+        android:background="@drawable/btn_overlay"
+        android:text="L2"
+        android:textColor="#FFFFFFFF"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/btnL1"
+        android:layout_width="74dp"
+        android:layout_height="44dp"
+        android:layout_gravity="top|left"
+        android:layout_marginLeft="92dp"
+        android:layout_marginTop="64dp"
+        android:alpha="0.78"
+        android:background="@drawable/btn_overlay"
+        android:text="L1"
+        android:textColor="#FFFFFFFF"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/btnR1"
+        android:layout_width="74dp"
+        android:layout_height="44dp"
+        android:layout_gravity="top|right"
+        android:layout_marginRight="92dp"
+        android:layout_marginTop="64dp"
+        android:alpha="0.78"
+        android:background="@drawable/btn_overlay"
+        android:text="R1"
+        android:textColor="#FFFFFFFF"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/btnR2"
+        android:layout_width="74dp"
+        android:layout_height="44dp"
+        android:layout_gravity="top|right"
+        android:layout_marginRight="12dp"
+        android:layout_marginTop="64dp"
+        android:alpha="0.72"
+        android:background="@drawable/btn_overlay"
+        android:text="R2"
+        android:textColor="#FFFFFFFF"
+        android:textStyle="bold" />
+
+    <cl.retrolink.app.VirtualStickView
+        android:id="@+id/virtualStick"
+        android:layout_width="184dp"
+        android:layout_height="184dp"
+        android:layout_gravity="bottom|left"
+        android:layout_marginLeft="18dp"
+        android:layout_marginBottom="16dp" />
+
+    <Button
+        android:id="@+id/btnSelect"
+        android:layout_width="86dp"
+        android:layout_height="46dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginRight="96dp"
+        android:layout_marginBottom="16dp"
+        android:alpha="0.76"
+        android:background="@drawable/btn_neon_dark"
+        android:text="SELECT"
+        android:textColor="@color/retro_text"
+        android:textSize="9sp" />
+
+    <Button
+        android:id="@+id/btnStart"
+        android:layout_width="86dp"
+        android:layout_height="46dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginLeft="96dp"
+        android:layout_marginBottom="16dp"
+        android:alpha="0.76"
+        android:background="@drawable/btn_neon_dark"
+        android:text="START"
+        android:textColor="@color/retro_text"
+        android:textSize="9sp" />
+
+    <Button
+        android:id="@+id/btnSquare"
+        android:layout_width="66dp"
+        android:layout_height="66dp"
+        android:layout_gravity="bottom|right"
+        android:layout_marginRight="154dp"
+        android:layout_marginBottom="106dp"
+        android:alpha="0.80"
+        android:background="@drawable/btn_overlay"
+        android:text="□"
+        android:textColor="#FFFFFFFF"
+        android:textSize="24sp"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/btnTriangle"
+        android:layout_width="66dp"
+        android:layout_height="66dp"
+        android:layout_gravity="bottom|right"
+        android:layout_marginRight="88dp"
+        android:layout_marginBottom="168dp"
+        android:alpha="0.80"
+        android:background="@drawable/btn_overlay"
+        android:text="△"
+        android:textColor="#FFFFFFFF"
+        android:textSize="23sp"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/btnCross"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:layout_gravity="bottom|right"
+        android:layout_marginRight="88dp"
+        android:layout_marginBottom="40dp"
+        android:alpha="0.84"
+        android:background="@drawable/btn_overlay"
+        android:text="×"
+        android:textColor="#FFFFFFFF"
+        android:textSize="28sp"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/btnCircle"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:layout_gravity="bottom|right"
+        android:layout_marginRight="22dp"
+        android:layout_marginBottom="104dp"
+        android:alpha="0.84"
+        android:background="@drawable/btn_overlay"
+        android:text="○"
+        android:textColor="#FFFFFFFF"
+        android:textSize="28sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:id="@+id/ps1GameTopBar"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:layout_gravity="top"
+        android:layout_marginLeft="12dp"
+        android:layout_marginTop="7dp"
+        android:layout_marginRight="62dp"
+        android:background="@drawable/panel_overlay"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingLeft="14dp"
+        android:paddingRight="8dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/txtPs1GameTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="PLAYSTATION · JUEGO"
+                android:textColor="@color/retro_cyan"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtPs1GameStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="2"
+                android:text="Preparando PCSX-ReARMed…"
+                android:textColor="@color/retro_text"
+                android:textSize="7sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtPs1GameStats"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="Software framebuffer"
+                android:textColor="@color/retro_muted"
+                android:textSize="7sp" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnPs1GameReset"
+            android:layout_width="78dp"
+            android:layout_height="42dp"
+            android:background="@drawable/btn_secondary_neon"
+            android:text="RESET"
+            android:textColor="@color/retro_text"
+            android:textSize="8sp" />
+
+        <Button
+            android:id="@+id/btnPs1GameSettings"
+            android:layout_width="86dp"
+            android:layout_height="42dp"
+            android:layout_marginLeft="5dp"
+            android:background="@drawable/btn_secondary_neon"
+            android:text="⚙ AJUSTES"
+            android:textColor="@color/retro_text"
+            android:textSize="7sp" />
+
+        <Button
+            android:id="@+id/btnPs1GameExit"
+            android:layout_width="76dp"
+            android:layout_height="42dp"
+            android:layout_marginLeft="5dp"
+            android:background="@drawable/btn_magenta_neon"
+            android:text="SALIR"
+            android:textColor="@color/retro_text"
+            android:textSize="8sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnPs1GameHud"
+        android:layout_width="46dp"
+        android:layout_height="46dp"
+        android:layout_gravity="top|right"
+        android:layout_marginTop="9dp"
+        android:layout_marginRight="9dp"
+        android:background="@drawable/btn_retro"
+        android:text="⚙"
+        android:textColor="@color/retro_text"
+        android:textSize="18sp" />
+</FrameLayout>

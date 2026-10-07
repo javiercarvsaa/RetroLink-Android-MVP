@@ -35,6 +35,7 @@ public final class SoftwareCoreView extends SurfaceView implements SurfaceHolder
     private volatile String gameBoyLinkMode = "Not Connected";
     private volatile String gameBoyLinkHost = "";
     private volatile int gameBoyLinkPort = 56400;
+    private volatile boolean ps1DefaultsEnabled;
     private Thread thread;
     private CountDownLatch stopped = new CountDownLatch(1);
 
@@ -70,6 +71,22 @@ public final class SoftwareCoreView extends SurfaceView implements SurfaceHolder
         gameBoyLinkMode = mode == null ? "Not Connected" : mode;
         gameBoyLinkHost = host == null ? "" : host.trim();
         gameBoyLinkPort = Math.max(56400, Math.min(56420, port));
+    }
+
+    public synchronized void configurePs1Defaults() {
+        ps1DefaultsEnabled = true;
+    }
+
+    private void applyPs1Options() {
+        if (core != CoreRegistry.PS1 || !ps1DefaultsEnabled) return;
+        NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_region", "auto");
+        NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_bios", "auto");
+        NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_memcard1", "serial");
+        NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_memcard2", "shared");
+        NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_drc", "enabled");
+        NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_frameskip_type", "auto");
+        NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_show_bios_bootlogo", "disabled");
+        NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_multitap", "disabled");
     }
 
     private void applyGameBoyLinkOptions() {
@@ -149,6 +166,7 @@ public final class SoftwareCoreView extends SurfaceView implements SurfaceHolder
         try {
             NativeLibretro.nativeClearFrontendOptions();
             applyGameBoyLinkOptions();
+            applyPs1Options();
             String linkLabel = "Not Connected".equals(gameBoyLinkMode) ? "" :
                     (" · " + ("Network Server".equals(gameBoyLinkMode) ? "LINK SERVER" : "LINK CLIENT"));
             postStats("Etapa 2/5 · cargando " + core.shortSystem + " · software framebuffer" + linkLabel);
@@ -246,7 +264,8 @@ public final class SoftwareCoreView extends SurfaceView implements SurfaceHolder
         bitmap.setPixels(pixels, 0, w, 0, 0, w, h);
 
         // SNES comparte una consola/pantalla; P2 recibe el framebuffer del Host.
-        if ((core == CoreRegistry.SNES || core == CoreRegistry.ATARI_2600)
+        if ((core == CoreRegistry.SNES || core == CoreRegistry.ATARI_2600
+                || core == CoreRegistry.PS1)
                 && FrameStreamServer.hasRemoteClients()) {
             try {
                 Bitmap remote = bitmap.copy(Bitmap.Config.ARGB_8888, false);

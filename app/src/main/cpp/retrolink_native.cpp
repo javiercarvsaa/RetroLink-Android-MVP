@@ -568,7 +568,10 @@ int16_t input_state_cb(unsigned port, unsigned device, unsigned index, unsigned 
             case RETRO_DEVICE_ID_JOYPAD_A: return (!g_core_is_n64 && (in.mask & A)) ? 1 : 0;
             case RETRO_DEVICE_ID_JOYPAD_Y: return g_core_is_n64 ? ((in.mask & B) ? 1 : 0) : ((in.mask & C_UP) ? 1 : 0);
             case RETRO_DEVICE_ID_JOYPAD_X: return (!g_core_is_n64 && (in.mask & C_LEFT)) ? 1 : 0;
-            case RETRO_DEVICE_ID_JOYPAD_L2: return (g_core_is_n64 && (in.mask & Z)) ? 1 : 0;
+            case RETRO_DEVICE_ID_JOYPAD_L2:
+                return g_core_is_n64 ? ((in.mask & Z) ? 1 : 0) : ((in.mask & C_DOWN) ? 1 : 0);
+            case RETRO_DEVICE_ID_JOYPAD_R2:
+                return (!g_core_is_n64 && (in.mask & C_RIGHT)) ? 1 : 0;
             default: return 0;
         }
     }
@@ -782,11 +785,22 @@ Java_cl_retrolink_app_NativeLibretro_nativeInit(JNIEnv* env, jclass,
     g_core_info = std::string(info.library_name ? info.library_name : "Core") + " " +
                   std::string(info.library_version ? info.library_version : "");
 
+    g_rom.clear();
+    if (!info.need_fullpath) {
+        g_stage = "read content";
+        if (!read_file(rom, g_rom)) {
+            g_last_error = "No se pudo leer el contenido desde almacenamiento interno";
+            std::string err = g_last_error;
+            shutdown_core();
+            return env->NewStringUTF(err.c_str());
+        }
+    }
+
     g_stage = "retro_load_game";
     retro_game_info game{};
     game.path = rom.c_str();
-    game.data = g_rom.data();
-    game.size = g_rom.size();
+    game.data = info.need_fullpath ? nullptr : g_rom.data();
+    game.size = info.need_fullpath ? 0 : g_rom.size();
     game.meta = nullptr;
     if (!p_load_game(&game)) {
         g_last_error = "El core libretro rechazó el contenido";

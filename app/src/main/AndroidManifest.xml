@@ -37,6 +37,27 @@
             android:screenOrientation="sensorLandscape" />
 
         <activity
+            android:name=".Ps1ControllerActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape" />
+
+        <activity
+            android:name=".Ps1GameActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape"
+            android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity
+            android:name=".Ps1RoomActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape" />
+
+        <activity
+            android:name=".Ps1LibraryActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape" />
+
+        <activity
             android:name=".Atari2600ControllerActivity"
             android:exported="false"
             android:screenOrientation="sensorLandscape" />

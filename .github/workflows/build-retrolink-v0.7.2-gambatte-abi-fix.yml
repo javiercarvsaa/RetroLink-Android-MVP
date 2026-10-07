@@ -1,0 +1,291 @@
+name: RetroLink v0.7.2 Gambatte Libretro ABI Fix
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/build-retrolink-v0.7.2-gambatte-abi-fix.yml"
+
+permissions:
+  contents: write
+
+env:
+  BRANCH_NAME: codex/v0.6-ui-controls
+  ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+  ANDROID_HOME: /usr/local/lib/android/sdk
+  NDK_VERSION: 28.2.13676358
+  N64_CORE_SHA: 12edd2c74a517ff86dfa8cfc71ad75e4c10486d5
+  GAMBATTE_URL: https://buildbot.libretro.com/nightly/android/latest/arm64-v8a/gambatte_libretro_android.so.zip
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Switch to development branch
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git fetch origin "${BRANCH_NAME}"
+          git switch -C "${BRANCH_NAME}" "origin/${BRANCH_NAME}"
+          grep -Eq 'versionName "0\.7\.(1|2)-rc1"' app/build.gradle
+
+      - name: Apply Gambatte libretro ABI fix
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path("app/src/main/cpp/retrolink_native.cpp")
+          s = p.read_text()
+
+          pairs = [
+              (
+          '''        case RETRO_ENVIRONMENT_GET_OVERSCAN:
+              *reinterpret_cast<bool*>(data) = false;
+              return true;''',
+          '''        case RETRO_ENVIRONMENT_GET_OVERSCAN:
+              if (!data) return false;
+              *reinterpret_cast<bool*>(data) = false;
+              return true;'''
+              ),
+              (
+          '''        case RETRO_ENVIRONMENT_GET_CAN_DUPE:
+              *reinterpret_cast<bool*>(data) = true;
+              return true;''',
+          '''        case RETRO_ENVIRONMENT_GET_CAN_DUPE:
+              if (!data) return false;
+              *reinterpret_cast<bool*>(data) = true;
+              return true;'''
+              ),
+              (
+          '''        case RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE:
+              *reinterpret_cast<bool*>(data) = false;
+              return true;''',
+          '''        case RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE:
+              if (!data) return false;
+              *reinterpret_cast<bool*>(data) = false;
+              return true;'''
+              ),
+              (
+          '''        case RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION:
+              *reinterpret_cast<unsigned*>(data) = 0; // obliga al fallback legacy SET_VARIABLES
+              return true;''',
+          '''        case RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION:
+              if (!data) return false;
+              *reinterpret_cast<unsigned*>(data) = 0; // obliga al fallback legacy SET_VARIABLES
+              return true;'''
+              ),
+              (
+          '''        case RETRO_ENVIRONMENT_GET_INPUT_BITMASKS:
+              *reinterpret_cast<bool*>(data) = false;
+              return true;''',
+          '''        case RETRO_ENVIRONMENT_GET_INPUT_BITMASKS:
+              // Gambatte consulta esta capacidad con data == NULL.
+              // v0.7.1 desreferenciaba ese NULL durante retro_init y podía cerrar la Activity.
+              // RetroLink usa input_state por botón, por lo que anunciamos correctamente
+              // que no soportamos el retorno de bitmask global.
+              return false;'''
+              ),
+              (
+          '''        case RETRO_ENVIRONMENT_GET_LANGUAGE:
+              *reinterpret_cast<unsigned*>(data) = RETRO_LANGUAGE_ENGLISH;
+              return true;''',
+          '''        case RETRO_ENVIRONMENT_GET_LANGUAGE:
+              if (!data) return false;
+              *reinterpret_cast<unsigned*>(data) = RETRO_LANGUAGE_ENGLISH;
+              return true;'''
+              ),
+              (
+          '''        case RETRO_ENVIRONMENT_GET_USERNAME:
+              *reinterpret_cast<const char**>(data) = "RetroLink";
+              return true;''',
+          '''        case RETRO_ENVIRONMENT_GET_USERNAME:
+              if (!data) return false;
+              *reinterpret_cast<const char**>(data) = "RetroLink";
+              return true;'''
+              )
+          ]
+
+          for old, new in pairs:
+              if old in s:
+                  s = s.replace(old, new, 1)
+
+          if "Gambatte consulta esta capacidad con data == NULL" not in s:
+              raise SystemExit("No se pudo aplicar el fix GET_INPUT_BITMASKS")
+          p.write_text(s)
+
+          build = Path("app/build.gradle")
+          bs = build.read_text()
+          if 'versionName "0.7.1-rc1"' in bs:
+              bs = bs.replace("versionCode 31", "versionCode 32", 1)
+              bs = bs.replace('versionName "0.7.1-rc1"', 'versionName "0.7.2-rc1"', 1)
+              build.write_text(bs)
+          elif 'versionName "0.7.2-rc1"' not in bs:
+              raise SystemExit("Versión base inesperada")
+          PY
+
+      - name: Static ABI validation
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, xml.etree.ElementTree as ET
+
+          for p in Path("app/src/main/res").rglob("*.xml"):
+              ET.parse(p)
+          ET.parse("app/src/main/AndroidManifest.xml")
+
+          native = Path("app/src/main/cpp/retrolink_native.cpp").read_text()
+          build = Path("app/build.gradle").read_text()
+          software = Path("app/src/main/java/cl/retrolink/app/SoftwareCoreView.java").read_text()
+          covers = Path("app/src/main/java/cl/retrolink/app/GameBoyCoverArtManager.java").read_text()
+
+          assert "case RETRO_ENVIRONMENT_GET_INPUT_BITMASKS:" in native
+          block = native.split("case RETRO_ENVIRONMENT_GET_INPUT_BITMASKS:",1)[1].split("#endif",1)[0]
+          assert "return false;" in block
+          assert "reinterpret_cast<bool*>(data)" not in block
+          assert "Gambatte consulta esta capacidad con data == NULL" in native
+          assert "nativeCopyVideoFrame" in software
+          assert "Nintendo%20-%20Game%20Boy/Named_Boxarts" in covers
+          assert "Nintendo%20-%20Game%20Boy%20Color/Named_Boxarts" in covers
+          assert 'versionCode 32' in build
+          assert 'versionName "0.7.2-rc1"' in build
+
+          ids=set()
+          for p in Path("app/src/main/res").rglob("*.xml"):
+              ids.update(re.findall(r'@\+id/([A-Za-z0-9_]+)', p.read_text(errors="ignore")))
+          refs=set()
+          for p in Path("app/src/main/java").rglob("*.java"):
+              refs.update(re.findall(r'R\.id\.([A-Za-z0-9_]+)', p.read_text(errors="ignore")))
+          missing=sorted(refs-ids)
+          assert not missing, f"Missing R.id: {missing}"
+          print("v0.7.2 Gambatte ABI static validation PASS")
+          PY
+
+      - name: Commit v0.7.2 source
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app
+          if git diff --cached --quiet; then
+            echo "v0.7.2 already present."
+          else
+            git commit -m "fix(v0.7.2): handle Gambatte input bitmask query safely"
+            git push origin "${BRANCH_NAME}"
+          fi
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle 9.4.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.4.1"
+
+      - name: Install Android SDK NDK CMake
+        shell: bash
+        run: |
+          set -euxo pipefail
+          SDKMANAGER=/usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER"             "platform-tools"             "platforms;android-36"             "build-tools;36.0.0"             "ndk;${NDK_VERSION}"             "cmake;3.22.1"
+
+      - name: Build pinned N64 core
+        shell: bash
+        run: |
+          set -euxo pipefail
+          rm -rf n64core
+          git init n64core
+          cd n64core
+          git remote add origin https://github.com/libretro/mupen64plus-libretro-nx.git
+          git fetch --depth 1 origin "${N64_CORE_SHA}"
+          git checkout --detach FETCH_HEAD
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("libretro/jni/Android.mk")
+          s=p.read_text()
+          old="LOCAL_MODULE           := retro"
+          assert old in s
+          p.write_text(s.replace(old,"LOCAL_MODULE           := retro_n64",1))
+          PY
+          export NDK_ROOT="${ANDROID_SDK_ROOT}/ndk/${NDK_VERSION}"
+          cd libretro/jni
+          "${NDK_ROOT}/ndk-build" -j2             NDK_PROJECT_PATH=.             NDK_APPLICATION_MK=Application.mk             APP_BUILD_SCRIPT=Android.mk             APP_ABI=arm64-v8a             GLES3=1
+          test -f libs/arm64-v8a/libretro_n64.so
+
+      - name: Install N64 core and ABI
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p app/src/main/jniLibs/arm64-v8a app/src/main/cpp
+          cp n64core/libretro/jni/libs/arm64-v8a/libretro_n64.so app/src/main/jniLibs/arm64-v8a/libretro_n64.so
+          cp n64core/libretro-common/include/libretro.h app/src/main/cpp/libretro.h
+
+      - name: Install and inspect Gambatte ARM64
+        shell: bash
+        run: |
+          set -euxo pipefail
+          rm -rf "$RUNNER_TEMP/gambatte"
+          mkdir -p "$RUNNER_TEMP/gambatte"
+          curl -fL --retry 4 --retry-delay 3 "$GAMBATTE_URL" -o "$RUNNER_TEMP/gambatte.zip"
+          unzip -q "$RUNNER_TEMP/gambatte.zip" -d "$RUNNER_TEMP/gambatte"
+          CORE="$(find "$RUNNER_TEMP/gambatte" -type f -name '*gambatte*.so' | head -n1)"
+          test -n "$CORE"
+          cp "$CORE" app/src/main/jniLibs/arm64-v8a/libretro_gambatte.so
+          test -s app/src/main/jniLibs/arm64-v8a/libretro_gambatte.so
+          file app/src/main/jniLibs/arm64-v8a/libretro_gambatte.so
+          readelf -Ws app/src/main/jniLibs/arm64-v8a/libretro_gambatte.so | grep ' retro_init$'
+          readelf -Ws app/src/main/jniLibs/arm64-v8a/libretro_gambatte.so | grep ' retro_run$'
+          readelf -Ws app/src/main/jniLibs/arm64-v8a/libretro_gambatte.so | grep ' retro_load_game$'
+
+      - name: Build APK
+        shell: bash
+        run: |
+          set -euxo pipefail
+          gradle --no-daemon :app:assembleDebug --stacktrace
+
+      - name: Validate APK
+        shell: bash
+        run: |
+          set -euxo pipefail
+          APK=app/build/outputs/apk/debug/app-debug.apk
+          test -f "$APK"
+          unzip -l "$APK" | grep 'lib/arm64-v8a/libretro_n64.so'
+          unzip -l "$APK" | grep 'lib/arm64-v8a/libretro_gambatte.so'
+          unzip -l "$APK" | grep 'lib/arm64-v8a/libretrolink_native.so'
+          grep -q 'versionName "0.7.2-rc1"' app/build.gradle
+          grep -q 'Gambatte consulta esta capacidad con data == NULL' app/src/main/cpp/retrolink_native.cpp
+          grep -q 'GameBoyCoverArtManager' app/src/main/java/cl/retrolink/app/GameBoyLibraryActivity.java
+
+      - name: Prepare APK
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cp app/build/outputs/apk/debug/app-debug.apk RetroLink-v0.7.2-gambatte-abi-fix-rc1-debug.apk
+          sha256sum RetroLink-v0.7.2-gambatte-abi-fix-rc1-debug.apk             | tee RetroLink-v0.7.2-gambatte-abi-fix-rc1-debug.sha256
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: RetroLink-v0.7.2-gambatte-abi-fix-rc1
+          path: |
+            RetroLink-v0.7.2-gambatte-abi-fix-rc1-debug.apk
+            RetroLink-v0.7.2-gambatte-abi-fix-rc1-debug.sha256
+          if-no-files-found: error
+          retention-days: 14

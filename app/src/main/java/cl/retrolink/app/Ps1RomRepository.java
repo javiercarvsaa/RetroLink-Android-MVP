@@ -77,7 +77,7 @@ public final class Ps1RomRepository {
             File marker = new File(folder, LAUNCH_FILE);
             if (!marker.isFile()) continue;
             try {
-                String name = Files.readString(marker.toPath(), StandardCharsets.UTF_8).trim();
+                String name = new String(Files.readAllBytes(marker.toPath()), StandardCharsets.UTF_8).trim();
                 if (name.isEmpty()) continue;
                 File launch = new File(folder, name);
                 if (launch.isFile()) out.add(describe(launch, name));
@@ -120,8 +120,8 @@ public final class Ps1RomRepository {
 
         try {
             for (Source source : sources) copyUri(c, source.uri, new File(folder, source.name));
-            Files.writeString(new File(folder, LAUNCH_FILE).toPath(),
-                    primary.name, StandardCharsets.UTF_8);
+            Files.write(new File(folder, LAUNCH_FILE).toPath(),
+                    primary.name.getBytes(StandardCharsets.UTF_8));
 
             File launch = new File(folder, primary.name);
             ImportedGame game = describe(launch, primary.name);

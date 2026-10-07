@@ -1,0 +1,380 @@
+name: RetroLink v0.7.5 Real Game Boy Multiplayer
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/build-retrolink-v0.7.5-real-gameboy-multiplayer.yml"
+
+permissions:
+  contents: write
+
+env:
+  BRANCH_NAME: codex/v0.6-ui-controls
+  ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+  ANDROID_HOME: /usr/local/lib/android/sdk
+  NDK_VERSION: 28.2.13676358
+  N64_CORE_SHA: 12edd2c74a517ff86dfa8cfc71ad75e4c10486d5
+  GAMBATTE_SHA: d9d6cd06382d1ced30de34d56d3609452323dab1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Switch to development branch
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git fetch origin "${BRANCH_NAME}"
+          git switch -C "${BRANCH_NAME}" "origin/${BRANCH_NAME}"
+          grep -Eq 'versionName "0\.7\.(4|5)-rc1"' app/build.gradle
+
+      - name: Apply v0.7.5 real Game Boy multiplayer
+        shell: bash
+        run: |
+          set -euxo pipefail
+          if grep -q 'versionName "0.7.5-rc1"' app/build.gradle \
+             && test -f app/src/main/java/cl/retrolink/app/GameBoyRomTransfer.java; then
+            echo "v0.7.5 source already present."
+            exit 0
+          fi
+
+          cat > "$RUNNER_TEMP/v075_payload.b64" <<'PAYLOAD'
+          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
+          PAYLOAD
+          base64 -d "$RUNNER_TEMP/v075_payload.b64" > "$RUNNER_TEMP/v075_payload.tar.gz"
+          tar -xzf "$RUNNER_TEMP/v075_payload.tar.gz"
+          python3 apply_v075.py
+          rm -f apply_v075.py
+
+      - name: Static multiplayer validation
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          import xml.etree.ElementTree as ET
+
+          transfer = Path("app/src/main/java/cl/retrolink/app/GameBoyRomTransfer.java").read_text()
+          room = Path("app/src/main/java/cl/retrolink/app/GameBoyLinkActivity.java").read_text()
+          library = Path("app/src/main/java/cl/retrolink/app/GameBoyLibraryActivity.java").read_text()
+          game = Path("app/src/main/java/cl/retrolink/app/IntegratedGameActivity.java").read_text()
+          controller = Path("app/src/main/java/cl/retrolink/app/ControllerActivity.java").read_text()
+          build = Path("app/build.gradle").read_text()
+
+          # P2 no depende de una ROM local.
+          assert 'P2 no necesita importar ni seleccionar ROM' in room
+          assert 'P2 puede entrar a Multiplayer sin ROM' in library
+          assert 'btnGbMultiplayer).setEnabled(true)' in library
+          assert 'GameBoyLinkActivity.EXTRA_AUTO_JOIN_IP' in controller
+          assert 'Selecciona el mismo juego GB/GBC para entrar como P2' not in controller
+
+          # P1 transfiere la ROM y P2 verifica exactamente el archivo recibido.
+          assert 'public static final int PORT = 56399;' in transfer
+          assert 'MessageDigest.getInstance("SHA-256")' in transfer
+          assert 'out.writeUTF("SEND")' in transfer
+          assert '"READY|" + expectedSha' in transfer
+          assert '"HAVE|" + expectedSha' in transfer
+          assert 'postClientRomReady' in transfer
+          assert 'postClientStart' in transfer
+          assert 'hostCoreReady.await' in transfer
+
+          # Gambatte P1 debe estar READY antes de autorizar el arranque de P2.
+          assert 'EXTRA_GB_LINK_READY_RECEIVER' in game
+          assert 'linkReadyReceiver.send(LINK_CORE_READY' in game
+          assert 'transfer.signalHostCoreReady()' in room
+          assert 'buildGameIntent("Network Server"' in room
+          assert 'buildGameIntent("Network Client"' in room
+          assert 'private static final int LINK_PORT = 56400;' in room
+
+          # No vuelve a aparecer el launcher manual que causaba sesiones 1P paralelas.
+          assert 'launch.setVisibility(View.GONE)' in room
+
+          assert 'versionCode 35' in build
+          assert 'versionName "0.7.5-rc1"' in build
+
+          for p in Path("app/src/main/res").rglob("*.xml"):
+              ET.parse(p)
+          ET.parse("app/src/main/AndroidManifest.xml")
+
+          # Basic structural sanity for the two new/replaced Java classes.
+          for src in (transfer, room):
+              assert src.count("{") == src.count("}"), "Unbalanced Java braces"
+
+          print("v0.7.5 REAL Game Boy multiplayer static validation PASS")
+          PY
+
+      - name: Commit v0.7.5 source
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app
+          if git diff --cached --quiet; then
+            echo "v0.7.5 already committed."
+          else
+            git commit -m "feat(v0.7.5): transfer P1 Game Boy ROM to P2 and synchronize Game Link"
+            git push origin "${BRANCH_NAME}"
+          fi
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle 9.4.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.4.1"
+
+      - name: Install Android SDK NDK CMake
+        shell: bash
+        run: |
+          set -euxo pipefail
+          SDKMANAGER=/usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" \
+            "platform-tools" \
+            "platforms;android-36" \
+            "build-tools;36.0.0" \
+            "ndk;${NDK_VERSION}" \
+            "cmake;3.22.1"
+
+      - name: Build pinned N64 core
+        shell: bash
+        run: |
+          set -euxo pipefail
+          rm -rf n64core
+          git init n64core
+          cd n64core
+          git remote add origin https://github.com/libretro/mupen64plus-libretro-nx.git
+          git fetch --depth 1 origin "${N64_CORE_SHA}"
+          git checkout --detach FETCH_HEAD
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("libretro/jni/Android.mk")
+          s=p.read_text()
+          old="LOCAL_MODULE           := retro"
+          assert old in s
+          p.write_text(s.replace(old,"LOCAL_MODULE           := retro_n64",1))
+          PY
+          export NDK_ROOT="${ANDROID_SDK_ROOT}/ndk/${NDK_VERSION}"
+          cd libretro/jni
+          "${NDK_ROOT}/ndk-build" -j2 \
+            NDK_PROJECT_PATH=. \
+            NDK_APPLICATION_MK=Application.mk \
+            APP_BUILD_SCRIPT=Android.mk \
+            APP_ABI=arm64-v8a \
+            GLES3=1
+          test -f libs/arm64-v8a/libretro_n64.so
+
+      - name: Install N64 core and libretro ABI
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p app/src/main/jniLibs/arm64-v8a app/src/main/cpp
+          cp n64core/libretro/jni/libs/arm64-v8a/libretro_n64.so app/src/main/jniLibs/arm64-v8a/libretro_n64.so
+          cp n64core/libretro-common/include/libretro.h app/src/main/cpp/libretro.h
+
+      - name: Fetch pinned Gambatte
+        shell: bash
+        run: |
+          set -euxo pipefail
+          rm -rf gambattecore
+          git init gambattecore
+          cd gambattecore
+          git remote add origin https://github.com/libretro/gambatte-libretro.git
+          git fetch --depth 1 origin "${GAMBATTE_SHA}"
+          git checkout --detach FETCH_HEAD
+          test "$(git rev-parse HEAD)" = "${GAMBATTE_SHA}"
+          test -f libgambatte/libretro/jni/Android.mk
+          grep -q 'HAVE_NETWORK := 1' libgambatte/libretro/jni/Android.mk
+          grep -q 'net_serial.cpp' Makefile.common
+
+      - name: Build network-enabled Gambatte ARM64
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("gambattecore/libgambatte/libretro/jni/Android.mk")
+          s=p.read_text()
+          old="LOCAL_MODULE    := retro"
+          assert old in s
+          p.write_text(s.replace(old,"LOCAL_MODULE    := retro_gambatte",1))
+          PY
+          export NDK_ROOT="${ANDROID_SDK_ROOT}/ndk/${NDK_VERSION}"
+          cd gambattecore/libgambatte/libretro/jni
+          "${NDK_ROOT}/ndk-build" -j2 \
+            NDK_PROJECT_PATH=. \
+            NDK_APPLICATION_MK=Application.mk \
+            APP_BUILD_SCRIPT=Android.mk \
+            APP_ABI=arm64-v8a
+          test -s libs/arm64-v8a/libretro_gambatte.so
+          strings libs/arm64-v8a/libretro_gambatte.so | grep -F 'gambatte_gb_link_mode'
+          strings libs/arm64-v8a/libretro_gambatte.so | grep -F 'Network Server'
+          strings libs/arm64-v8a/libretro_gambatte.so | grep -F 'Network Client'
+          strings libs/arm64-v8a/libretro_gambatte.so | grep -F 'GameLink network server started'
+
+      - name: Install Gambatte core
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cp gambattecore/libgambatte/libretro/jni/libs/arm64-v8a/libretro_gambatte.so \
+             app/src/main/jniLibs/arm64-v8a/libretro_gambatte.so
+
+      - name: Build APK
+        shell: bash
+        run: |
+          set -euxo pipefail
+          gradle --no-daemon :app:assembleDebug --stacktrace
+
+      - name: Validate APK
+        shell: bash
+        run: |
+          set -euxo pipefail
+          APK=app/build/outputs/apk/debug/app-debug.apk
+          test -f "$APK"
+          unzip -l "$APK" | grep 'lib/arm64-v8a/libretro_n64.so'
+          unzip -l "$APK" | grep 'lib/arm64-v8a/libretro_gambatte.so'
+          unzip -l "$APK" | grep 'lib/arm64-v8a/libretrolink_native.so'
+          grep -q 'versionName "0.7.5-rc1"' app/build.gradle
+          grep -q 'GameBoyRomTransfer.PORT' app/src/main/java/cl/retrolink/app/GameBoyLinkActivity.java
+          grep -q 'LINK_CORE_READY' app/src/main/java/cl/retrolink/app/IntegratedGameActivity.java
+
+      - name: Prepare APK
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cp app/build/outputs/apk/debug/app-debug.apk RetroLink-v0.7.5-real-gameboy-multiplayer-rc1-debug.apk
+          sha256sum RetroLink-v0.7.5-real-gameboy-multiplayer-rc1-debug.apk \
+            | tee RetroLink-v0.7.5-real-gameboy-multiplayer-rc1-debug.sha256
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: RetroLink-v0.7.5-real-gameboy-multiplayer-rc1
+          path: |
+            RetroLink-v0.7.5-real-gameboy-multiplayer-rc1-debug.apk
+            RetroLink-v0.7.5-real-gameboy-multiplayer-rc1-debug.sha256
+          if-no-files-found: error
+          retention-days: 14

@@ -37,6 +37,11 @@
             android:screenOrientation="sensorLandscape" />
 
         <activity
+            android:name=".GameBoyLinkActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape" />
+
+        <activity
             android:name=".GameBoyLibraryActivity"
             android:exported="false"
             android:screenOrientation="sensorLandscape" />

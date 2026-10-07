@@ -44,12 +44,17 @@ public class HostBleManager {
     private BluetoothLeAdvertiser advertiser;
     private final Map<BluetoothDevice, Integer> players = Collections.synchronizedMap(new LinkedHashMap<>());
     private boolean advertising;
+    private int maxPlayerNumber = 4;
 
     public HostBleManager(Context context, Listener listener) {
         this.context = context.getApplicationContext();
         this.listener = listener;
         btManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
         adapter = btManager != null ? btManager.getAdapter() : null;
+    }
+
+    public void setMaxPlayerNumber(int maxPlayerNumber) {
+        this.maxPlayerNumber = Math.max(2, Math.min(4, maxPlayerNumber));
     }
 
     @SuppressLint("MissingPermission")
@@ -129,7 +134,7 @@ public class HostBleManager {
         }
     };
 
-    private synchronized int allocatePlayer(BluetoothDevice device) { Integer existing=players.get(device); if(existing!=null)return existing; for(int p=2;p<=4;p++) if(!players.containsValue(p)){players.put(device,p);return p;} return 0; }
+    private synchronized int allocatePlayer(BluetoothDevice device) { Integer existing=players.get(device); if(existing!=null)return existing; for(int p=2;p<=maxPlayerNumber;p++) if(!players.containsValue(p)){players.put(device,p);return p;} return 0; }
     @SuppressLint("MissingPermission") private String safeDeviceLabel(BluetoothDevice device) { try{String n=device.getName(); if(n!=null&&!n.trim().isEmpty())return n;}catch(Exception ignored){} String a=device.getAddress(); return a==null?"Android":"Android …"+a.substring(Math.max(0,a.length()-5)); }
     private void status(String s){main.post(()->listener.onStatus(s));} private void log(String s){main.post(()->listener.onLog(s));}
 }

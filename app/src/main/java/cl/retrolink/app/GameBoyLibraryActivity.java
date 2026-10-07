@@ -41,6 +41,11 @@ public class GameBoyLibraryActivity extends Activity {
         findViewById(R.id.btnGbBack).setOnClickListener(v -> finish());
         findViewById(R.id.btnGbImport).setOnClickListener(v -> pickRom());
         findViewById(R.id.btnGbPlay).setOnClickListener(v -> play());
+        findViewById(R.id.btnGbMultiplayer).setOnClickListener(v -> {
+            if (selected == null || !selected.file.isFile()) { pickRom(); return; }
+            GameBoyRomRepository.select(this, selected);
+            startActivity(new Intent(this, GameBoyLinkActivity.class));
+        });
         findViewById(R.id.btnGbRefreshCovers).setOnClickListener(v -> {
             GameBoyCoverArtManager.invalidateIndexes(this);
             refresh();
@@ -162,6 +167,8 @@ public class GameBoyLibraryActivity extends Activity {
         state.setText(has ? "● LISTO PARA JUGAR" : "○ SIN JUEGO SELECCIONADO");
         findViewById(R.id.btnGbPlay).setEnabled(has);
         findViewById(R.id.btnGbPlay).setAlpha(has ? 1f : 0.42f);
+        findViewById(R.id.btnGbMultiplayer).setEnabled(has);
+        findViewById(R.id.btnGbMultiplayer).setAlpha(has ? 1f : 0.42f);
         refreshSelectedCoverOnly();
     }
 

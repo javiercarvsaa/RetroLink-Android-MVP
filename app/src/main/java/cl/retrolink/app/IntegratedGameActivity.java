@@ -18,6 +18,9 @@ public class IntegratedGameActivity extends Activity implements EmulatorSurfaceV
     public static final String EXTRA_CORE_ID = "core_id";
     public static final String EXTRA_ROM_PATH = "rom_path";
     public static final String EXTRA_GAME_TITLE = "game_title";
+    public static final String EXTRA_GB_LINK_MODE = "gb_link_mode";
+    public static final String EXTRA_GB_LINK_HOST = "gb_link_host";
+    public static final String EXTRA_GB_LINK_PORT = "gb_link_port";
 
     private SoftwareCoreView surface;
     private TextView title, status, stats;
@@ -36,6 +39,9 @@ public class IntegratedGameActivity extends Activity implements EmulatorSurfaceV
         core = CoreRegistry.byId(getIntent().getStringExtra(EXTRA_CORE_ID));
         String romPath = getIntent().getStringExtra(EXTRA_ROM_PATH);
         String gameTitle = getIntent().getStringExtra(EXTRA_GAME_TITLE);
+        String gbLinkMode = getIntent().getStringExtra(EXTRA_GB_LINK_MODE);
+        String gbLinkHost = getIntent().getStringExtra(EXTRA_GB_LINK_HOST);
+        int gbLinkPort = getIntent().getIntExtra(EXTRA_GB_LINK_PORT, 56400);
         if (romPath == null || !new File(romPath).isFile()) {
             Toast.makeText(this, "Juego no disponible", Toast.LENGTH_LONG).show();
             finish();
@@ -70,6 +76,11 @@ public class IntegratedGameActivity extends Activity implements EmulatorSurfaceV
         saveDir.mkdirs();
 
         String corePath = getApplicationInfo().nativeLibraryDir + "/" + core.libraryFile;
+        if (core == CoreRegistry.GAME_BOY && gbLinkMode != null && !gbLinkMode.trim().isEmpty()) {
+            surface.configureGameBoyLink(gbLinkMode, gbLinkHost, gbLinkPort);
+            status.setText(core.system + " · " +
+                    ("Network Server".equals(gbLinkMode) ? "P1 HOST GAME LINK" : "P2 CLIENT GAME LINK"));
+        }
         surface.configure(core, corePath, romPath, systemDir.getAbsolutePath(), saveDir.getAbsolutePath(), this);
         setHudVisible(false);
     }

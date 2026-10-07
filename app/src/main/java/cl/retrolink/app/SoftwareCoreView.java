@@ -30,6 +30,9 @@ public final class SoftwareCoreView extends SurfaceView implements SurfaceHolder
     private volatile boolean paused;
     private volatile boolean ready;
     private volatile boolean resetRequested;
+    private volatile String gameBoyLinkMode = "Not Connected";
+    private volatile String gameBoyLinkHost = "";
+    private volatile int gameBoyLinkPort = 56400;
     private Thread thread;
     private CountDownLatch stopped = new CountDownLatch(1);
 
@@ -59,6 +62,34 @@ public final class SoftwareCoreView extends SurfaceView implements SurfaceHolder
         this.listener = listener;
         configured.set(true);
         maybeStart();
+    }
+
+    public synchronized void configureGameBoyLink(String mode, String host, int port) {
+        gameBoyLinkMode = mode == null ? "Not Connected" : mode;
+        gameBoyLinkHost = host == null ? "" : host.trim();
+        gameBoyLinkPort = Math.max(56400, Math.min(56420, port));
+    }
+
+    private void applyGameBoyLinkOptions() {
+        if (core != CoreRegistry.GAME_BOY || "Not Connected".equals(gameBoyLinkMode)) return;
+        NativeLibretro.nativeSetFrontendOption("gambatte_show_gb_link_settings", "enabled");
+        NativeLibretro.nativeSetFrontendOption("gambatte_gb_link_mode", gameBoyLinkMode);
+        NativeLibretro.nativeSetFrontendOption("gambatte_gb_link_network_port", String.valueOf(gameBoyLinkPort));
+        if (!"Network Client".equals(gameBoyLinkMode) || gameBoyLinkHost.isEmpty()) return;
+        String[] octets = gameBoyLinkHost.split("\\.");
+        if (octets.length != 4) return;
+        int index = 1;
+        for (String octet : octets) {
+            int value;
+            try { value = Integer.parseInt(octet); }
+            catch (Exception e) { return; }
+            if (value < 0 || value > 255) return;
+            String padded = String.format(java.util.Locale.US, "%03d", value);
+            for (int i = 0; i < 3; i++) {
+                NativeLibretro.nativeSetFrontendOption("gambatte_gb_link_network_server_ip_" + index, String.valueOf(padded.charAt(i)));
+                index++;
+            }
+        }
     }
 
     public boolean isCoreReady() { return ready; }
@@ -115,7 +146,10 @@ public final class SoftwareCoreView extends SurfaceView implements SurfaceHolder
     private void runCore() {
         try {
             NativeLibretro.nativeClearFrontendOptions();
-            postStats("Etapa 2/5 · cargando " + core.shortSystem + " · software framebuffer");
+            applyGameBoyLinkOptions();
+            String linkLabel = "Not Connected".equals(gameBoyLinkMode) ? "" :
+                    (" · " + ("Network Server".equals(gameBoyLinkMode) ? "LINK SERVER" : "LINK CLIENT"));
+            postStats("Etapa 2/5 · cargando " + core.shortSystem + " · software framebuffer" + linkLabel);
             String error = NativeLibretro.nativeInit(corePath, romPath, systemDir, saveDir);
             if (error != null && !error.isEmpty()) {
                 postError(error + " · etapa=" + NativeLibretro.nativeGetStage());

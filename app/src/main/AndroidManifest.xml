@@ -37,6 +37,27 @@
             android:screenOrientation="sensorLandscape" />
 
         <activity
+            android:name=".Atari2600ControllerActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape" />
+
+        <activity
+            android:name=".Atari2600GameActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape"
+            android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity
+            android:name=".Atari2600RoomActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape" />
+
+        <activity
+            android:name=".Atari2600LibraryActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape" />
+
+        <activity
             android:name=".SnesControllerActivity"
             android:exported="false"
             android:screenOrientation="sensorLandscape" />

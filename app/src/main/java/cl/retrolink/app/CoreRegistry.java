@@ -46,17 +46,23 @@ public final class CoreRegistry {
             "snes.snes9x", "Super Nintendo Entertainment System", "SNES",
             "libretro_snes9x.so", "sfc|smc", true, false);
 
+    public static final Core ATARI_2600 = new Core(
+            "atari2600.stella2014", "Atari 2600", "ATARI 2600",
+            "libretro_atari2600.so", "a26", true, false);
+
     private CoreRegistry() {}
 
     public static Core byId(String id) {
         if (GAME_BOY.id.equals(id)) return GAME_BOY;
         if (SNES.id.equals(id)) return SNES;
+        if (ATARI_2600.id.equals(id)) return ATARI_2600;
         return N64;
     }
 
     public static Core forFileName(String name) {
         if (GAME_BOY.supportsFileName(name)) return GAME_BOY;
         if (SNES.supportsFileName(name)) return SNES;
+        if (ATARI_2600.supportsFileName(name)) return ATARI_2600;
         if (N64.supportsFileName(name)) return N64;
         return null;
     }

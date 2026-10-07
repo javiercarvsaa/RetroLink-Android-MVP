@@ -62,6 +62,7 @@ public class HostBleManager {
         String value = sessionType == null ? "" : sessionType.trim().toUpperCase(java.util.Locale.US);
         if ("GBLINK".equals(value)) this.sessionType = "GBLINK";
         else if ("SNES".equals(value)) this.sessionType = "SNES";
+        else if ("ATARI2600".equals(value)) this.sessionType = "ATARI2600";
         else this.sessionType = "N64";
     }
 
@@ -111,7 +112,9 @@ public class HostBleManager {
                 ? "Host activo · Game Boy Link P1"
                 : ("SNES".equals(sessionType)
                     ? "Host activo · SNES P1 + mando remoto"
-                    : "Host activo · BLE + pantalla distribuida")); log("Publicidad BLE iniciada."); }
+                    : ("ATARI2600".equals(sessionType)
+                        ? "Host activo · Atari 2600 P1 + joystick remoto"
+                        : "Host activo · BLE + pantalla distribuida"))); log("Publicidad BLE iniciada."); }
         @Override public void onStartFailure(int errorCode) { advertising = false; status("Error al anunciar Host BLE (" + errorCode + ")."); log("Advertise failure=" + errorCode); }
     };
 

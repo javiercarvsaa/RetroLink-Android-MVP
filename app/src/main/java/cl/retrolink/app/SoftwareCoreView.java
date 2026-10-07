@@ -246,7 +246,8 @@ public final class SoftwareCoreView extends SurfaceView implements SurfaceHolder
         bitmap.setPixels(pixels, 0, w, 0, 0, w, h);
 
         // SNES comparte una consola/pantalla; P2 recibe el framebuffer del Host.
-        if (core == CoreRegistry.SNES && FrameStreamServer.hasRemoteClients()) {
+        if ((core == CoreRegistry.SNES || core == CoreRegistry.ATARI_2600)
+                && FrameStreamServer.hasRemoteClients()) {
             try {
                 Bitmap remote = bitmap.copy(Bitmap.Config.ARGB_8888, false);
                 if (remote != null) EmulatorFrameHub.publishOwned(remote);

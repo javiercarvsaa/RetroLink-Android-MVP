@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/atariControllerRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:clipChildren="false"
+    android:splitMotionEvents="true">
+
+    <cl.retrolink.app.RemoteFrameView
+        android:id="@+id/atariRemoteFrame"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <cl.retrolink.app.VirtualStickView
+        android:id="@+id/virtualStick"
+        android:layout_width="190dp"
+        android:layout_height="190dp"
+        android:layout_gravity="bottom|left"
+        android:layout_marginLeft="18dp"
+        android:layout_marginBottom="14dp" />
+
+    <Button
+        android:id="@+id/btnSelect"
+        android:layout_width="92dp"
+        android:layout_height="48dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginRight="104dp"
+        android:layout_marginBottom="16dp"
+        android:alpha="0.76"
+        android:background="@drawable/btn_neon_dark"
+        android:text="SELECT"
+        android:textColor="@color/retro_text"
+        android:textSize="9sp" />
+
+    <Button
+        android:id="@+id/btnReset"
+        android:layout_width="92dp"
+        android:layout_height="48dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginLeft="104dp"
+        android:layout_marginBottom="16dp"
+        android:alpha="0.76"
+        android:background="@drawable/btn_neon_dark"
+        android:text="RESET"
+        android:textColor="@color/retro_text"
+        android:textSize="9sp" />
+
+    <Button
+        android:id="@+id/btnFire"
+        android:layout_width="108dp"
+        android:layout_height="108dp"
+        android:layout_gravity="bottom|right"
+        android:layout_marginRight="36dp"
+        android:layout_marginBottom="70dp"
+        android:alpha="0.84"
+        android:background="@drawable/btn_overlay"
+        android:text="FIRE"
+        android:textColor="#FFFFFFFF"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:id="@+id/atariControllerTopBar"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_gravity="top"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="7dp"
+        android:layout_marginRight="62dp"
+        android:background="@drawable/panel_neon_glass"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingLeft="12dp"
+        android:paddingRight="8dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/txtAtariControllerPlayer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="PLAYER 2 · ATARI 2600"
+                android:textColor="@color/retro_text"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtAtariControllerStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Buscando sala…"
+                android:textColor="@color/retro_green"
+                android:textSize="8sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtAtariControllerVideo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Misma red Wi-Fi/hotspot"
+                android:textColor="#A9C4DF"
+                android:textSize="7sp" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnAtariReconnect"
+            android:layout_width="96dp"
+            android:layout_height="42dp"
+            android:background="@drawable/btn_neon_cyan"
+            android:text="RECONECTAR"
+            android:textColor="@color/retro_text"
+            android:textSize="7sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnAtariRemoteExit"
+            android:layout_width="76dp"
+            android:layout_height="42dp"
+            android:layout_marginLeft="6dp"
+            android:background="@drawable/btn_neon_magenta"
+            android:text="SALIR"
+            android:textColor="@color/retro_text"
+            android:textSize="8sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnAtariControllerHud"
+        android:layout_width="46dp"
+        android:layout_height="46dp"
+        android:layout_gravity="top|right"
+        android:layout_marginTop="9dp"
+        android:layout_marginRight="9dp"
+        android:background="@drawable/btn_neon_dark"
+        android:text="×"
+        android:textColor="@color/retro_text"
+        android:textSize="18sp" />
+</FrameLayout>

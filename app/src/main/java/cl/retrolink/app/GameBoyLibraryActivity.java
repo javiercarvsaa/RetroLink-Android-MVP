@@ -42,8 +42,8 @@ public class GameBoyLibraryActivity extends Activity {
         findViewById(R.id.btnGbImport).setOnClickListener(v -> pickRom());
         findViewById(R.id.btnGbPlay).setOnClickListener(v -> play());
         findViewById(R.id.btnGbMultiplayer).setOnClickListener(v -> {
-            if (selected == null || !selected.file.isFile()) { pickRom(); return; }
-            GameBoyRomRepository.select(this, selected);
+            if (selected != null && selected.file.isFile())
+                GameBoyRomRepository.select(this, selected);
             startActivity(new Intent(this, GameBoyLinkActivity.class));
         });
         findViewById(R.id.btnGbRefreshCovers).setOnClickListener(v -> {
@@ -167,8 +167,9 @@ public class GameBoyLibraryActivity extends Activity {
         state.setText(has ? "● LISTO PARA JUGAR" : "○ SIN JUEGO SELECCIONADO");
         findViewById(R.id.btnGbPlay).setEnabled(has);
         findViewById(R.id.btnGbPlay).setAlpha(has ? 1f : 0.42f);
-        findViewById(R.id.btnGbMultiplayer).setEnabled(has);
-        findViewById(R.id.btnGbMultiplayer).setAlpha(has ? 1f : 0.42f);
+        // P2 puede entrar a Multiplayer sin ROM: P1 la transfiere por RetroLink.
+        findViewById(R.id.btnGbMultiplayer).setEnabled(true);
+        findViewById(R.id.btnGbMultiplayer).setAlpha(1f);
         refreshSelectedCoverOnly();
     }
 

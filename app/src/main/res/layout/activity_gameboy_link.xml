@@ -105,7 +105,7 @@
                     android:layout_height="0dp"
                     android:layout_weight="1"
                     android:layout_marginTop="10dp"
-                    android:text="Cada teléfono ejecuta su propia Game Boy. Bluetooth encuentra la sala y Wi‑Fi local emula el Cable Game Link."
+                    android:text="P1 selecciona el juego una sola vez. RetroLink envía y verifica la ROM en P2; después ambos teléfonos abren Gambatte y el Cable Game Link."
                     android:textColor="#789BC0"
                     android:textSize="8sp" />
 
@@ -199,7 +199,8 @@
                     android:alpha="0.42"
                     android:background="@drawable/btn_primary_gradient"
                     android:enabled="false"
-                    android:text="▶ INICIAR GAME LINK P1"
+                    android:text="SINCRONIZACIÓN AUTOMÁTICA"
+                    android:visibility="gone"
                     android:textColor="@color/retro_text"
                     android:textSize="9sp"
                     android:textStyle="bold" />

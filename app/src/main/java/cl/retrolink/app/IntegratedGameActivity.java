@@ -3,6 +3,7 @@ package cl.retrolink.app;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.ResultReceiver;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -21,6 +22,10 @@ public class IntegratedGameActivity extends Activity implements EmulatorSurfaceV
     public static final String EXTRA_GB_LINK_MODE = "gb_link_mode";
     public static final String EXTRA_GB_LINK_HOST = "gb_link_host";
     public static final String EXTRA_GB_LINK_PORT = "gb_link_port";
+    public static final String EXTRA_GB_LINK_READY_RECEIVER = "gb_link_ready_receiver";
+    public static final String RESULT_LINK_ERROR = "gb_link_ready_error";
+    public static final int LINK_CORE_READY = 1;
+    public static final int LINK_CORE_ERROR = -1;
 
     private SoftwareCoreView surface;
     private TextView title, status, stats;
@@ -29,6 +34,8 @@ public class IntegratedGameActivity extends Activity implements EmulatorSurfaceV
     private N64ControlBinder controls;
     private CoreRegistry.Core core;
     private boolean coreShutdown;
+    private ResultReceiver linkReadyReceiver;
+    private boolean linkReadyReported;
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
@@ -42,6 +49,7 @@ public class IntegratedGameActivity extends Activity implements EmulatorSurfaceV
         String gbLinkMode = getIntent().getStringExtra(EXTRA_GB_LINK_MODE);
         String gbLinkHost = getIntent().getStringExtra(EXTRA_GB_LINK_HOST);
         int gbLinkPort = getIntent().getIntExtra(EXTRA_GB_LINK_PORT, 56400);
+        linkReadyReceiver = (ResultReceiver) getIntent().getParcelableExtra(EXTRA_GB_LINK_READY_RECEIVER);
         if (romPath == null || !new File(romPath).isFile()) {
             Toast.makeText(this, "Juego no disponible", Toast.LENGTH_LONG).show();
             finish();
@@ -112,12 +120,22 @@ public class IntegratedGameActivity extends Activity implements EmulatorSurfaceV
         status.setText(core.system + " · " + coreInfo);
         stats.setText(String.format(java.util.Locale.US, "%.2f FPS · %d Hz · SOFTWARE SAFE", fps, sampleRate));
         Toast.makeText(this, core.shortSystem + " listo", Toast.LENGTH_SHORT).show();
+        if (linkReadyReceiver != null && !linkReadyReported) {
+            linkReadyReported = true;
+            linkReadyReceiver.send(LINK_CORE_READY, Bundle.EMPTY);
+        }
     }
 
     @Override public void onCoreError(String error) {
         status.setText("ERROR · " + error);
         setHudVisible(true);
         Toast.makeText(this, error, Toast.LENGTH_LONG).show();
+        if (linkReadyReceiver != null && !linkReadyReported) {
+            linkReadyReported = true;
+            Bundle result = new Bundle();
+            result.putString(RESULT_LINK_ERROR, error == null ? "" : error);
+            linkReadyReceiver.send(LINK_CORE_ERROR, result);
+        }
     }
 
     @Override public void onStats(String s) { stats.setText(s); }

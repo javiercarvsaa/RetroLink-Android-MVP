@@ -113,7 +113,11 @@ public class FrameStreamClient {
         int fps = Math.round(statsFrames * 1000f / Math.max(1L, elapsed));
         statsFrames = 0;
         statsStartMs = now;
-        status("Video LL · " + fps + " FPS · P" + player + (preCropped ? " PLAYER HQ" : " FULL")
+        // Si el Host todavía responde FULL mientras el usuario ya eligió PLAYER,
+        // reenviamos el comando y mantenemos un fallback local funcional.
+        if (playerView && !preCropped) setPlayerView(true);
+        String viewMode = preCropped ? " PLAYER HQ" : (playerView ? " PLAYER LOCAL" : " FULL");
+        status("Video LL · " + fps + " FPS · P" + player + viewMode
                 + (dk64Raw ? " · DK64 RAW" : " · RetroSR 2.2"));
     }
 

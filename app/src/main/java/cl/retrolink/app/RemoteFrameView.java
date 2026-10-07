@@ -176,15 +176,24 @@ public class RemoteFrameView extends View {
 
     private Rect sourceFor(Bitmap bitmap, boolean cropped) {
         if (bitmap == null || bitmap.isRecycled()) return new Rect(0, 0, 1, 1);
-        if (cropped && playerView) {
-            // v0.6.7 Remote Centering: el Host ya intenta retirar letterbox antes
-            // del JPEG, pero la compresión puede convertir negro puro en near-black
-            // y dejar una banda que v0.6.6 no lograba eliminar. Hacemos una segunda
-            // medición sobre el frame decodificado y usamos solo el contenido visible.
-            return manualViewportRect(trimDecodedBlackBands(bitmap));
+
+        // v0.6.11: el ajuste manual debe funcionar tanto cuando el Host entrega
+        // PLAYER HQ pre-recortado como cuando temporalmente sigue entregando FULL.
+        // Antes, X/Y/Zoom solo se aplicaban en preCropped=true: los valores de P2
+        // cambiaban en pantalla, pero el bitmap FULL ignoraba manualViewportRect().
+        if (!playerView) return new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+
+        Rect base;
+        if (cropped) {
+            // El Host ya enfocó al jugador; retiramos letterbox residual post-JPEG.
+            base = trimDecodedBlackBands(bitmap);
+        } else {
+            // Fallback autónomo del teléfono remoto. Selecciona su viewport desde
+            // el frame FULL y luego aplica exactamente el mismo X/Y/Zoom manual.
+            base = SplitScreenProfile.sourceRect(
+                    bitmap.getWidth(), bitmap.getHeight(), playerCount, player);
         }
-        if (cropped || !playerView) return new Rect(0,0,bitmap.getWidth(),bitmap.getHeight());
-        return SplitScreenProfile.sourceRect(bitmap.getWidth(), bitmap.getHeight(), playerCount, player);
+        return manualViewportRect(base);
     }
 
     /**

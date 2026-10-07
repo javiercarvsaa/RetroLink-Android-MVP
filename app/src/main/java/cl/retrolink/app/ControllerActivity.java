@@ -31,6 +31,7 @@ public class ControllerActivity extends Activity implements ControllerBleManager
     private final Handler main = new Handler(Looper.getMainLooper());
     private int player;
     private String lastHostIp = "";
+    private boolean redirectingToGameBoy;
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
@@ -169,7 +170,45 @@ public class ControllerActivity extends Activity implements ControllerBleManager
         main.postDelayed(() -> setHudVisible(RetroPreferences.gameHudVisible(this), false), 1200);
     }
 
+    @Override public void onSessionInfo(String sessionType, String ip) {
+        if (!"GBLINK".equalsIgnoreCase(sessionType) || redirectingToGameBoy) return;
+
+        redirectingToGameBoy = true;
+        if (video != null) video.stop();
+
+        GameBoyRomRepository.ImportedGame gb = GameBoyRomRepository.lastGame(this);
+        if (gb == null || !gb.file.isFile()) {
+            status.setText("Sala Game Boy Link detectada");
+            videoStatus.setText("Selecciona el mismo juego GB/GBC para entrar como P2");
+            inputStatus.setText("No se usará la pantalla remota N64");
+            Toast.makeText(this,
+                    "Sala GB/GBC detectada. Selecciona el mismo juego en Biblioteca Game Boy.",
+                    Toast.LENGTH_LONG).show();
+            if (ble != null) ble.disconnect();
+            startActivity(new Intent(this, GameBoyLibraryActivity.class));
+            finish();
+            return;
+        }
+
+        status.setText("P2 · GAME BOY LINK");
+        videoStatus.setText("Host " + ip + " · abriendo Gambatte local…");
+        inputStatus.setText("A/B · START · SELECT · control local");
+
+        Intent i = new Intent(this, IntegratedGameActivity.class);
+        i.putExtra(IntegratedGameActivity.EXTRA_CORE_ID, CoreRegistry.GAME_BOY.id);
+        i.putExtra(IntegratedGameActivity.EXTRA_ROM_PATH, gb.file.getAbsolutePath());
+        i.putExtra(IntegratedGameActivity.EXTRA_GAME_TITLE, gb.title);
+        i.putExtra(IntegratedGameActivity.EXTRA_GB_LINK_MODE, "Network Client");
+        i.putExtra(IntegratedGameActivity.EXTRA_GB_LINK_HOST, ip == null ? "" : ip.trim());
+        i.putExtra(IntegratedGameActivity.EXTRA_GB_LINK_PORT, 56400);
+
+        if (ble != null) ble.disconnect();
+        startActivity(i);
+        finish();
+    }
+
     @Override public void onHostInfo(String ip) {
+        if (redirectingToGameBoy) return;
         if (ip == null || ip.trim().isEmpty()) {
             videoStatus.setText("BLE OK · esperando IP Wi‑Fi del Host…");
             main.postDelayed(() -> { if (ble != null) ble.requestHostInfo(); }, 1200);

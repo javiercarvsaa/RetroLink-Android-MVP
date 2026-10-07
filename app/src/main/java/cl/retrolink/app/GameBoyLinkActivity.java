@@ -33,6 +33,8 @@ public class GameBoyLinkActivity extends Activity
     private int pendingRole = ROLE_NONE;
     private boolean p2Connected;
     private String hostIp = "";
+    private boolean linkLaunchStarted;
+    private String remoteSessionType = "";
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -56,6 +58,7 @@ public class GameBoyLinkActivity extends Activity
         game.setText(selected.title + " · " + selected.systemLabel);
         hostBle = new HostBleManager(this, this);
         hostBle.setMaxPlayerNumber(2);
+        hostBle.setSessionType("GBLINK");
         clientBle = new ControllerBleManager(this, this);
 
         findViewById(R.id.btnGbLinkBack).setOnClickListener(v -> finish());
@@ -80,6 +83,8 @@ public class GameBoyLinkActivity extends Activity
         stopDiscovery();
         role = ROLE_HOST;
         p2Connected = false;
+        linkLaunchStarted = false;
+        remoteSessionType = "GBLINK";
         hostIp = NetworkUtils.localIpv4();
         hostBle.start();
         status.setText("Sala Game Link activa · esperando Player 2");
@@ -90,6 +95,8 @@ public class GameBoyLinkActivity extends Activity
         stopDiscovery();
         role = ROLE_CLIENT;
         p2Connected = false;
+        linkLaunchStarted = false;
+        remoteSessionType = "";
         hostIp = "";
         clientBle.startScan();
         status.setText("Buscando sala Game Boy Link…");
@@ -102,6 +109,7 @@ public class GameBoyLinkActivity extends Activity
     }
 
     private void launchLink() {
+        if (linkLaunchStarted) return;
         if (role == ROLE_HOST && !p2Connected) {
             Toast.makeText(this, "Espera a que Player 2 se conecte", Toast.LENGTH_SHORT).show();
             return;
@@ -111,6 +119,15 @@ public class GameBoyLinkActivity extends Activity
             return;
         }
         if (role == ROLE_NONE) return;
+        if (role == ROLE_CLIENT && !"GBLINK".equals(remoteSessionType)) {
+            Toast.makeText(this, "El Host encontrado no es una sala Game Boy Link", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        linkLaunchStarted = true;
+        status.setText(role == ROLE_HOST
+                ? "Abriendo Gambatte local · P1 SERVER…"
+                : "Abriendo Gambatte local · P2 CLIENT…");
 
         Intent i = new Intent(this, IntegratedGameActivity.class);
         i.putExtra(IntegratedGameActivity.EXTRA_CORE_ID, CoreRegistry.GAME_BOY.id);
@@ -156,8 +173,9 @@ public class GameBoyLinkActivity extends Activity
     @Override public void onPlayerConnected(int player, String label) {
         if (role == ROLE_HOST && player == 2) {
             p2Connected = true;
-            status.setText("Player 2 listo · inicia Game Link en ambos dispositivos");
+            status.setText("Player 2 listo · abriendo Game Link local…");
             refresh();
+            launch.postDelayed(this::launchLink, 700);
         }
     }
 
@@ -184,13 +202,28 @@ public class GameBoyLinkActivity extends Activity
         refresh();
     }
 
+    @Override public void onSessionInfo(String sessionType, String ip) {
+        if (role != ROLE_CLIENT) return;
+        remoteSessionType = sessionType == null ? "" : sessionType.trim().toUpperCase(java.util.Locale.US);
+        if (!remoteSessionType.isEmpty() && !"GBLINK".equals(remoteSessionType)) {
+            status.setText("Host incompatible · esta sala no es Game Boy Link");
+            launch.setEnabled(false);
+            launch.setAlpha(0.42f);
+        }
+    }
+
     @Override public void onHostInfo(String ip) {
         if (role != ROLE_CLIENT) return;
         hostIp = ip == null ? "" : ip.trim();
         status.setText(hostIp.isEmpty()
                 ? "BLE conectado · esperando IP Wi-Fi del Host…"
-                : "P2 listo · Host " + hostIp + " · puedes iniciar");
+                : ("GBLINK".equals(remoteSessionType)
+                    ? "P2 listo · abriendo Gambatte local…"
+                    : "P2 detectado · validando tipo de sala…"));
         refresh();
+        if (!hostIp.isEmpty() && "GBLINK".equals(remoteSessionType)) {
+            launch.postDelayed(this::launchLink, 350);
+        }
     }
 
     @Override public void onDisconnected() {

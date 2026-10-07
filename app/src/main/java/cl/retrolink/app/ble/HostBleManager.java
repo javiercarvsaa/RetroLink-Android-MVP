@@ -45,6 +45,7 @@ public class HostBleManager {
     private final Map<BluetoothDevice, Integer> players = Collections.synchronizedMap(new LinkedHashMap<>());
     private boolean advertising;
     private int maxPlayerNumber = 4;
+    private String sessionType = "N64";
 
     public HostBleManager(Context context, Listener listener) {
         this.context = context.getApplicationContext();
@@ -55,6 +56,11 @@ public class HostBleManager {
 
     public void setMaxPlayerNumber(int maxPlayerNumber) {
         this.maxPlayerNumber = Math.max(2, Math.min(4, maxPlayerNumber));
+    }
+
+    public void setSessionType(String sessionType) {
+        String value = sessionType == null ? "" : sessionType.trim().toUpperCase(java.util.Locale.US);
+        this.sessionType = "GBLINK".equals(value) ? "GBLINK" : "N64";
     }
 
     @SuppressLint("MissingPermission")
@@ -99,7 +105,7 @@ public class HostBleManager {
     }
 
     private final AdvertiseCallback advertiseCallback = new AdvertiseCallback() {
-        @Override public void onStartSuccess(AdvertiseSettings settingsInEffect) { advertising = true; status("Host activo · BLE + pantalla distribuida"); log("Publicidad BLE iniciada."); }
+        @Override public void onStartSuccess(AdvertiseSettings settingsInEffect) { advertising = true; status("GBLINK".equals(sessionType) ? "Host activo · Game Boy Link P1" : "Host activo · BLE + pantalla distribuida"); log("Publicidad BLE iniciada."); }
         @Override public void onStartFailure(int errorCode) { advertising = false; status("Error al anunciar Host BLE (" + errorCode + ")."); log("Advertise failure=" + errorCode); }
     };
 
@@ -118,7 +124,9 @@ public class HostBleManager {
             if (BleProtocol.PLAYER_UUID.equals(characteristic.getUuid())) {
                 Integer player = players.get(device); value = new byte[]{(byte)(player == null ? 0 : player)};
             } else if (BleProtocol.HOST_INFO_UUID.equals(characteristic.getUuid())) {
-                value = NetworkUtils.localIpv4().getBytes(StandardCharsets.UTF_8);
+                String ip = NetworkUtils.localIpv4();
+                String payload = sessionType + "|" + ip;
+                value = payload.getBytes(StandardCharsets.UTF_8);
             } else { if (gattServer != null) gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_REQUEST_NOT_SUPPORTED, 0, null); return; }
             if (gattServer != null) gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, value);
         }

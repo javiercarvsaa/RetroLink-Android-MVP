@@ -63,6 +63,7 @@ public class HostActivity extends Activity implements HostBleManager.Listener, F
         engine = new DemoGameEngine(); // fallback de video antes de que exista frame del emulador.
         engine.setPlayerCount(playerCount);
         ble = new HostBleManager(this, this);
+        ble.setSessionType("N64");
         stream = new FrameStreamServer(this, engine, this);
         controls = new N64ControlBinder(this, (m, x, y) -> {
             InputHub.set(1, m, x, y);

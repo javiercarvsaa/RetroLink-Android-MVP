@@ -28,6 +28,7 @@ public class ControllerBleManager {
     public interface Listener {
         void onStatus(String status);
         void onConnected(int player);
+        default void onSessionInfo(String sessionType, String ip) {}
         void onHostInfo(String ip);
         void onDisconnected();
         void onLog(String line);
@@ -303,13 +304,26 @@ public class ControllerBleManager {
                 status("El Host no pudo asignar jugador.");
             }
         } else if (BleProtocol.HOST_INFO_UUID.equals(c.getUuid())) {
-            String ip = value == null ? "" : new String(value, StandardCharsets.UTF_8).trim();
+            String raw = value == null ? "" : new String(value, StandardCharsets.UTF_8).trim();
+            String sessionType = "N64";
+            String ip = raw;
+
+            int split = raw.indexOf('|');
+            if (split > 0) {
+                sessionType = raw.substring(0, split).trim().toUpperCase(java.util.Locale.US);
+                ip = raw.substring(split + 1).trim();
+            }
+
             if (ip.isEmpty()) {
                 synchronized (this) {
                     hostInfoReady = false;
                     hostInfoNeeded = true;
                 }
-                main.post(() -> listener.onHostInfo(""));
+                final String mode = sessionType;
+                main.post(() -> {
+                    listener.onSessionInfo(mode, "");
+                    listener.onHostInfo("");
+                });
                 main.removeCallbacks(retryHostInfo);
                 main.postDelayed(retryHostInfo, 1200);
             } else {
@@ -317,9 +331,14 @@ public class ControllerBleManager {
                     hostInfoReady = true;
                     hostInfoNeeded = false;
                 }
-                log("IP Host recibida: " + ip);
-                main.post(() -> listener.onHostInfo(ip));
-                sendInput(0, 0, 0);
+                final String mode = sessionType;
+                final String hostIp = ip;
+                log("Host " + mode + " recibido: " + hostIp);
+                main.post(() -> {
+                    listener.onSessionInfo(mode, hostIp);
+                    listener.onHostInfo(hostIp);
+                });
+                if (!"GBLINK".equals(mode)) sendInput(0, 0, 0);
                 pumpOperations();
             }
         }

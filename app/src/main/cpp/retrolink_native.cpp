@@ -166,9 +166,11 @@ std::string choose_default(const char* legacy) {
 bool environment_cb(unsigned cmd, void* data) {
     switch (cmd) {
         case RETRO_ENVIRONMENT_GET_OVERSCAN:
+            if (!data) return false;
             *reinterpret_cast<bool*>(data) = false;
             return true;
         case RETRO_ENVIRONMENT_GET_CAN_DUPE:
+            if (!data) return false;
             *reinterpret_cast<bool*>(data) = true;
             return true;
         case RETRO_ENVIRONMENT_SET_PIXEL_FORMAT: {
@@ -285,25 +287,30 @@ bool environment_cb(unsigned cmd, void* data) {
             return true;
         }
         case RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE:
+            if (!data) return false;
             *reinterpret_cast<bool*>(data) = false;
             return true;
 #ifdef RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION
         case RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION:
+            if (!data) return false;
             *reinterpret_cast<unsigned*>(data) = 0; // obliga al fallback legacy SET_VARIABLES
             return true;
 #endif
 #ifdef RETRO_ENVIRONMENT_GET_INPUT_BITMASKS
         case RETRO_ENVIRONMENT_GET_INPUT_BITMASKS:
-            *reinterpret_cast<bool*>(data) = false;
-            return true;
+            // Gambatte consulta esta capacidad con data == NULL.
+            // RetroLink usa input_state por botón, no bitmask global.
+            return false;
 #endif
 #ifdef RETRO_ENVIRONMENT_GET_LANGUAGE
         case RETRO_ENVIRONMENT_GET_LANGUAGE:
+            if (!data) return false;
             *reinterpret_cast<unsigned*>(data) = RETRO_LANGUAGE_ENGLISH;
             return true;
 #endif
 #ifdef RETRO_ENVIRONMENT_GET_USERNAME
         case RETRO_ENVIRONMENT_GET_USERNAME:
+            if (!data) return false;
             *reinterpret_cast<const char**>(data) = "RetroLink";
             return true;
 #endif

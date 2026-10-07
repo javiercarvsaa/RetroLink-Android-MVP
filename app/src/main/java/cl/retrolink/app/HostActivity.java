@@ -29,8 +29,9 @@ public class HostActivity extends Activity implements HostBleManager.Listener, F
     private HostBleManager ble;
     private FrameStreamServer stream;
     private DemoGameEngine engine;
-    private TextView status, romInfo, clients, coreStatus, roomState, p1State, p2State, p3State, p4State;
-    private Button[] playerButtons;
+    private TextView status, romInfo, clients, coreStatus, roomState, p1State, p2State, p3State, p4State, configSummary;
+    private Button[] playerButtons, configPlayerButtons;
+    private View configPanel, configScrim;
     private N64ControlBinder controls;
     private int playerCount = 1;
     private File romFile;
@@ -54,6 +55,10 @@ public class HostActivity extends Activity implements HostBleManager.Listener, F
         p3State = findViewById(R.id.txtP3State);
         p4State = findViewById(R.id.txtP4State);
         playerButtons = new Button[]{null, findViewById(R.id.btnPlayers1), findViewById(R.id.btnPlayers2), findViewById(R.id.btnPlayers3), findViewById(R.id.btnPlayers4)};
+        configPlayerButtons = new Button[]{null, findViewById(R.id.btnConfigPlayers1), findViewById(R.id.btnConfigPlayers2), findViewById(R.id.btnConfigPlayers3), findViewById(R.id.btnConfigPlayers4)};
+        configPanel = findViewById(R.id.hostConfigPanel);
+        configScrim = findViewById(R.id.hostConfigScrim);
+        configSummary = findViewById(R.id.txtHostConfigSummary);
 
         engine = new DemoGameEngine(); // fallback de video antes de que exista frame del emulador.
         engine.setPlayerCount(playerCount);
@@ -69,9 +74,34 @@ public class HostActivity extends Activity implements HostBleManager.Listener, F
         findViewById(R.id.btnRom).setOnClickListener(v -> pickRom());
         findViewById(R.id.btnLaunch).setOnClickListener(v -> launchIntegratedN64());
         findViewById(R.id.btnHostTestControls).setOnClickListener(v -> startActivity(new Intent(this, ControlTestActivity.class)));
+        findViewById(R.id.btnHostConfig).setOnClickListener(v -> setConfigVisible(configPanel == null || configPanel.getVisibility() != View.VISIBLE));
+        findViewById(R.id.btnHostConfigClose).setOnClickListener(v -> setConfigVisible(false));
+        findViewById(R.id.btnHostConfigCloseBottom).setOnClickListener(v -> setConfigVisible(false));
+        if (configScrim != null) configScrim.setOnClickListener(v -> setConfigVisible(false));
+        findViewById(R.id.btnHostGraphics).setOnClickListener(v -> {
+            RetroPreferences.setGraphicsProfile(this, (RetroPreferences.graphicsProfile(this) + 1) % 3);
+            refreshHostConfig();
+        });
+        findViewById(R.id.btnHostStream).setOnClickListener(v -> {
+            int current = RetroPreferences.streamFps(this);
+            int next = current <= 0 ? 30 : current == 30 ? 40 : current == 40 ? 50 : current == 50 ? 60 : 0;
+            RetroPreferences.setStreamFps(this, next);
+            refreshHostConfig();
+        });
+        findViewById(R.id.btnHostSplit).setOnClickListener(v -> {
+            RetroPreferences.nextSplitCropMode(this);
+            refreshHostConfig();
+        });
+        findViewById(R.id.btnHostHudDefault).setOnClickListener(v -> {
+            RetroPreferences.setGameHudVisible(this, !RetroPreferences.gameHudVisible(this));
+            refreshHostConfig();
+        });
+        findViewById(R.id.btnHostConfigTestControls).setOnClickListener(v -> startActivity(new Intent(this, ControlTestActivity.class)));
+        findViewById(R.id.btnHostAdvanced).setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
         for (int p = 1; p <= 4; p++) {
             final int count = p;
             playerButtons[p].setOnClickListener(v -> setPlayers(count));
+            configPlayerButtons[p].setOnClickListener(v -> setPlayers(count));
         }
 
         findViewById(R.id.navHostHome).setOnClickListener(v -> finish());
@@ -83,6 +113,7 @@ public class HostActivity extends Activity implements HostBleManager.Listener, F
         refreshPlayerCards();
         refreshRoomStatus();
         updatePlayerButtons();
+        refreshHostConfig();
         if (getIntent().getBooleanExtra(EXTRA_OPEN_ROM_PICKER, false)) {
             findViewById(R.id.hostRoot).postDelayed(this::pickRom, 180);
         }
@@ -142,6 +173,10 @@ public class HostActivity extends Activity implements HostBleManager.Listener, F
         findViewById(R.id.btnStartHost).setAlpha(hostStarted ? 0.45f : 1f);
         findViewById(R.id.btnStopHost).setEnabled(hostStarted);
         findViewById(R.id.btnStopHost).setAlpha(hostStarted ? 1f : 0.45f);
+        if (configSummary != null) {
+            configSummary.setText("P1–P" + playerCount + " · " + RetroPreferences.splitCropModeLabel(this)
+                    + " · " + (hostStarted ? "SALA ACTIVA" : "SALA DETENIDA"));
+        }
     }
 
     private void startHost() {
@@ -182,13 +217,45 @@ public class HostActivity extends Activity implements HostBleManager.Listener, F
         engine.setPlayerCount(playerCount);
         updatePlayerButtons();
         refreshPlayerCards();
+        refreshHostConfig();
     }
 
     private void updatePlayerButtons() {
         for (int p = 1; p <= 4; p++) {
-            playerButtons[p].setBackgroundResource(p == playerCount ? R.drawable.segment_selected : R.drawable.btn_secondary_neon);
-            playerButtons[p].setAlpha(p == playerCount ? 1f : 0.78f);
+            if (playerButtons != null && playerButtons[p] != null) {
+                playerButtons[p].setBackgroundResource(p == playerCount ? R.drawable.segment_selected : R.drawable.btn_secondary_neon);
+                playerButtons[p].setAlpha(p == playerCount ? 1f : 0.78f);
+            }
+            if (configPlayerButtons != null && configPlayerButtons[p] != null) {
+                configPlayerButtons[p].setBackgroundResource(p == playerCount ? R.drawable.segment_selected : R.drawable.btn_neon_dark);
+                configPlayerButtons[p].setAlpha(p == playerCount ? 1f : 0.82f);
+            }
         }
+    }
+
+    private void setConfigVisible(boolean visible) {
+        if (configScrim != null) configScrim.setVisibility(visible ? View.VISIBLE : View.GONE);
+        if (configPanel != null) {
+            configPanel.setVisibility(visible ? View.VISIBLE : View.GONE);
+            if (visible) configPanel.bringToFront();
+        }
+        if (visible) refreshHostConfig();
+    }
+
+    private void refreshHostConfig() {
+        Button gfx = findViewById(R.id.btnHostGraphics);
+        Button streamButton = findViewById(R.id.btnHostStream);
+        Button split = findViewById(R.id.btnHostSplit);
+        Button hud = findViewById(R.id.btnHostHudDefault);
+        if (gfx != null) gfx.setText("GRÁFICOS  ·  " + RetroPreferences.graphicsProfileLabel(this));
+        if (streamButton != null) streamButton.setText("VIDEO REMOTO  ·  " + RetroPreferences.streamProfileLabel(this));
+        if (split != null) split.setText("SPLIT-SCREEN  ·  " + RetroPreferences.splitCropModeLabel(this));
+        if (hud != null) hud.setText("HUD AL INICIAR  ·  " + (RetroPreferences.gameHudVisible(this) ? "VISIBLE" : "OCULTO"));
+        if (configSummary != null) {
+            configSummary.setText("P1–P" + playerCount + " · " + RetroPreferences.splitCropModeLabel(this)
+                    + " · " + (hostStarted ? "SALA ACTIVA" : "SALA DETENIDA"));
+        }
+        updatePlayerButtons();
     }
 
     private void pickRom() {
@@ -257,6 +324,19 @@ public class HostActivity extends Activity implements HostBleManager.Listener, F
         }
     }
 
+    @Override protected void onResume() {
+        super.onResume();
+        refreshHostConfig();
+    }
+
+    @Override public void onBackPressed() {
+        if (configPanel != null && configPanel.getVisibility() == View.VISIBLE) {
+            setConfigVisible(false);
+            return;
+        }
+        super.onBackPressed();
+    }
+
     @Override protected void onPause() {
         if (controls != null) controls.release();
         super.onPause();
@@ -281,6 +361,7 @@ public class HostActivity extends Activity implements HostBleManager.Listener, F
             updatePlayerButtons();
         }
         refreshPlayerCards();
+        refreshHostConfig();
         Toast.makeText(this, "P" + p + " conectado · " + d, Toast.LENGTH_SHORT).show();
     }
 
@@ -289,6 +370,7 @@ public class HostActivity extends Activity implements HostBleManager.Listener, F
         InputHub.resetPlayer(p);
         engine.setInput(p, 0, 0, 0);
         refreshPlayerCards();
+        refreshHostConfig();
     }
 
     @Override public void onInput(int p, int m, int x, int y) {

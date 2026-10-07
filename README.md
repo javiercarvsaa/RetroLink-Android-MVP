@@ -28,3 +28,17 @@ La siguiente versión mayor será **v0.7.0 MultiPlatform Foundation**, orientada
 - Configuración persistente e independiente para Host/P1 y cada cliente remoto.
 - El ajuste manual se aplica sobre el enfoque automático de v0.6.7.
 - Próxima versión mayor: v0.7.0 MultiPlatform Foundation.
+
+
+## v0.6.9 RC1 — Remote Manual Viewport Fix
+- Corrige P2-P4: los botones de PANTALLA ahora producen desplazamiento visible.
+- El paneo remoto usa hasta ±8% del cuadro, con zoom automático progresivo para evitar bordes negros.
+- El panel remoto se eleva sobre los controles táctiles para asegurar la recepción de toques.
+- Mantiene Remote Centering, PLAYER HQ, RetroSR espacial y ajustes persistentes por jugador.
+
+## v0.6.10 RC1 — Final UI Polish
+- Integra el diseño final RetroLink en los menús reales del emulador P1 y P2-P4.
+- Rediseña PANTALLA con controles grandes X/Y/Zoom, lectura persistente y prioridad táctil.
+- Añade configuración in-game real para gráficos, RetroSR y split-screen.
+- Añade panel lateral de Configuración en Sala Multijugador con opciones reales de jugadores, gráficos, streaming, split, HUD y controles.
+- Incluye la corrección v0.6.9 del paneo remoto P2-P4.

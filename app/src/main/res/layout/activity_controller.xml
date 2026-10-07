@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#000000"
+    android:clipChildren="false"
     android:splitMotionEvents="true">
 
     <cl.retrolink.app.RemoteFrameView
@@ -11,75 +12,165 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <LinearLayout
-        android:id="@+id/controllerTopBar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top"
-        android:background="@drawable/panel_overlay"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingLeft="6dp"
-        android:paddingTop="6dp"
-        android:paddingRight="58dp"
-        android:paddingBottom="6dp">
-        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
-            <TextView android:id="@+id/txtControllerStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Desconectado" android:textColor="#FFFFFFFF" android:textSize="11sp" android:textStyle="bold" />
-            <TextView android:id="@+id/txtVideoStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Video pendiente · misma Wi‑Fi/hotspot" android:textColor="#BBFFFFFF" android:textSize="8sp" android:maxLines="1" />
-            <TextView android:id="@+id/txtInputStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Entrada directa al núcleo N64" android:textColor="#BBDDFFFF" android:textSize="8sp" android:maxLines="1" />
-        </LinearLayout>
-        <Button android:id="@+id/btnFindHost" android:layout_width="82dp" android:layout_height="42dp" android:text="CONECTAR" android:textSize="8sp" android:textColor="@color/retro_text" android:background="@drawable/btn_retro" />
-        <Button android:id="@+id/btnViewMode" android:layout_width="78dp" android:layout_height="42dp" android:layout_marginLeft="3dp" android:text="FULL" android:textSize="8sp" android:textColor="@color/retro_text" android:background="@drawable/btn_retro" />
-        <Button android:id="@+id/btnControllerViewport" android:layout_width="76dp" android:layout_height="42dp" android:layout_marginLeft="3dp" android:text="PANTALLA" android:textSize="7sp" android:textColor="@color/retro_text" android:background="@drawable/btn_retro" />
-    <Button android:id="@+id/btnControllerEditControls" android:layout_width="66dp" android:layout_height="42dp" android:layout_marginLeft="3dp" android:text="MOVER" android:textSize="8sp" android:textColor="@color/retro_text" android:background="@drawable/btn_retro" />
-    </LinearLayout>
-
-
-    <LinearLayout
-        android:id="@+id/controllerViewportPanel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|center_horizontal"
-        android:layout_marginTop="62dp"
-        android:background="@drawable/panel_overlay"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:padding="6dp"
-        android:visibility="gone">
-        <TextView android:id="@+id/txtControllerViewport" android:layout_width="170dp" android:layout_height="wrap_content" android:text="AJUSTE DE PANTALLA" android:textColor="@color/retro_cyan" android:textSize="8sp" android:textStyle="bold" />
-        <Button android:id="@+id/btnControllerViewLeft" android:layout_width="42dp" android:layout_height="40dp" android:text="←" android:background="@drawable/btn_retro" android:textColor="@color/retro_text" />
-        <Button android:id="@+id/btnControllerViewUp" android:layout_width="42dp" android:layout_height="40dp" android:layout_marginLeft="2dp" android:text="↑" android:background="@drawable/btn_retro" android:textColor="@color/retro_text" />
-        <Button android:id="@+id/btnControllerViewDown" android:layout_width="42dp" android:layout_height="40dp" android:layout_marginLeft="2dp" android:text="↓" android:background="@drawable/btn_retro" android:textColor="@color/retro_text" />
-        <Button android:id="@+id/btnControllerViewRight" android:layout_width="42dp" android:layout_height="40dp" android:layout_marginLeft="2dp" android:text="→" android:background="@drawable/btn_retro" android:textColor="@color/retro_text" />
-        <Button android:id="@+id/btnControllerViewZoomOut" android:layout_width="48dp" android:layout_height="40dp" android:layout_marginLeft="5dp" android:text="Z−" android:background="@drawable/btn_retro" android:textColor="@color/retro_text" android:textSize="8sp" />
-        <Button android:id="@+id/btnControllerViewZoomIn" android:layout_width="48dp" android:layout_height="40dp" android:layout_marginLeft="2dp" android:text="Z+" android:background="@drawable/btn_retro" android:textColor="@color/retro_text" android:textSize="8sp" />
-        <Button android:id="@+id/btnControllerViewReset" android:layout_width="62dp" android:layout_height="40dp" android:layout_marginLeft="5dp" android:text="CENTRO" android:background="@drawable/btn_secondary_neon" android:textColor="@color/retro_text" android:textSize="7sp" />
-        <Button android:id="@+id/btnControllerViewDone" android:layout_width="48dp" android:layout_height="40dp" android:layout_marginLeft="3dp" android:text="OK" android:background="@drawable/btn_primary_gradient" android:textColor="@color/retro_text" android:textSize="8sp" android:textStyle="bold" />
-    </LinearLayout>
-
-    <Button
-        android:id="@+id/btnControllerHud"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
-        android:layout_gravity="top|right"
-        android:layout_marginTop="7dp"
-        android:layout_marginRight="7dp"
-        android:alpha="0.72"
-        android:background="@drawable/btn_retro"
-        android:text="×"
-        android:textColor="@color/retro_text"
-        android:textSize="18sp"
-        android:contentDescription="Ocultar estado y conexión" />
-
-    <cl.retrolink.app.VirtualStickView android:id="@+id/virtualStick" android:layout_width="180dp" android:layout_height="180dp" android:layout_gravity="bottom|left" android:layout_marginLeft="16dp" android:layout_marginBottom="12dp" />
+    <!-- Controles de juego: quedan por debajo de los menús flotantes. -->
+    <cl.retrolink.app.VirtualStickView
+        android:id="@+id/virtualStick"
+        android:layout_width="180dp"
+        android:layout_height="180dp"
+        android:layout_gravity="bottom|left"
+        android:layout_marginLeft="16dp"
+        android:layout_marginBottom="12dp" />
     <Button android:id="@+id/btnZ" android:layout_width="70dp" android:layout_height="70dp" android:layout_gravity="bottom|left" android:layout_marginLeft="200dp" android:layout_marginBottom="70dp" android:alpha="0.75" android:background="@drawable/btn_overlay" android:text="Z" android:textColor="#FFFFFFFF" android:textStyle="bold" />
-    <Button android:id="@+id/btnL" android:layout_width="66dp" android:layout_height="52dp" android:layout_gravity="top|left" android:layout_marginTop="62dp" android:layout_marginLeft="12dp" android:alpha="0.75" android:background="@drawable/btn_overlay" android:text="L" android:textColor="#FFFFFFFF" />
-    <Button android:id="@+id/btnR" android:layout_width="66dp" android:layout_height="52dp" android:layout_gravity="top|right" android:layout_marginTop="62dp" android:layout_marginRight="12dp" android:alpha="0.75" android:background="@drawable/btn_overlay" android:text="R" android:textColor="#FFFFFFFF" />
-    <Button android:id="@+id/btnStart" android:layout_width="88dp" android:layout_height="48dp" android:layout_gravity="bottom|center_horizontal" android:layout_marginBottom="16dp" android:alpha="0.72" android:background="@drawable/btn_retro" android:text="START" android:textSize="11sp" android:textColor="#FFFFFFFF" />
-    <Button android:id="@+id/btnA" android:layout_width="82dp" android:layout_height="82dp" android:layout_gravity="bottom|right" android:layout_marginRight="34dp" android:layout_marginBottom="28dp" android:alpha="0.78" android:background="@drawable/btn_overlay" android:text="A" android:textSize="24sp" android:textColor="#FFFFFFFF" android:textStyle="bold" />
-    <Button android:id="@+id/btnB" android:layout_width="72dp" android:layout_height="72dp" android:layout_gravity="bottom|right" android:layout_marginRight="122dp" android:layout_marginBottom="50dp" android:alpha="0.72" android:background="@drawable/btn_overlay" android:text="B" android:textSize="20sp" android:textColor="#FFFFFFFF" android:textStyle="bold" />
+    <Button android:id="@+id/btnL" android:layout_width="66dp" android:layout_height="52dp" android:layout_gravity="top|left" android:layout_marginTop="68dp" android:layout_marginLeft="12dp" android:alpha="0.75" android:background="@drawable/btn_overlay" android:text="L" android:textColor="#FFFFFFFF" />
+    <Button android:id="@+id/btnR" android:layout_width="66dp" android:layout_height="52dp" android:layout_gravity="top|right" android:layout_marginTop="68dp" android:layout_marginRight="12dp" android:alpha="0.75" android:background="@drawable/btn_overlay" android:text="R" android:textColor="#FFFFFFFF" />
+    <Button android:id="@+id/btnStart" android:layout_width="88dp" android:layout_height="46dp" android:layout_gravity="bottom|center_horizontal" android:layout_marginBottom="14dp" android:alpha="0.74" android:background="@drawable/btn_neon_dark" android:text="START" android:textSize="10sp" android:textColor="@color/retro_text" />
+    <Button android:id="@+id/btnA" android:layout_width="82dp" android:layout_height="82dp" android:layout_gravity="bottom|right" android:layout_marginRight="34dp" android:layout_marginBottom="28dp" android:alpha="0.80" android:background="@drawable/btn_overlay" android:text="A" android:textSize="24sp" android:textColor="#FFFFFFFF" android:textStyle="bold" />
+    <Button android:id="@+id/btnB" android:layout_width="72dp" android:layout_height="72dp" android:layout_gravity="bottom|right" android:layout_marginRight="122dp" android:layout_marginBottom="50dp" android:alpha="0.74" android:background="@drawable/btn_overlay" android:text="B" android:textSize="20sp" android:textColor="#FFFFFFFF" android:textStyle="bold" />
     <Button android:id="@+id/btnCUp" android:layout_width="54dp" android:layout_height="54dp" android:layout_gravity="bottom|right" android:layout_marginRight="92dp" android:layout_marginBottom="164dp" android:alpha="0.68" android:background="@drawable/btn_overlay" android:text="C▲" android:textSize="10sp" android:textColor="#FFFFFFFF" />
     <Button android:id="@+id/btnCDown" android:layout_width="54dp" android:layout_height="54dp" android:layout_gravity="bottom|right" android:layout_marginRight="92dp" android:layout_marginBottom="104dp" android:alpha="0.68" android:background="@drawable/btn_overlay" android:text="C▼" android:textSize="10sp" android:textColor="#FFFFFFFF" />
     <Button android:id="@+id/btnCLeft" android:layout_width="54dp" android:layout_height="54dp" android:layout_gravity="bottom|right" android:layout_marginRight="150dp" android:layout_marginBottom="134dp" android:alpha="0.68" android:background="@drawable/btn_overlay" android:text="C◀" android:textSize="10sp" android:textColor="#FFFFFFFF" />
     <Button android:id="@+id/btnCRight" android:layout_width="54dp" android:layout_height="54dp" android:layout_gravity="bottom|right" android:layout_marginRight="34dp" android:layout_marginBottom="134dp" android:alpha="0.68" android:background="@drawable/btn_overlay" android:text="C▶" android:textSize="10sp" android:textColor="#FFFFFFFF" />
+
+    <!-- Menú compacto del jugador remoto. -->
+    <LinearLayout
+        android:id="@+id/controllerTopBar"
+        android:layout_width="match_parent"
+        android:layout_height="58dp"
+        android:layout_gravity="top"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="7dp"
+        android:layout_marginRight="62dp"
+        android:background="@drawable/panel_neon_glass"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingLeft="12dp"
+        android:paddingRight="8dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/txtControllerPlayerTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="PLAYER REMOTO"
+                android:textColor="@color/retro_text"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/txtControllerStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Desconectado"
+                android:textColor="@color/retro_green"
+                android:textSize="8sp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/txtVideoStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Video pendiente · misma Wi‑Fi/hotspot"
+                android:textColor="#A9C4DF"
+                android:textSize="7sp" />
+            <TextView
+                android:id="@+id/txtInputStatus"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:visibility="gone"
+                android:text="Entrada N64" />
+        </LinearLayout>
+
+        <Button android:id="@+id/btnFindHost" android:layout_width="92dp" android:layout_height="42dp" android:background="@drawable/btn_neon_magenta" android:text="CONECTAR" android:textColor="@color/retro_text" android:textSize="8sp" android:textStyle="bold" />
+        <Button android:id="@+id/btnViewMode" android:layout_width="92dp" android:layout_height="42dp" android:layout_marginLeft="5dp" android:background="@drawable/btn_neon_cyan" android:text="FULL" android:textColor="@color/retro_text" android:textSize="8sp" android:textStyle="bold" />
+        <Button android:id="@+id/btnControllerViewport" android:layout_width="102dp" android:layout_height="42dp" android:layout_marginLeft="5dp" android:background="@drawable/btn_neon_cyan" android:text="▣  PANTALLA" android:textColor="@color/retro_text" android:textSize="7sp" android:textStyle="bold" />
+        <Button android:id="@+id/btnControllerEditControls" android:layout_width="86dp" android:layout_height="42dp" android:layout_marginLeft="5dp" android:background="@drawable/btn_neon_dark" android:text="↔  MOVER" android:textColor="@color/retro_text" android:textSize="7sp" android:textStyle="bold" />
+        <Button android:id="@+id/btnControllerSettings" android:layout_width="84dp" android:layout_height="42dp" android:layout_marginLeft="5dp" android:background="@drawable/btn_neon_dark" android:text="⚙ AJUSTES" android:textColor="@color/retro_text" android:textSize="7sp" android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Ajuste manual, inspirado en el arte final pero usando controles reales. -->
+    <LinearLayout
+        android:id="@+id/controllerViewportPanel"
+        android:layout_width="560dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="72dp"
+        android:background="@drawable/panel_neon_glass"
+        android:elevation="20dp"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:visibility="gone">
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="38dp" android:gravity="center_vertical" android:orientation="horizontal">
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="▣  PANTALLA DEL JUGADOR" android:textColor="@color/retro_cyan" android:textSize="13sp" android:textStyle="bold" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Ajuste manual del encuadre" android:textColor="#AFC8E3" android:textSize="8sp" />
+        </LinearLayout>
+
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#4D00D8FF" />
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="150dp" android:orientation="horizontal" android:paddingTop="8dp">
+            <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.1" android:gravity="center" android:orientation="vertical">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:text="POSICIÓN" android:textColor="#BCD7F2" android:textSize="8sp" android:textStyle="bold" />
+                <Button android:id="@+id/btnControllerViewUp" android:layout_width="58dp" android:layout_height="44dp" android:layout_marginTop="4dp" android:background="@drawable/btn_neon_cyan" android:text="↑" android:textColor="@color/retro_text" android:textSize="20sp" android:textStyle="bold" />
+                <LinearLayout android:layout_width="match_parent" android:layout_height="48dp" android:gravity="center" android:orientation="horizontal">
+                    <Button android:id="@+id/btnControllerViewLeft" android:layout_width="58dp" android:layout_height="44dp" android:background="@drawable/btn_neon_cyan" android:text="←" android:textColor="@color/retro_text" android:textSize="20sp" android:textStyle="bold" />
+                    <View android:layout_width="22dp" android:layout_height="1dp" />
+                    <Button android:id="@+id/btnControllerViewRight" android:layout_width="58dp" android:layout_height="44dp" android:background="@drawable/btn_neon_cyan" android:text="→" android:textColor="@color/retro_text" android:textSize="20sp" android:textStyle="bold" />
+                </LinearLayout>
+                <Button android:id="@+id/btnControllerViewDown" android:layout_width="58dp" android:layout_height="44dp" android:background="@drawable/btn_neon_cyan" android:text="↓" android:textColor="@color/retro_text" android:textSize="20sp" android:textStyle="bold" />
+            </LinearLayout>
+
+            <View android:layout_width="1dp" android:layout_height="match_parent" android:layout_marginLeft="8dp" android:layout_marginRight="12dp" android:background="#4D00D8FF" />
+
+            <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:text="ZOOM" android:textColor="#BCD7F2" android:textSize="8sp" android:textStyle="bold" />
+                <LinearLayout android:layout_width="match_parent" android:layout_height="54dp" android:layout_marginTop="8dp" android:gravity="center" android:orientation="horizontal">
+                    <Button android:id="@+id/btnControllerViewZoomOut" android:layout_width="82dp" android:layout_height="50dp" android:background="@drawable/btn_neon_dark" android:text="Z−" android:textColor="@color/retro_text" android:textSize="15sp" android:textStyle="bold" />
+                    <Button android:id="@+id/btnControllerViewZoomIn" android:layout_width="82dp" android:layout_height="50dp" android:layout_marginLeft="8dp" android:background="@drawable/btn_neon_dark" android:text="Z+" android:textColor="@color/retro_text" android:textSize="15sp" android:textStyle="bold" />
+                </LinearLayout>
+                <Button android:id="@+id/btnControllerViewReset" android:layout_width="174dp" android:layout_height="46dp" android:layout_marginTop="8dp" android:background="@drawable/btn_neon_dark" android:text="◎  CENTRAR" android:textColor="@color/retro_text" android:textSize="9sp" android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/txtControllerViewport"
+            android:layout_width="match_parent"
+            android:layout_height="38dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/pill_neon_dark"
+            android:gravity="center"
+            android:text="P2 · X 0% · Y 0% · Z 100%"
+            android:textColor="@color/retro_green"
+            android:textSize="9sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnControllerViewDone"
+            android:layout_width="match_parent"
+            android:layout_height="46dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/btn_neon_magenta"
+            android:text="✓  LISTO"
+            android:textColor="@color/retro_text"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnControllerHud"
+        android:layout_width="46dp"
+        android:layout_height="46dp"
+        android:layout_gravity="top|right"
+        android:layout_marginTop="9dp"
+        android:layout_marginRight="9dp"
+        android:alpha="0.96"
+        android:background="@drawable/btn_neon_dark"
+        android:contentDescription="Mostrar u ocultar menú del jugador"
+        android:text="×"
+        android:textColor="@color/retro_text"
+        android:textSize="18sp" />
 </FrameLayout>

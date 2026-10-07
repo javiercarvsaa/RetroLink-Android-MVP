@@ -12,7 +12,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipChildren="true">
-
         <FrameLayout
             android:id="@+id/emulatorCrop"
             android:layout_width="match_parent"
@@ -21,7 +20,6 @@
             android:background="#000000"
             android:clipChildren="true"
             android:clipToPadding="true">
-
             <cl.retrolink.app.EmulatorSurfaceView
                 android:id="@+id/emulatorSurface"
                 android:layout_width="match_parent"
@@ -30,134 +28,7 @@
         </FrameLayout>
     </FrameLayout>
 
-    <LinearLayout
-        android:id="@+id/emuTopBar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top"
-        android:background="@drawable/panel_overlay"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingLeft="5dp"
-        android:paddingTop="5dp"
-        android:paddingBottom="5dp"
-        android:paddingRight="54dp"
-        android:visibility="gone">
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
-            <TextView
-                android:id="@+id/txtEmuStatus"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="N64 integrado iniciando…"
-                android:textColor="#FFFFFFFF"
-                android:textSize="10sp"
-                android:textStyle="bold" />
-            <TextView
-                android:id="@+id/txtEmuStats"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Core · FPS · audio"
-                android:textColor="#BBDDFFFF"
-                android:textSize="8sp" />
-        </LinearLayout>
-
-        <Button
-            android:id="@+id/btnEmuView"
-            android:layout_width="82dp"
-            android:layout_height="40dp"
-            android:background="@drawable/btn_retro"
-            android:text="FULL"
-            android:textColor="@color/retro_text"
-            android:textSize="8sp" />
-        <Button
-            android:id="@+id/btnEmuReset"
-            android:layout_width="68dp"
-            android:layout_height="40dp"
-            android:layout_marginLeft="3dp"
-            android:background="@drawable/btn_retro"
-            android:text="RESET"
-            android:textColor="@color/retro_text"
-            android:textSize="8sp" />
-        <Button
-            android:id="@+id/btnEmuSettings"
-            android:layout_width="62dp"
-            android:layout_height="40dp"
-            android:layout_marginLeft="3dp"
-            android:background="@drawable/btn_retro"
-            android:text="AJUSTES"
-            android:textColor="@color/retro_text"
-            android:textSize="7sp" />
-        <Button
-            android:id="@+id/btnEmuViewportAdjust"
-            android:layout_width="64dp"
-            android:layout_height="40dp"
-            android:layout_marginLeft="3dp"
-            android:background="@drawable/btn_retro"
-            android:text="PANTALLA"
-            android:textColor="@color/retro_text"
-            android:textSize="7sp" />
-        <Button
-            android:id="@+id/btnEmuEditControls"
-            android:layout_width="58dp"
-            android:layout_height="40dp"
-            android:layout_marginLeft="3dp"
-            android:background="@drawable/btn_retro"
-            android:text="MOVER"
-            android:textColor="@color/retro_text"
-            android:textSize="7sp" />
-        <Button
-            android:id="@+id/btnEmuExit"
-            android:layout_width="62dp"
-            android:layout_height="40dp"
-            android:layout_marginLeft="3dp"
-            android:background="@drawable/btn_retro"
-            android:text="SALIR"
-            android:textColor="@color/retro_text"
-            android:textSize="8sp" />
-    </LinearLayout>
-
-
-    <LinearLayout
-        android:id="@+id/emuViewportPanel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|center_horizontal"
-        android:layout_marginTop="58dp"
-        android:background="@drawable/panel_overlay"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:padding="6dp"
-        android:visibility="gone">
-        <TextView android:id="@+id/txtEmuViewport" android:layout_width="170dp" android:layout_height="wrap_content" android:text="AJUSTE DE PANTALLA · P1" android:textColor="@color/retro_cyan" android:textSize="8sp" android:textStyle="bold" />
-        <Button android:id="@+id/btnEmuViewLeft" android:layout_width="42dp" android:layout_height="40dp" android:text="←" android:background="@drawable/btn_retro" android:textColor="@color/retro_text" />
-        <Button android:id="@+id/btnEmuViewUp" android:layout_width="42dp" android:layout_height="40dp" android:layout_marginLeft="2dp" android:text="↑" android:background="@drawable/btn_retro" android:textColor="@color/retro_text" />
-        <Button android:id="@+id/btnEmuViewDown" android:layout_width="42dp" android:layout_height="40dp" android:layout_marginLeft="2dp" android:text="↓" android:background="@drawable/btn_retro" android:textColor="@color/retro_text" />
-        <Button android:id="@+id/btnEmuViewRight" android:layout_width="42dp" android:layout_height="40dp" android:layout_marginLeft="2dp" android:text="→" android:background="@drawable/btn_retro" android:textColor="@color/retro_text" />
-        <Button android:id="@+id/btnEmuViewZoomOut" android:layout_width="48dp" android:layout_height="40dp" android:layout_marginLeft="5dp" android:text="Z−" android:background="@drawable/btn_retro" android:textColor="@color/retro_text" android:textSize="8sp" />
-        <Button android:id="@+id/btnEmuViewZoomIn" android:layout_width="48dp" android:layout_height="40dp" android:layout_marginLeft="2dp" android:text="Z+" android:background="@drawable/btn_retro" android:textColor="@color/retro_text" android:textSize="8sp" />
-        <Button android:id="@+id/btnEmuViewReset" android:layout_width="62dp" android:layout_height="40dp" android:layout_marginLeft="5dp" android:text="CENTRO" android:background="@drawable/btn_secondary_neon" android:textColor="@color/retro_text" android:textSize="7sp" />
-        <Button android:id="@+id/btnEmuViewDone" android:layout_width="48dp" android:layout_height="40dp" android:layout_marginLeft="3dp" android:text="OK" android:background="@drawable/btn_primary_gradient" android:textColor="@color/retro_text" android:textSize="8sp" android:textStyle="bold" />
-    </LinearLayout>
-
-    <Button
-        android:id="@+id/btnEmuHud"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
-        android:layout_gravity="top|right"
-        android:layout_marginTop="7dp"
-        android:layout_marginRight="7dp"
-        android:alpha="0.72"
-        android:background="@drawable/btn_retro"
-        android:text="⚙"
-        android:textColor="@color/retro_text"
-        android:textSize="18sp"
-        android:contentDescription="Mostrar información y ajustes" />
-
+    <!-- Controles táctiles N64. -->
     <cl.retrolink.app.VirtualStickView
         android:id="@+id/virtualStick"
         android:layout_width="196dp"
@@ -165,11 +36,10 @@
         android:layout_gravity="bottom|left"
         android:layout_marginLeft="16dp"
         android:layout_marginBottom="12dp" />
-
     <Button android:id="@+id/btnZ" android:layout_width="70dp" android:layout_height="70dp" android:layout_gravity="bottom|left" android:layout_marginLeft="200dp" android:layout_marginBottom="70dp" android:alpha="0.72" android:background="@drawable/btn_overlay" android:text="Z" android:textColor="#FFFFFFFF" android:textStyle="bold" />
-    <Button android:id="@+id/btnL" android:layout_width="66dp" android:layout_height="52dp" android:layout_gravity="top|left" android:layout_marginTop="62dp" android:layout_marginLeft="12dp" android:alpha="0.72" android:background="@drawable/btn_overlay" android:text="L" android:textColor="#FFFFFFFF" />
-    <Button android:id="@+id/btnR" android:layout_width="66dp" android:layout_height="52dp" android:layout_gravity="top|right" android:layout_marginTop="62dp" android:layout_marginRight="12dp" android:alpha="0.72" android:background="@drawable/btn_overlay" android:text="R" android:textColor="#FFFFFFFF" />
-    <Button android:id="@+id/btnStart" android:layout_width="88dp" android:layout_height="48dp" android:layout_gravity="bottom|center_horizontal" android:layout_marginBottom="16dp" android:alpha="0.70" android:background="@drawable/btn_retro" android:text="START" android:textSize="11sp" android:textColor="#FFFFFFFF" />
+    <Button android:id="@+id/btnL" android:layout_width="66dp" android:layout_height="52dp" android:layout_gravity="top|left" android:layout_marginTop="68dp" android:layout_marginLeft="12dp" android:alpha="0.72" android:background="@drawable/btn_overlay" android:text="L" android:textColor="#FFFFFFFF" />
+    <Button android:id="@+id/btnR" android:layout_width="66dp" android:layout_height="52dp" android:layout_gravity="top|right" android:layout_marginTop="68dp" android:layout_marginRight="12dp" android:alpha="0.72" android:background="@drawable/btn_overlay" android:text="R" android:textColor="#FFFFFFFF" />
+    <Button android:id="@+id/btnStart" android:layout_width="88dp" android:layout_height="46dp" android:layout_gravity="bottom|center_horizontal" android:layout_marginBottom="14dp" android:alpha="0.74" android:background="@drawable/btn_neon_dark" android:text="START" android:textSize="10sp" android:textColor="#FFFFFFFF" />
     <Button android:id="@+id/btnA" android:layout_width="82dp" android:layout_height="82dp" android:layout_gravity="bottom|right" android:layout_marginRight="34dp" android:layout_marginBottom="28dp" android:alpha="0.76" android:background="@drawable/btn_overlay" android:text="A" android:textSize="24sp" android:textColor="#FFFFFFFF" android:textStyle="bold" />
     <Button android:id="@+id/btnB" android:layout_width="72dp" android:layout_height="72dp" android:layout_gravity="bottom|right" android:layout_marginRight="122dp" android:layout_marginBottom="50dp" android:alpha="0.70" android:background="@drawable/btn_overlay" android:text="B" android:textSize="20sp" android:textColor="#FFFFFFFF" android:textStyle="bold" />
     <Button android:id="@+id/btnCUp" android:layout_width="54dp" android:layout_height="54dp" android:layout_gravity="bottom|right" android:layout_marginRight="92dp" android:layout_marginBottom="164dp" android:alpha="0.66" android:background="@drawable/btn_overlay" android:text="C▲" android:textSize="10sp" android:textColor="#FFFFFFFF" />
@@ -177,4 +47,116 @@
     <Button android:id="@+id/btnCLeft" android:layout_width="54dp" android:layout_height="54dp" android:layout_gravity="bottom|right" android:layout_marginRight="150dp" android:layout_marginBottom="134dp" android:alpha="0.66" android:background="@drawable/btn_overlay" android:text="C◀" android:textSize="10sp" android:textColor="#FFFFFFFF" />
     <Button android:id="@+id/btnCRight" android:layout_width="54dp" android:layout_height="54dp" android:layout_gravity="bottom|right" android:layout_marginRight="34dp" android:layout_marginBottom="134dp" android:alpha="0.66" android:background="@drawable/btn_overlay" android:text="C▶" android:textSize="10sp" android:textColor="#FFFFFFFF" />
 
+    <!-- Menú flotante P1. -->
+    <LinearLayout
+        android:id="@+id/emuTopBar"
+        android:layout_width="match_parent"
+        android:layout_height="58dp"
+        android:layout_gravity="top"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="7dp"
+        android:layout_marginRight="62dp"
+        android:background="@drawable/panel_neon_glass"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingLeft="12dp"
+        android:paddingRight="8dp"
+        android:visibility="gone">
+
+        <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center_vertical" android:orientation="vertical">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="NINTENDO 64 · PLAYER 1" android:textColor="@color/retro_cyan" android:textSize="8sp" android:textStyle="bold" android:letterSpacing="0.08" />
+            <TextView android:id="@+id/txtEmuStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end" android:text="N64 integrado iniciando…" android:textColor="@color/retro_text" android:textSize="9sp" android:textStyle="bold" />
+            <TextView android:id="@+id/txtEmuStats" android:layout_width="match_parent" android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end" android:text="Core · FPS · audio" android:textColor="#A8C1DF" android:textSize="7sp" />
+        </LinearLayout>
+
+        <Button android:id="@+id/btnEmuView" android:layout_width="88dp" android:layout_height="42dp" android:background="@drawable/btn_neon_cyan" android:text="FULL" android:textColor="@color/retro_text" android:textSize="8sp" android:textStyle="bold" />
+        <Button android:id="@+id/btnEmuViewportAdjust" android:layout_width="102dp" android:layout_height="42dp" android:layout_marginLeft="5dp" android:background="@drawable/btn_neon_cyan" android:text="▣  PANTALLA" android:textColor="@color/retro_text" android:textSize="7sp" android:textStyle="bold" />
+        <Button android:id="@+id/btnEmuSettings" android:layout_width="92dp" android:layout_height="42dp" android:layout_marginLeft="5dp" android:background="@drawable/btn_neon_dark" android:text="⚙ AJUSTES" android:textColor="@color/retro_text" android:textSize="7sp" android:textStyle="bold" />
+        <Button android:id="@+id/btnEmuEditControls" android:layout_width="82dp" android:layout_height="42dp" android:layout_marginLeft="5dp" android:background="@drawable/btn_neon_dark" android:text="↔ MOVER" android:textColor="@color/retro_text" android:textSize="7sp" android:textStyle="bold" />
+        <Button android:id="@+id/btnEmuReset" android:layout_width="70dp" android:layout_height="42dp" android:layout_marginLeft="5dp" android:background="@drawable/btn_neon_dark" android:text="RESET" android:textColor="@color/retro_text" android:textSize="7sp" />
+        <Button android:id="@+id/btnEmuExit" android:layout_width="68dp" android:layout_height="42dp" android:layout_marginLeft="5dp" android:background="@drawable/btn_neon_magenta" android:text="SALIR" android:textColor="@color/retro_text" android:textSize="7sp" android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Pantalla manual P1. -->
+    <LinearLayout
+        android:id="@+id/emuViewportPanel"
+        android:layout_width="560dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="72dp"
+        android:background="@drawable/panel_neon_glass"
+        android:elevation="20dp"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:visibility="gone">
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="38dp" android:gravity="center_vertical" android:orientation="horizontal">
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="▣  PANTALLA JUGADOR 1" android:textColor="@color/retro_cyan" android:textSize="13sp" android:textStyle="bold" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Ajuste manual del encuadre" android:textColor="#AFC8E3" android:textSize="8sp" />
+        </LinearLayout>
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#4D00D8FF" />
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="150dp" android:orientation="horizontal" android:paddingTop="8dp">
+            <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.1" android:gravity="center" android:orientation="vertical">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:text="POSICIÓN" android:textColor="#BCD7F2" android:textSize="8sp" android:textStyle="bold" />
+                <Button android:id="@+id/btnEmuViewUp" android:layout_width="58dp" android:layout_height="44dp" android:layout_marginTop="4dp" android:background="@drawable/btn_neon_cyan" android:text="↑" android:textColor="@color/retro_text" android:textSize="20sp" android:textStyle="bold" />
+                <LinearLayout android:layout_width="match_parent" android:layout_height="48dp" android:gravity="center" android:orientation="horizontal">
+                    <Button android:id="@+id/btnEmuViewLeft" android:layout_width="58dp" android:layout_height="44dp" android:background="@drawable/btn_neon_cyan" android:text="←" android:textColor="@color/retro_text" android:textSize="20sp" android:textStyle="bold" />
+                    <View android:layout_width="22dp" android:layout_height="1dp" />
+                    <Button android:id="@+id/btnEmuViewRight" android:layout_width="58dp" android:layout_height="44dp" android:background="@drawable/btn_neon_cyan" android:text="→" android:textColor="@color/retro_text" android:textSize="20sp" android:textStyle="bold" />
+                </LinearLayout>
+                <Button android:id="@+id/btnEmuViewDown" android:layout_width="58dp" android:layout_height="44dp" android:background="@drawable/btn_neon_cyan" android:text="↓" android:textColor="@color/retro_text" android:textSize="20sp" android:textStyle="bold" />
+            </LinearLayout>
+            <View android:layout_width="1dp" android:layout_height="match_parent" android:layout_marginLeft="8dp" android:layout_marginRight="12dp" android:background="#4D00D8FF" />
+            <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:text="ZOOM" android:textColor="#BCD7F2" android:textSize="8sp" android:textStyle="bold" />
+                <LinearLayout android:layout_width="match_parent" android:layout_height="54dp" android:layout_marginTop="8dp" android:gravity="center" android:orientation="horizontal">
+                    <Button android:id="@+id/btnEmuViewZoomOut" android:layout_width="82dp" android:layout_height="50dp" android:background="@drawable/btn_neon_dark" android:text="Z−" android:textColor="@color/retro_text" android:textSize="15sp" android:textStyle="bold" />
+                    <Button android:id="@+id/btnEmuViewZoomIn" android:layout_width="82dp" android:layout_height="50dp" android:layout_marginLeft="8dp" android:background="@drawable/btn_neon_dark" android:text="Z+" android:textColor="@color/retro_text" android:textSize="15sp" android:textStyle="bold" />
+                </LinearLayout>
+                <Button android:id="@+id/btnEmuViewReset" android:layout_width="174dp" android:layout_height="46dp" android:layout_marginTop="8dp" android:background="@drawable/btn_neon_dark" android:text="◎  CENTRAR" android:textColor="@color/retro_text" android:textSize="9sp" android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView android:id="@+id/txtEmuViewport" android:layout_width="match_parent" android:layout_height="38dp" android:layout_marginTop="8dp" android:background="@drawable/pill_neon_dark" android:gravity="center" android:text="P1 · X 0% · Y 0% · Z 100%" android:textColor="@color/retro_green" android:textSize="9sp" android:textStyle="bold" />
+        <Button android:id="@+id/btnEmuViewDone" android:layout_width="match_parent" android:layout_height="46dp" android:layout_marginTop="8dp" android:background="@drawable/btn_neon_magenta" android:text="✓  LISTO" android:textColor="@color/retro_text" android:textSize="10sp" android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Configuración de juego: solo opciones conectadas a funciones reales. -->
+    <LinearLayout
+        android:id="@+id/emuSettingsPanel"
+        android:layout_width="340dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|right"
+        android:layout_marginTop="72dp"
+        android:layout_marginRight="12dp"
+        android:background="@drawable/panel_neon_glass_magenta"
+        android:elevation="22dp"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:visibility="gone">
+
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="⚙  CONFIGURACIÓN DE JUEGO" android:textColor="@color/retro_text" android:textSize="13sp" android:textStyle="bold" />
+        <TextView android:id="@+id/txtEmuSettingsSummary" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Gráficos · RetroSR · split-screen" android:textColor="#AFC8E3" android:textSize="8sp" />
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginTop="8dp" android:layout_marginBottom="8dp" android:background="#5CFF36C7" />
+        <Button android:id="@+id/btnEmuGraphics" android:layout_width="match_parent" android:layout_height="46dp" android:background="@drawable/btn_neon_cyan" android:text="GRÁFICOS" android:textColor="@color/retro_text" android:textSize="8sp" android:textStyle="bold" />
+        <Button android:id="@+id/btnEmuRetroSr" android:layout_width="match_parent" android:layout_height="46dp" android:layout_marginTop="6dp" android:background="@drawable/btn_neon_dark" android:text="RETROSR" android:textColor="@color/retro_text" android:textSize="8sp" android:textStyle="bold" />
+        <Button android:id="@+id/btnEmuSplitProfile" android:layout_width="match_parent" android:layout_height="46dp" android:layout_marginTop="6dp" android:background="@drawable/btn_neon_dark" android:text="SPLIT-SCREEN" android:textColor="@color/retro_text" android:textSize="8sp" android:textStyle="bold" />
+        <Button android:id="@+id/btnEmuAdvancedSettings" android:layout_width="match_parent" android:layout_height="44dp" android:layout_marginTop="8dp" android:background="@drawable/btn_neon_dark" android:text="AJUSTES AVANZADOS  ›" android:textColor="@color/retro_text" android:textSize="8sp" />
+        <Button android:id="@+id/btnEmuSettingsClose" android:layout_width="match_parent" android:layout_height="44dp" android:layout_marginTop="8dp" android:background="@drawable/btn_neon_magenta" android:text="CERRAR" android:textColor="@color/retro_text" android:textSize="9sp" android:textStyle="bold" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnEmuHud"
+        android:layout_width="46dp"
+        android:layout_height="46dp"
+        android:layout_gravity="top|right"
+        android:layout_marginTop="9dp"
+        android:layout_marginRight="9dp"
+        android:alpha="0.96"
+        android:background="@drawable/btn_neon_dark"
+        android:contentDescription="Mostrar u ocultar menú de juego"
+        android:text="⚙"
+        android:textColor="@color/retro_text"
+        android:textSize="18sp" />
 </FrameLayout>

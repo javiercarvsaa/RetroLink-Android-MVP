@@ -8,7 +8,7 @@ public final class PlayerViewportPreferences {
     private static final String PREFS = "retrolink_player_viewport_v068";
     private static final float MAX_OFFSET = 1.0f;
     private static final float MIN_ZOOM = 1.00f;
-    private static final float MAX_ZOOM = 1.18f;
+    private static final float MAX_ZOOM = 1.22f;
 
     private PlayerViewportPreferences() {}
 

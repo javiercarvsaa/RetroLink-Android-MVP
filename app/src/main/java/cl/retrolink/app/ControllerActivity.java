@@ -22,7 +22,7 @@ public class ControllerActivity extends Activity implements ControllerBleManager
     private ControllerBleManager ble;
     private FrameStreamClient video;
     private RemoteFrameView screen;
-    private TextView status, videoStatus, inputStatus;
+    private TextView status, videoStatus, inputStatus, playerTitle;
     private Button viewButton, hudButton;
     private View topBar, viewportPanel;
     private TextView viewportLabel;
@@ -41,6 +41,7 @@ public class ControllerActivity extends Activity implements ControllerBleManager
         status = findViewById(R.id.txtControllerStatus);
         videoStatus = findViewById(R.id.txtVideoStatus);
         inputStatus = findViewById(R.id.txtInputStatus);
+        playerTitle = findViewById(R.id.txtControllerPlayerTitle);
         screen = findViewById(R.id.remoteFrameView);
         viewButton = findViewById(R.id.btnViewMode);
         hudButton = findViewById(R.id.btnControllerHud);
@@ -66,6 +67,7 @@ public class ControllerActivity extends Activity implements ControllerBleManager
         findViewById(R.id.btnControllerViewZoomIn).setOnClickListener(v -> adjustViewport(0f, 0f, 0.02f));
         findViewById(R.id.btnControllerViewReset).setOnClickListener(v -> { if (screen != null) screen.resetViewport(); updateViewportLabel(); });
         findViewById(R.id.btnControllerViewDone).setOnClickListener(v -> { if (viewportPanel != null) viewportPanel.setVisibility(View.GONE); });
+        findViewById(R.id.btnControllerSettings).setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
         findViewById(R.id.btnControllerEditControls).setOnClickListener(v -> {
             Intent i = new Intent(this, ControlLayoutActivity.class);
             i.putExtra(ControlLayoutActivity.EXTRA_SCOPE, ControlLayoutStore.SCOPE_N64_REMOTE_LANDSCAPE);
@@ -96,18 +98,25 @@ public class ControllerActivity extends Activity implements ControllerBleManager
         }
         boolean show = viewportPanel.getVisibility() != View.VISIBLE;
         viewportPanel.setVisibility(show ? View.VISIBLE : View.GONE);
-        if (show) updateViewportLabel();
+        if (show) {
+            // Mantener el panel por encima de los controles táctiles para que sus
+            // botones siempre reciban el toque en P2-P4.
+            viewportPanel.bringToFront();
+            if (hudButton != null) hudButton.bringToFront();
+            updateViewportLabel();
+        }
     }
 
     private void adjustViewport(float dx, float dy, float dz) {
         if (screen == null) return;
         if (dx != 0f || dy != 0f) screen.nudgeViewport(dx, dy);
         if (dz != 0f) screen.changeViewportZoom(dz);
+        screen.invalidate();
         updateViewportLabel();
     }
 
     private void updateViewportLabel() {
-        if (viewportLabel != null && screen != null) viewportLabel.setText("AJUSTE DE PANTALLA · " + screen.viewportLabel());
+        if (viewportLabel != null && screen != null) viewportLabel.setText(screen.viewportLabel());
     }
 
     @Override public boolean dispatchKeyEvent(KeyEvent event) {
@@ -146,6 +155,7 @@ public class ControllerActivity extends Activity implements ControllerBleManager
     @Override public void onConnected(int p) {
         player = p;
         screen.setPlayer(p);
+        if (playerTitle != null) playerTitle.setText("PLAYER P" + p);
         updateViewportLabel();
         status.setText("P" + p + " · BLE LISTO");
         inputStatus.setText("P" + p + " conectado al núcleo N64 del Host");
@@ -172,6 +182,7 @@ public class ControllerActivity extends Activity implements ControllerBleManager
 
     @Override public void onDisconnected() {
         player = 0;
+        if (playerTitle != null) playerTitle.setText("PLAYER REMOTO");
         lastHostIp = "";
         if (video != null) video.stop();
         videoStatus.setText("Video desconectado");
@@ -186,11 +197,16 @@ public class ControllerActivity extends Activity implements ControllerBleManager
     }
 
     private void setHudVisible(boolean visible, boolean persist) {
-        if (topBar != null) topBar.setVisibility(visible ? View.VISIBLE : View.GONE);
+        if (topBar != null) {
+            topBar.setVisibility(visible ? View.VISIBLE : View.GONE);
+            if (visible) topBar.bringToFront();
+        }
+        if (!visible && viewportPanel != null) viewportPanel.setVisibility(View.GONE);
         if (hudButton != null) {
             hudButton.setText(visible ? "×" : "⚙");
-            hudButton.setContentDescription(visible ? "Ocultar estado de jugador" : "Mostrar estado y conexión");
-            hudButton.setAlpha(visible ? 0.92f : 0.72f);
+            hudButton.setContentDescription(visible ? "Ocultar menú del jugador" : "Mostrar menú del jugador");
+            hudButton.setAlpha(visible ? 0.98f : 0.82f);
+            hudButton.bringToFront();
         }
         if (persist && player > 0) RetroPreferences.setGameHudVisible(this, visible);
     }

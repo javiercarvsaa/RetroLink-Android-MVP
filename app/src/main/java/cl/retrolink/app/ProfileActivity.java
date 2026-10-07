@@ -23,7 +23,7 @@ public class ProfileActivity extends Activity {
         gamepad = findViewById(R.id.txtProfileGamepad);
         libraryCount = findViewById(R.id.txtProfileLibraryCount);
         coreState = findViewById(R.id.txtProfileCoreState);
-        ((TextView) findViewById(R.id.txtProfileVersion)).setText("RetroLink v0.6.4 RC1");
+        ((TextView) findViewById(R.id.txtProfileVersion)).setText("RetroLink v0.6.10 RC1");
 
         findViewById(R.id.navProfileHome).setOnClickListener(v -> finish());
         findViewById(R.id.navProfileGames).setOnClickListener(v -> startActivity(new Intent(this, LibraryActivity.class)));

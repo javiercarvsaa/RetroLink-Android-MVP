@@ -30,8 +30,8 @@ public class IntegratedN64Activity extends Activity implements EmulatorSurfaceVi
     private EmulatorSurfaceView surface;
     private FrameLayout viewport, crop, controlRoot;
     private TextView status, stats;
-    private View topBar, viewportPanel;
-    private TextView viewportLabel;
+    private View topBar, viewportPanel, settingsPanel;
+    private TextView viewportLabel, settingsSummary;
     private Button viewBtn, hudBtn, settingsBtn;
     private N64ControlBinder controls;
     private int playerCount = 1;
@@ -68,6 +68,8 @@ public class IntegratedN64Activity extends Activity implements EmulatorSurfaceVi
         topBar = findViewById(R.id.emuTopBar);
         viewportPanel = findViewById(R.id.emuViewportPanel);
         viewportLabel = findViewById(R.id.txtEmuViewport);
+        settingsPanel = findViewById(R.id.emuSettingsPanel);
+        settingsSummary = findViewById(R.id.txtEmuSettingsSummary);
         viewBtn = findViewById(R.id.btnEmuView);
         hudBtn = findViewById(R.id.btnEmuHud);
         settingsBtn = findViewById(R.id.btnEmuSettings);
@@ -93,7 +95,7 @@ public class IntegratedN64Activity extends Activity implements EmulatorSurfaceVi
         findViewById(R.id.btnEmuReset).setOnClickListener(v -> surface.resetCore());
         viewBtn.setOnClickListener(v -> togglePlayerView());
         hudBtn.setOnClickListener(v -> setHudVisible(topBar == null || topBar.getVisibility() != View.VISIBLE));
-        settingsBtn.setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
+        settingsBtn.setOnClickListener(v -> toggleSettingsPanel());
         findViewById(R.id.btnEmuViewportAdjust).setOnClickListener(v -> toggleViewportPanel());
         findViewById(R.id.btnEmuViewLeft).setOnClickListener(v -> adjustViewport(-0.20f, 0f, 0f));
         findViewById(R.id.btnEmuViewRight).setOnClickListener(v -> adjustViewport(0.20f, 0f, 0f));
@@ -103,9 +105,26 @@ public class IntegratedN64Activity extends Activity implements EmulatorSurfaceVi
         findViewById(R.id.btnEmuViewZoomIn).setOnClickListener(v -> adjustViewport(0f, 0f, 0.02f));
         findViewById(R.id.btnEmuViewReset).setOnClickListener(v -> { PlayerViewportPreferences.reset(this, false, 1); applyPlayerTransform(); updateViewportLabel(); });
         findViewById(R.id.btnEmuViewDone).setOnClickListener(v -> { if (viewportPanel != null) viewportPanel.setVisibility(View.GONE); });
+        findViewById(R.id.btnEmuGraphics).setOnClickListener(v -> {
+            RetroPreferences.setGraphicsProfile(this, (RetroPreferences.graphicsProfile(this) + 1) % 3);
+            surface.setPerformanceProfile(RetroPreferences.graphicsProfile(this));
+            refreshGameSettingsPanel();
+        });
+        findViewById(R.id.btnEmuRetroSr).setOnClickListener(v -> {
+            RetroPreferences.nextRetroSrMode(this);
+            refreshGameSettingsPanel();
+        });
+        findViewById(R.id.btnEmuSplitProfile).setOnClickListener(v -> {
+            RetroPreferences.nextSplitCropMode(this);
+            applyPlayerTransform();
+            refreshGameSettingsPanel();
+        });
+        findViewById(R.id.btnEmuAdvancedSettings).setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
+        findViewById(R.id.btnEmuSettingsClose).setOnClickListener(v -> { if (settingsPanel != null) settingsPanel.setVisibility(View.GONE); });
         findViewById(R.id.btnEmuEditControls).setOnClickListener(v -> startActivity(new Intent(this, ControlLayoutActivity.class)));
         setHudVisible(RetroPreferences.gameHudVisible(this), false);
         updateViewButton();
+        refreshGameSettingsPanel();
 
         surface.setPerformanceProfile(RetroPreferences.graphicsProfile(this));
         viewport.post(this::fitSurfaceFourByThree);
@@ -174,6 +193,7 @@ public class IntegratedN64Activity extends Activity implements EmulatorSurfaceVi
 
     private void toggleViewportPanel() {
         syncSessionPlayers();
+        if (settingsPanel != null) settingsPanel.setVisibility(View.GONE);
         if (playerCount <= 1) {
             Toast.makeText(this, "El ajuste de pantalla se usa en vista PLAYER con 2P–4P.", Toast.LENGTH_SHORT).show();
             return;
@@ -199,7 +219,32 @@ public class IntegratedN64Activity extends Activity implements EmulatorSurfaceVi
     }
 
     private void updateViewportLabel() {
-        if (viewportLabel != null) viewportLabel.setText("AJUSTE DE PANTALLA · " + PlayerViewportPreferences.label(this, false, 1));
+        if (viewportLabel != null) viewportLabel.setText(PlayerViewportPreferences.label(this, false, 1));
+    }
+
+    private void toggleSettingsPanel() {
+        if (settingsPanel == null) return;
+        if (viewportPanel != null) viewportPanel.setVisibility(View.GONE);
+        boolean show = settingsPanel.getVisibility() != View.VISIBLE;
+        settingsPanel.setVisibility(show ? View.VISIBLE : View.GONE);
+        if (show) {
+            refreshGameSettingsPanel();
+            settingsPanel.bringToFront();
+            if (hudBtn != null) hudBtn.bringToFront();
+        }
+    }
+
+    private void refreshGameSettingsPanel() {
+        Button gfx = findViewById(R.id.btnEmuGraphics);
+        Button sr = findViewById(R.id.btnEmuRetroSr);
+        Button split = findViewById(R.id.btnEmuSplitProfile);
+        if (gfx != null) gfx.setText("GRÁFICOS  ·  " + RetroPreferences.graphicsProfileLabel(this));
+        if (sr != null) sr.setText("RETROSR  ·  " + RetroPreferences.retroSrModeLabel(this));
+        if (split != null) split.setText("SPLIT-SCREEN  ·  " + RetroPreferences.splitCropModeLabel(this));
+        if (settingsSummary != null) {
+            settingsSummary.setText("P1–P" + Math.max(1, playerCount) + " · "
+                    + RetroPreferences.streamProfileLabel(this));
+        }
     }
 
     private void setHudVisible(boolean visible) {
@@ -207,11 +252,19 @@ public class IntegratedN64Activity extends Activity implements EmulatorSurfaceVi
     }
 
     private void setHudVisible(boolean visible, boolean persist) {
-        if (topBar != null) topBar.setVisibility(visible ? View.VISIBLE : View.GONE);
+        if (topBar != null) {
+            topBar.setVisibility(visible ? View.VISIBLE : View.GONE);
+            if (visible) topBar.bringToFront();
+        }
+        if (!visible) {
+            if (viewportPanel != null) viewportPanel.setVisibility(View.GONE);
+            if (settingsPanel != null) settingsPanel.setVisibility(View.GONE);
+        }
         if (hudBtn != null) {
             hudBtn.setText(visible ? "×" : "⚙");
-            hudBtn.setContentDescription(visible ? "Ocultar información de juego" : "Mostrar información y ajustes");
-            hudBtn.setAlpha(visible ? 0.92f : 0.72f);
+            hudBtn.setContentDescription(visible ? "Ocultar menú de juego" : "Mostrar menú de juego");
+            hudBtn.setAlpha(visible ? 0.98f : 0.82f);
+            hudBtn.bringToFront();
         }
         if (persist) RetroPreferences.setGameHudVisible(this, visible);
     }
@@ -317,6 +370,7 @@ public class IntegratedN64Activity extends Activity implements EmulatorSurfaceVi
             surface.onResume();
             applyPlayerTransform();
         }
+        refreshGameSettingsPanel();
         if (controlRoot != null) ControlLayoutStore.applyAll(this, controlRoot, ControlLayoutStore.SCOPE_N64_LANDSCAPE);
         main.removeCallbacks(captureTick);
         if (!coreShutdown) main.post(captureTick);

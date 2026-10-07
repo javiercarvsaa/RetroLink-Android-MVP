@@ -39,9 +39,15 @@ public class RemoteFrameView extends View {
     public void nudgeViewport(float dx, float dy) {
         float x = PlayerViewportPreferences.offsetX(getContext(), true, player) + dx;
         float y = PlayerViewportPreferences.offsetY(getContext(), true, player) + dy;
+        x = Math.max(-1f, Math.min(1f, x));
+        y = Math.max(-1f, Math.min(1f, y));
         float z = PlayerViewportPreferences.zoom(getContext(), true, player);
-        // Un pequeño zoom automático deja margen para desplazar sin revelar bordes negros.
-        if ((Math.abs(x) > 0.001f || Math.abs(y) > 0.001f) && z < 1.04f) z = 1.04f;
+
+        // v0.6.9: P2-P4 deben moverse con la misma magnitud visual que P1.
+        // Cada paso de 0.20 equivale aprox. a 1.6% del cuadro. El zoom mínimo
+        // crece con el desplazamiento para conservar margen y no revelar bordes negros.
+        float minZoomForPan = 1f + 0.20f * Math.max(Math.abs(x), Math.abs(y));
+        if (z < minZoomForPan) z = minZoomForPan;
         PlayerViewportPreferences.set(getContext(), true, player, x, y, z);
         postInvalidateOnAnimation();
     }
@@ -238,8 +244,16 @@ public class RemoteFrameView extends View {
 
         int maxDx = Math.max(0, (bw - cw) / 2);
         int maxDy = Math.max(0, (bh - ch) / 2);
-        int cx = base.centerX() + Math.round(ox * maxDx);
-        int cy = base.centerY() + Math.round(oy * maxDy);
+
+        // v0.6.8 multiplicaba el offset por el pequeño margen creado por el zoom
+        // (p.ej. 0.20 * ~2%), por lo que P2 parecía no moverse. En v0.6.9 el
+        // offset representa directamente hasta ±8% del cuadro, igual que el Host.
+        int wantedDx = Math.round(ox * bw * 0.08f);
+        int wantedDy = Math.round(oy * bh * 0.08f);
+        int panX = clampInt(wantedDx, -maxDx, maxDx);
+        int panY = clampInt(wantedDy, -maxDy, maxDy);
+        int cx = base.centerX() + panX;
+        int cy = base.centerY() + panY;
         int left = clampInt(cx - cw / 2, base.left, base.right - cw);
         int top = clampInt(cy - ch / 2, base.top, base.bottom - ch);
         return new Rect(left, top, left + cw, top + ch);

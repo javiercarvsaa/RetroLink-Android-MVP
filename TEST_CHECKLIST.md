@@ -38,3 +38,23 @@
 - [ ] CENTRO restablece X=0, Y=0, Z=100%.
 - [ ] Reiniciar app conserva encuadre manual.
 - [ ] FULL no se altera por los ajustes PLAYER.
+
+
+## v0.6.9 Remote Manual Viewport Fix
+- [ ] P2 abre PANTALLA y ←/→ mueve el cuadro claramente.
+- [ ] P2 ↑/↓ mueve el cuadro claramente.
+- [ ] El texto X/Y cambia en cada pulsación.
+- [ ] Z+/Z− cambia el zoom.
+- [ ] CENTRO vuelve a X 0 / Y 0 / Z 100%.
+- [ ] El panel recibe toques aunque L/R y controles táctiles estén visibles.
+- [ ] P1 sigue ajustando pantalla sin regresiones.
+
+## v0.6.10 Final UI Polish
+- [ ] ⚙ del Host abre/cierra el panel Configuración de Sala.
+- [ ] 1/2/3/4 jugadores funcionan tanto en la barra principal como en el panel lateral.
+- [ ] Gráficos, Video remoto, Split-screen y HUD actualizan valores reales.
+- [ ] P1: ⚙ muestra menú final; PANTALLA mueve X/Y y Z+/Z−.
+- [ ] P1: AJUSTES abre panel in-game y sus tres controles cambian preferencias reales.
+- [ ] P2-P4: PANTALLA recibe toques y el desplazamiento es claramente visible.
+- [ ] MOVER sigue abriendo el editor de controles correspondiente.
+- [ ] FULL/PLAYER, RESET y SALIR mantienen comportamiento existente.

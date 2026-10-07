@@ -50,6 +50,7 @@ public class ControllerBleManager {
     private boolean hostInfoReadInFlight;
     private boolean hostInfoNeeded;
     private boolean hostInfoReady;
+    private String activeSessionType = "N64";
     private int sequence;
     private InputState inFlightState;
     private final ArrayDeque<InputState> queue = new ArrayDeque<>();
@@ -62,6 +63,16 @@ public class ControllerBleManager {
     };
 
     private final Runnable retryHostInfo = this::requestHostInfo;
+
+    private final Runnable inputWriteWatchdog = () -> {
+        synchronized (ControllerBleManager.this) {
+            if (!writeInFlight) return;
+            writeInFlight = false;
+            inFlightState = null;
+        }
+        log("BLE input watchdog: liberando escritura sin callback.");
+        pumpOperations();
+    };
 
     public ControllerBleManager(Context c, Listener l) {
         context = c.getApplicationContext();
@@ -104,6 +115,7 @@ public class ControllerBleManager {
     public void disconnect() {
         stopScan();
         main.removeCallbacks(retryHostInfo);
+        main.removeCallbacks(inputWriteWatchdog);
         inputCharacteristic = playerCharacteristic = hostInfoCharacteristic = null;
         hostDevice = null;
         connecting = false;
@@ -114,6 +126,7 @@ public class ControllerBleManager {
             hostInfoReadInFlight = false;
             hostInfoNeeded = false;
             hostInfoReady = false;
+            activeSessionType = "N64";
         }
         if (gatt != null) {
             try { gatt.disconnect(); } catch (Exception ignored) {}
@@ -166,19 +179,27 @@ public class ControllerBleManager {
 
         InputState st = queue.removeFirst();
         byte[] v = BleProtocol.packet(sequence++, st.mask, st.x, st.y);
+
+        boolean reliable = "ATARI2600".equals(activeSessionType);
+        int writeType = reliable
+                ? BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+                : BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE;
+
         boolean started;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            started = gatt.writeCharacteristic(inputCharacteristic, v, BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE) == 0;
+            started = gatt.writeCharacteristic(inputCharacteristic, v, writeType) == 0;
         } else {
-            inputCharacteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+            inputCharacteristic.setWriteType(writeType);
             inputCharacteristic.setValue(v);
             started = gatt.writeCharacteristic(inputCharacteristic);
         }
+
         if (started) {
             writeInFlight = true;
             inFlightState = st;
+            main.removeCallbacks(inputWriteWatchdog);
+            main.postDelayed(inputWriteWatchdog, reliable ? 250 : 90);
         } else {
-            // Si ya llegó un estado más reciente, no reinsertamos uno antiguo.
             if (queue.isEmpty()) queue.addFirst(st);
             main.postDelayed(this::retryOperations, 6);
         }
@@ -225,6 +246,7 @@ public class ControllerBleManager {
                     hostInfoReady = false;
                 }
                 main.removeCallbacks(retryHostInfo);
+                main.removeCallbacks(inputWriteWatchdog);
                 status("Desconectado del Host.");
                 main.post(listener::onDisconnected);
                 try { g.close(); } catch (Exception ignored) {}
@@ -255,7 +277,11 @@ public class ControllerBleManager {
 
         @Override
         public void onCharacteristicWrite(BluetoothGatt g, BluetoothGattCharacteristic c, int statusCode) {
-            synchronized (ControllerBleManager.this) { writeInFlight = false; inFlightState = null; }
+            main.removeCallbacks(inputWriteWatchdog);
+            synchronized (ControllerBleManager.this) {
+                writeInFlight = false;
+                inFlightState = null;
+            }
             pumpOperations();
         }
 
@@ -314,6 +340,8 @@ public class ControllerBleManager {
                 ip = raw.substring(split + 1).trim();
             }
 
+            ip = extractIpv4(ip);
+
             if (ip.isEmpty()) {
                 synchronized (this) {
                     hostInfoReady = false;
@@ -330,6 +358,7 @@ public class ControllerBleManager {
                 synchronized (this) {
                     hostInfoReady = true;
                     hostInfoNeeded = false;
+                    activeSessionType = sessionType;
                 }
                 final String mode = sessionType;
                 final String hostIp = ip;
@@ -344,6 +373,28 @@ public class ControllerBleManager {
         }
     }
 
+
+    private static String extractIpv4(String text) {
+        if (text == null) return "";
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("(?<![0-9])(?:[0-9]{1,3}\\.){3}[0-9]{1,3}(?![0-9])")
+                .matcher(text);
+        while (m.find()) {
+            String candidate = m.group();
+            String[] parts = candidate.split("\\.");
+            boolean ok = parts.length == 4;
+            for (String part : parts) {
+                try {
+                    int v = Integer.parseInt(part);
+                    if (v < 0 || v > 255) ok = false;
+                } catch (Exception e) {
+                    ok = false;
+                }
+            }
+            if (ok) return candidate;
+        }
+        return "";
+    }
 
     public BluetoothDevice getHostDevice() { return hostDevice; }
     private void status(String s) { main.post(() -> listener.onStatus(s)); }

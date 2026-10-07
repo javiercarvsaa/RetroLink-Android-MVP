@@ -23,6 +23,7 @@ import cl.retrolink.app.NetworkUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -129,15 +130,32 @@ public class HostBleManager {
             }
         }
         @Override @SuppressLint("MissingPermission") public void onCharacteristicReadRequest(BluetoothDevice device, int requestId, int offset, BluetoothGattCharacteristic characteristic) {
-            byte[] value;
+            byte[] full;
             if (BleProtocol.PLAYER_UUID.equals(characteristic.getUuid())) {
-                Integer player = players.get(device); value = new byte[]{(byte)(player == null ? 0 : player)};
+                Integer player = players.get(device);
+                full = new byte[]{(byte)(player == null ? 0 : player)};
             } else if (BleProtocol.HOST_INFO_UUID.equals(characteristic.getUuid())) {
                 String ip = NetworkUtils.localIpv4();
                 String payload = sessionType + "|" + ip;
-                value = payload.getBytes(StandardCharsets.UTF_8);
-            } else { if (gattServer != null) gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_REQUEST_NOT_SUPPORTED, 0, null); return; }
-            if (gattServer != null) gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, value);
+                full = payload.getBytes(StandardCharsets.UTF_8);
+            } else {
+                if (gattServer != null)
+                    gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_REQUEST_NOT_SUPPORTED, offset, null);
+                return;
+            }
+
+            if (offset < 0 || offset > full.length) {
+                if (gattServer != null)
+                    gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_INVALID_OFFSET, offset, null);
+                return;
+            }
+
+            byte[] value = offset == full.length
+                    ? new byte[0]
+                    : Arrays.copyOfRange(full, offset, full.length);
+
+            if (gattServer != null)
+                gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, value);
         }
         @Override @SuppressLint("MissingPermission") public void onCharacteristicWriteRequest(BluetoothDevice device, int requestId, BluetoothGattCharacteristic characteristic, boolean preparedWrite, boolean responseNeeded, int offset, byte[] value) {
             int result = BluetoothGatt.GATT_SUCCESS;

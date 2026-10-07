@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/genericRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:clipChildren="true"
+    android:splitMotionEvents="true">
+
+    <FrameLayout
+        android:id="@+id/genericViewport"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipChildren="true">
+        <FrameLayout
+            android:id="@+id/genericCrop"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:background="#000000"
+            android:clipChildren="true">
+            <cl.retrolink.app.EmulatorSurfaceView
+                android:id="@+id/genericEmulatorSurface"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </FrameLayout>
+    </FrameLayout>
+
+    <LinearLayout
+        android:id="@+id/genericTopBar"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:layout_gravity="top"
+        android:layout_marginLeft="12dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginRight="62dp"
+        android:background="@drawable/panel_overlay"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingLeft="14dp"
+        android:paddingRight="8dp"
+        android:visibility="gone">
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/txtGenericTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="GB/GBC · JUEGO"
+                android:textColor="@color/retro_cyan"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/txtGenericStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="Preparando núcleo…"
+                android:textColor="@color/retro_text"
+                android:textSize="8sp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/txtGenericStats"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="PresentSync"
+                android:textColor="@color/retro_muted"
+                android:textSize="7sp" />
+        </LinearLayout>
+        <Button android:id="@+id/btnGenericReset" android:layout_width="82dp" android:layout_height="44dp" android:background="@drawable/btn_secondary_neon" android:text="RESET" android:textColor="@color/retro_text" android:textSize="8sp" />
+        <Button android:id="@+id/btnGenericSettings" android:layout_width="92dp" android:layout_height="44dp" android:layout_marginLeft="5dp" android:background="@drawable/btn_secondary_neon" android:text="⚙ AJUSTES" android:textColor="@color/retro_text" android:textSize="8sp" />
+        <Button android:id="@+id/btnGenericExit" android:layout_width="82dp" android:layout_height="44dp" android:layout_marginLeft="5dp" android:background="@drawable/btn_magenta_neon" android:text="SALIR" android:textColor="@color/retro_text" android:textSize="8sp" android:textStyle="bold" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnGenericHud"
+        android:layout_width="46dp"
+        android:layout_height="46dp"
+        android:layout_gravity="top|right"
+        android:layout_marginTop="10dp"
+        android:layout_marginRight="10dp"
+        android:background="@drawable/btn_retro"
+        android:text="⚙"
+        android:textColor="@color/retro_text"
+        android:textSize="18sp" />
+
+    <cl.retrolink.app.VirtualStickView
+        android:id="@+id/virtualStick"
+        android:layout_width="180dp"
+        android:layout_height="180dp"
+        android:layout_gravity="bottom|left"
+        android:layout_marginLeft="18dp"
+        android:layout_marginBottom="18dp" />
+
+    <Button android:id="@+id/btnZ" android:layout_width="86dp" android:layout_height="54dp" android:layout_gravity="bottom|center_horizontal" android:layout_marginRight="112dp" android:layout_marginBottom="24dp" android:alpha="0.76" android:background="@drawable/btn_retro" android:text="SELECT" android:textColor="@color/retro_text" android:textSize="9sp" />
+    <Button android:id="@+id/btnStart" android:layout_width="86dp" android:layout_height="54dp" android:layout_gravity="bottom|center_horizontal" android:layout_marginLeft="112dp" android:layout_marginBottom="24dp" android:alpha="0.76" android:background="@drawable/btn_retro" android:text="START" android:textColor="@color/retro_text" android:textSize="9sp" />
+    <Button android:id="@+id/btnB" android:layout_width="82dp" android:layout_height="82dp" android:layout_gravity="bottom|right" android:layout_marginRight="130dp" android:layout_marginBottom="58dp" android:alpha="0.76" android:background="@drawable/btn_overlay" android:text="B" android:textColor="#FFFFFFFF" android:textSize="21sp" android:textStyle="bold" />
+    <Button android:id="@+id/btnA" android:layout_width="92dp" android:layout_height="92dp" android:layout_gravity="bottom|right" android:layout_marginRight="28dp" android:layout_marginBottom="80dp" android:alpha="0.80" android:background="@drawable/btn_overlay" android:text="A" android:textColor="#FFFFFFFF" android:textSize="25sp" android:textStyle="bold" />
+</FrameLayout>

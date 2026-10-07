@@ -30,6 +30,7 @@ public class EmulatorSurfaceView extends GLSurfaceView {
     private int renderHeight = 480;
     private int performanceProfile = 1;
     private volatile N64GameProfile gameProfile = N64GameProfile.detect("");
+    private volatile CoreRegistry.Core activeCore = CoreRegistry.N64;
     private final AtomicBoolean shutdownStarted = new AtomicBoolean(false);
     private final CountDownLatch shutdownDone = new CountDownLatch(1);
 
@@ -94,13 +95,26 @@ public class EmulatorSurfaceView extends GLSurfaceView {
     }
 
     public void configure(String corePath, String romPath, String systemDir, String saveDir, Listener listener) {
-        gameProfile = N64GameProfile.detect(romPath);
-        SessionState.setGameProfile(gameProfile);
+        configure(CoreRegistry.N64, corePath, romPath, systemDir, saveDir, listener);
+    }
+
+    public void configure(CoreRegistry.Core core, String corePath, String romPath, String systemDir, String saveDir, Listener listener) {
+        activeCore = core == null ? CoreRegistry.N64 : core;
+        if (activeCore == CoreRegistry.N64) {
+            gameProfile = N64GameProfile.detect(romPath);
+            SessionState.setGameProfile(gameProfile);
+        } else {
+            gameProfile = null;
+            SessionState.setGameProfile(null);
+        }
         coreRenderer.configure(corePath, romPath, systemDir, saveDir, listener);
         requestRender();
     }
 
-    public String getGameProfileLabel() { return gameProfile == null ? "N64 AUTO" : gameProfile.shortLabel(); }
+    public String getGameProfileLabel() {
+        if (activeCore != CoreRegistry.N64) return activeCore.shortSystem;
+        return gameProfile == null ? "N64 AUTO" : gameProfile.shortLabel();
+    }
 
     public boolean isCoreReady() { return coreRenderer.ready; }
     public void resetCore() {
@@ -215,6 +229,7 @@ public class EmulatorSurfaceView extends GLSurfaceView {
 
         @Override public void onSurfaceChanged(javax.microedition.khronos.opengles.GL10 gl, int width, int height) {
             GLES20.glViewport(0, 0, width, height);
+            NativeLibretro.nativeSetOutputSize(width, height);
             surfaceReady = true;
             requestRender();
         }
@@ -236,7 +251,7 @@ public class EmulatorSurfaceView extends GLSurfaceView {
             if (!NativeLibretro.nativeRunFrame()) {
                 ready = false;
                 stopFramePacer();
-                postError("El núcleo N64 dejó de ejecutar frames");
+                postError("El núcleo " + activeCore.shortSystem + " dejó de ejecutar frames");
                 return;
             }
 
@@ -267,9 +282,10 @@ public class EmulatorSurfaceView extends GLSurfaceView {
 
         private void initializeCore() {
             initializedOnce = true;
-            if (listener != null) post(() -> listener.onStats("Etapa 2/5 · cargando libretro N64 · " + rw + "×" + rh));
+            if (listener != null) post(() -> listener.onStats("Etapa 2/5 · cargando " + activeCore.shortSystem + " · " + rw + "×" + rh));
 
             NativeLibretro.nativeClearFrontendOptions();
+            if (activeCore == CoreRegistry.N64) {
             NativeLibretro.nativeSetFrontendOption("mupen64plus-rdp-plugin", "gliden64");
             NativeLibretro.nativeSetFrontendOption("mupen64plus-rsp-plugin", "hle");
             NativeLibretro.nativeSetFrontendOption("mupen64plus-cpucore", "dynamic_recompiler");
@@ -307,6 +323,7 @@ public class EmulatorSurfaceView extends GLSurfaceView {
                 NativeLibretro.nativeSetFrontendOption("mupen64plus-HybridFilter", "False");
                 NativeLibretro.nativeSetFrontendOption("mupen64plus-FrameDuping", "False");
             }
+            }
 
             String error;
             try { error = NativeLibretro.nativeInit(corePath, romPath, systemDir, saveDir); }
@@ -326,7 +343,7 @@ public class EmulatorSurfaceView extends GLSurfaceView {
             }
 
             if (listener != null) {
-                final String gp = gameProfile == null ? "N64 AUTO" : gameProfile.shortLabel();
+                final String gp = activeCore == CoreRegistry.N64 ? (gameProfile == null ? "N64 AUTO" : gameProfile.shortLabel()) : activeCore.system;
                 post(() -> listener.onStats("Etapa 4/5 · ROM cargada · " + gp + " · iniciando ejecución"));
             }
             fps = NativeLibretro.nativeGetFps();

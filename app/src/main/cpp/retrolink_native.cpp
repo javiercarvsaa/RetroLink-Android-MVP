@@ -61,6 +61,15 @@ bool g_loaded = false;
 std::atomic<uint64_t> g_video_frames{0};
 uintptr_t g_frontend_fbo = 0;
 
+// v0.7.0 MultiPlatform: software framebuffer para cores 2D y core dinámico.
+bool g_core_is_n64 = true;
+int g_output_width = 640;
+int g_output_height = 480;
+GLuint g_sw_program = 0;
+GLuint g_sw_texture = 0;
+GLuint g_sw_vao = 0;
+std::vector<uint8_t> g_sw_rgba;
+
 using retro_init_fn = void (*)(void);
 using retro_deinit_fn = void (*)(void);
 using retro_api_version_fn = unsigned (*)(void);
@@ -322,11 +331,116 @@ bool environment_cb(unsigned cmd, void* data) {
     }
 }
 
+GLuint compile_sw_shader(GLenum type, const char* source) {
+    GLuint shader = glCreateShader(type);
+    glShaderSource(shader, 1, &source, nullptr);
+    glCompileShader(shader);
+    GLint ok = GL_FALSE;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &ok);
+    if (ok != GL_TRUE) {
+        char log[1024]{}; GLsizei len = 0;
+        glGetShaderInfoLog(shader, sizeof(log), &len, log);
+        LOGE("Software shader: %s", log);
+        glDeleteShader(shader);
+        return 0;
+    }
+    return shader;
+}
+
+void invalidate_software_renderer() {
+    g_sw_program = 0; g_sw_texture = 0; g_sw_vao = 0;
+}
+
+void reset_software_renderer() {
+    if (eglGetCurrentContext() != EGL_NO_CONTEXT) {
+        if (g_sw_texture) glDeleteTextures(1, &g_sw_texture);
+        if (g_sw_vao) glDeleteVertexArrays(1, &g_sw_vao);
+        if (g_sw_program) glDeleteProgram(g_sw_program);
+    }
+    invalidate_software_renderer();
+    g_sw_rgba.clear();
+}
+
+bool ensure_software_renderer() {
+    if (g_sw_program && g_sw_texture && g_sw_vao) return true;
+    static const char* VS =
+        "#version 300 es\n"
+        "out vec2 v_uv;\n"
+        "void main(){\n"
+        " vec2 p[4]=vec2[4](vec2(-1.0,-1.0),vec2(1.0,-1.0),vec2(-1.0,1.0),vec2(1.0,1.0));\n"
+        " vec2 t[4]=vec2[4](vec2(0.0,1.0),vec2(1.0,1.0),vec2(0.0,0.0),vec2(1.0,0.0));\n"
+        " gl_Position=vec4(p[gl_VertexID],0.0,1.0); v_uv=t[gl_VertexID];\n"
+        "}\n";
+    static const char* FS =
+        "#version 300 es\n"
+        "precision mediump float;\n"
+        "in vec2 v_uv; uniform sampler2D u_tex; out vec4 frag;\n"
+        "void main(){ frag=texture(u_tex,v_uv); }\n";
+    GLuint vs = compile_sw_shader(GL_VERTEX_SHADER, VS);
+    GLuint fs = compile_sw_shader(GL_FRAGMENT_SHADER, FS);
+    if (!vs || !fs) { if (vs) glDeleteShader(vs); if (fs) glDeleteShader(fs); return false; }
+    g_sw_program = glCreateProgram();
+    glAttachShader(g_sw_program, vs); glAttachShader(g_sw_program, fs); glLinkProgram(g_sw_program);
+    glDeleteShader(vs); glDeleteShader(fs);
+    GLint ok = GL_FALSE; glGetProgramiv(g_sw_program, GL_LINK_STATUS, &ok);
+    if (ok != GL_TRUE) { reset_software_renderer(); return false; }
+    glGenTextures(1, &g_sw_texture);
+    glBindTexture(GL_TEXTURE_2D, g_sw_texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glGenVertexArrays(1, &g_sw_vao);
+    return g_sw_texture != 0 && g_sw_vao != 0;
+}
+
+void render_software_frame(const void* data, unsigned width, unsigned height, size_t pitch) {
+    if (!data || width == 0 || height == 0 || !ensure_software_renderer()) return;
+    g_sw_rgba.resize(static_cast<size_t>(width) * height * 4);
+    for (unsigned y = 0; y < height; ++y) {
+        const uint8_t* row = static_cast<const uint8_t*>(data) + static_cast<size_t>(y) * pitch;
+        for (unsigned x = 0; x < width; ++x) {
+            uint8_t r = 0, g = 0, b = 0;
+            if (g_pixel_format == RETRO_PIXEL_FORMAT_RGB565) {
+                uint16_t px = 0; std::memcpy(&px, row + x * 2, 2);
+                r = static_cast<uint8_t>(((px >> 11) & 31) * 255 / 31);
+                g = static_cast<uint8_t>(((px >> 5) & 63) * 255 / 63);
+                b = static_cast<uint8_t>((px & 31) * 255 / 31);
+            } else if (g_pixel_format == RETRO_PIXEL_FORMAT_0RGB1555) {
+                uint16_t px = 0; std::memcpy(&px, row + x * 2, 2);
+                r = static_cast<uint8_t>(((px >> 10) & 31) * 255 / 31);
+                g = static_cast<uint8_t>(((px >> 5) & 31) * 255 / 31);
+                b = static_cast<uint8_t>((px & 31) * 255 / 31);
+            } else {
+                uint32_t px = 0; std::memcpy(&px, row + x * 4, 4);
+                r = static_cast<uint8_t>((px >> 16) & 0xff);
+                g = static_cast<uint8_t>((px >> 8) & 0xff);
+                b = static_cast<uint8_t>(px & 0xff);
+            }
+            size_t o = (static_cast<size_t>(y) * width + x) * 4;
+            g_sw_rgba[o] = r; g_sw_rgba[o + 1] = g; g_sw_rgba[o + 2] = b; g_sw_rgba[o + 3] = 255;
+        }
+    }
+    glDisable(GL_DEPTH_TEST); glDisable(GL_BLEND); glDisable(GL_SCISSOR_TEST);
+    glViewport(0, 0, g_output_width, g_output_height);
+    glClearColor(0.f, 0.f, 0.f, 1.f); glClear(GL_COLOR_BUFFER_BIT);
+    float scale = std::min(g_output_width / static_cast<float>(width), g_output_height / static_cast<float>(height));
+    int vw = std::max(1, static_cast<int>(width * scale + 0.5f));
+    int vh = std::max(1, static_cast<int>(height * scale + 0.5f));
+    glViewport((g_output_width - vw) / 2, (g_output_height - vh) / 2, vw, vh);
+    glUseProgram(g_sw_program); glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, g_sw_texture);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, static_cast<GLsizei>(width), static_cast<GLsizei>(height), 0, GL_RGBA, GL_UNSIGNED_BYTE, g_sw_rgba.data());
+    GLint sampler = glGetUniformLocation(g_sw_program, "u_tex");
+    if (sampler >= 0) glUniform1i(sampler, 0);
+    glBindVertexArray(g_sw_vao); glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glBindVertexArray(0); glUseProgram(0);
+    glViewport(0, 0, g_output_width, g_output_height);
+}
+
 void video_cb(const void* data, unsigned width, unsigned height, size_t pitch) {
-    (void)width; (void)height; (void)pitch;
-    // En hardware-rendering, RETRO_HW_FRAME_BUFFER_VALID llega como puntero no nulo.
-    // NULL representa frame duplicado. Esto permite separar VI/core FPS de FPS visuales reales.
-    if (data != nullptr) g_video_frames.fetch_add(1, std::memory_order_relaxed);
+    if (data == nullptr) return;
+    if (data != RETRO_HW_FRAME_BUFFER_VALID) render_software_frame(data, width, height, pitch);
+    g_video_frames.fetch_add(1, std::memory_order_relaxed);
 }
 
 size_t audio_batch_cb(const int16_t* data, size_t frames) {
@@ -384,18 +498,20 @@ int16_t input_state_cb(unsigned port, unsigned device, unsigned index, unsigned 
     constexpr int C_RIGHT = 1 << 13;
 
     if (device == RETRO_DEVICE_JOYPAD) {
+        bool axisUp = in.y < -38, axisDown = in.y > 38, axisLeft = in.x < -38, axisRight = in.x > 38;
         switch (id) {
-            case RETRO_DEVICE_ID_JOYPAD_UP: return (in.mask & UP) ? 1 : 0;
-            case RETRO_DEVICE_ID_JOYPAD_DOWN: return (in.mask & DOWN) ? 1 : 0;
-            case RETRO_DEVICE_ID_JOYPAD_LEFT: return (in.mask & LEFT) ? 1 : 0;
-            case RETRO_DEVICE_ID_JOYPAD_RIGHT: return (in.mask & RIGHT) ? 1 : 0;
-            // Mupen64Plus-Next usa el layout RetroPad: N64 A=B, N64 B=Y, Z=L2.
-            case RETRO_DEVICE_ID_JOYPAD_B: return (in.mask & A) ? 1 : 0;
-            case RETRO_DEVICE_ID_JOYPAD_Y: return (in.mask & B) ? 1 : 0;
-            case RETRO_DEVICE_ID_JOYPAD_L2: return (in.mask & Z) ? 1 : 0;
+            case RETRO_DEVICE_ID_JOYPAD_UP: return ((in.mask & UP) || (!g_core_is_n64 && axisUp)) ? 1 : 0;
+            case RETRO_DEVICE_ID_JOYPAD_DOWN: return ((in.mask & DOWN) || (!g_core_is_n64 && axisDown)) ? 1 : 0;
+            case RETRO_DEVICE_ID_JOYPAD_LEFT: return ((in.mask & LEFT) || (!g_core_is_n64 && axisLeft)) ? 1 : 0;
+            case RETRO_DEVICE_ID_JOYPAD_RIGHT: return ((in.mask & RIGHT) || (!g_core_is_n64 && axisRight)) ? 1 : 0;
+            case RETRO_DEVICE_ID_JOYPAD_START: return (in.mask & START) ? 1 : 0;
+            case RETRO_DEVICE_ID_JOYPAD_SELECT: return (!g_core_is_n64 && (in.mask & Z)) ? 1 : 0;
             case RETRO_DEVICE_ID_JOYPAD_L: return (in.mask & L) ? 1 : 0;
             case RETRO_DEVICE_ID_JOYPAD_R: return (in.mask & R) ? 1 : 0;
-            case RETRO_DEVICE_ID_JOYPAD_START: return (in.mask & START) ? 1 : 0;
+            case RETRO_DEVICE_ID_JOYPAD_B: return g_core_is_n64 ? ((in.mask & A) ? 1 : 0) : ((in.mask & B) ? 1 : 0);
+            case RETRO_DEVICE_ID_JOYPAD_A: return (!g_core_is_n64 && (in.mask & A)) ? 1 : 0;
+            case RETRO_DEVICE_ID_JOYPAD_Y: return (g_core_is_n64 && (in.mask & B)) ? 1 : 0;
+            case RETRO_DEVICE_ID_JOYPAD_L2: return (g_core_is_n64 && (in.mask & Z)) ? 1 : 0;
             default: return 0;
         }
     }
@@ -432,51 +548,31 @@ bool load_symbol(void** out, const char* name) {
 
 bool load_api(const std::string& path) {
     g_stage = "dlopen core";
-    // Primero por nombre: funciona tanto con librerías extraídas como con
-    // librerías cargables directamente desde el APK mediante el namespace
-    // del ClassLoader. Luego intentamos la ruta absoluta como respaldo.
+    std::string base = path;
+    auto slash = base.find_last_of("/\\");
+    if (slash != std::string::npos) base = base.substr(slash + 1);
+    g_core_is_n64 = base.find("n64") != std::string::npos || base.find("mupen") != std::string::npos;
     dlerror();
-    g_core = dlopen("libretro_n64.so", RTLD_NOW | RTLD_LOCAL);
+    if (!path.empty()) g_core = dlopen(path.c_str(), RTLD_NOW | RTLD_LOCAL);
     std::string first_error;
+    if (!g_core) { const char* e = dlerror(); if (e) first_error = e; }
+    if (!g_core && !base.empty()) { dlerror(); g_core = dlopen(base.c_str(), RTLD_NOW | RTLD_LOCAL); }
     if (!g_core) {
         const char* e = dlerror();
-        if (e) first_error = e;
-    }
-    if (!g_core && !path.empty()) {
-        dlerror();
-        g_core = dlopen(path.c_str(), RTLD_NOW | RTLD_LOCAL);
-        if (!g_core) {
-            const char* e = dlerror();
-            g_last_error = std::string("No se pudo cargar core N64") +
-                    (e ? std::string(": ") + e : std::string()) +
-                    (first_error.empty() ? std::string() : std::string(" · nombre: ") + first_error);
-            return false;
-        }
-    }
-    if (!g_core) {
-        g_last_error = first_error.empty() ? "No se pudo cargar core N64" :
-                std::string("No se pudo cargar core N64: ") + first_error;
+        g_last_error = std::string("No se pudo cargar core ") + (base.empty() ? "libretro" : base) +
+                (e ? std::string(": ") + e : std::string()) +
+                (first_error.empty() ? std::string() : std::string(" · ruta: ") + first_error);
         return false;
     }
 #define LOAD(name, field) if (!load_symbol(reinterpret_cast<void**>(&field), name)) return false
-    LOAD("retro_init", p_init);
-    LOAD("retro_deinit", p_deinit);
-    LOAD("retro_api_version", p_api_version);
-    LOAD("retro_get_system_info", p_get_system_info);
-    LOAD("retro_get_system_av_info", p_get_system_av_info);
-    LOAD("retro_set_environment", p_set_environment);
-    LOAD("retro_set_video_refresh", p_set_video_refresh);
-    LOAD("retro_set_audio_sample", p_set_audio_sample);
-    LOAD("retro_set_audio_sample_batch", p_set_audio_sample_batch);
-    LOAD("retro_set_input_poll", p_set_input_poll);
-    LOAD("retro_set_input_state", p_set_input_state);
-    LOAD("retro_set_controller_port_device", p_set_controller_port_device);
-    LOAD("retro_reset", p_reset);
-    LOAD("retro_run", p_run);
-    LOAD("retro_load_game", p_load_game);
-    LOAD("retro_unload_game", p_unload_game);
-    LOAD("retro_cheat_set", p_cheat_set);
-    LOAD("retro_cheat_reset", p_cheat_reset);
+    LOAD("retro_init", p_init); LOAD("retro_deinit", p_deinit); LOAD("retro_api_version", p_api_version);
+    LOAD("retro_get_system_info", p_get_system_info); LOAD("retro_get_system_av_info", p_get_system_av_info);
+    LOAD("retro_set_environment", p_set_environment); LOAD("retro_set_video_refresh", p_set_video_refresh);
+    LOAD("retro_set_audio_sample", p_set_audio_sample); LOAD("retro_set_audio_sample_batch", p_set_audio_sample_batch);
+    LOAD("retro_set_input_poll", p_set_input_poll); LOAD("retro_set_input_state", p_set_input_state);
+    LOAD("retro_set_controller_port_device", p_set_controller_port_device); LOAD("retro_reset", p_reset);
+    LOAD("retro_run", p_run); LOAD("retro_load_game", p_load_game); LOAD("retro_unload_game", p_unload_game);
+    LOAD("retro_cheat_set", p_cheat_set); LOAD("retro_cheat_reset", p_cheat_reset);
 #undef LOAD
     return true;
 }
@@ -526,6 +622,7 @@ void shutdown_core() {
     g_video_frames.store(0, std::memory_order_relaxed);
     g_rom.clear();
     g_options.clear();
+    reset_software_renderer();
     {
         std::lock_guard<std::mutex> lock(g_audio_mutex);
         g_audio_head = g_audio_tail = g_audio_count = 0;
@@ -627,7 +724,7 @@ Java_cl_retrolink_app_NativeLibretro_nativeInit(JNIEnv* env, jclass,
     game.size = g_rom.size();
     game.meta = nullptr;
     if (!p_load_game(&game)) {
-        g_last_error = "El core N64 rechazó la ROM";
+        g_last_error = "El core libretro rechazó el contenido";
         std::string err = g_last_error;
         if (p_deinit) p_deinit();
         if (g_core) dlclose(g_core);
@@ -662,6 +759,12 @@ Java_cl_retrolink_app_NativeLibretro_nativeSetInput(JNIEnv*, jclass, jint player
     in.y = std::max(-127, std::min(127, static_cast<int>(y)));
 }
 
+extern "C" JNIEXPORT void JNICALL
+Java_cl_retrolink_app_NativeLibretro_nativeSetOutputSize(JNIEnv*, jclass, jint width, jint height) {
+    g_output_width = std::max(1, static_cast<int>(width));
+    g_output_height = std::max(1, static_cast<int>(height));
+}
+
 extern "C" JNIEXPORT jboolean JNICALL
 Java_cl_retrolink_app_NativeLibretro_nativeRunFrame(JNIEnv*, jclass) {
     if (!g_loaded || !p_run) return JNI_FALSE;
@@ -690,6 +793,7 @@ Java_cl_retrolink_app_NativeLibretro_nativeResetCheats(JNIEnv*, jclass) {
 
 extern "C" JNIEXPORT void JNICALL
 Java_cl_retrolink_app_NativeLibretro_nativeContextReset(JNIEnv*, jclass) {
+    invalidate_software_renderer();
     if (g_loaded && g_hw_valid && g_hw.context_reset) {
         g_hw.context_reset();
         g_context_live = true;

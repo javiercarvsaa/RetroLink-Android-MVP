@@ -37,6 +37,17 @@
             android:screenOrientation="sensorLandscape" />
 
         <activity
+            android:name=".GameBoyLibraryActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape" />
+
+        <activity
+            android:name=".IntegratedGameActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape"
+            android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity
             android:name=".LibraryActivity"
             android:exported="false"
             android:screenOrientation="sensorLandscape" />

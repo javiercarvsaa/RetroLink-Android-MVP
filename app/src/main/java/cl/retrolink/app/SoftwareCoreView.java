@@ -10,6 +10,8 @@ import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
+import cl.retrolink.app.net.FrameStreamServer;
+
 import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -242,6 +244,14 @@ public final class SoftwareCoreView extends SurfaceView implements SurfaceHolder
             bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         }
         bitmap.setPixels(pixels, 0, w, 0, 0, w, h);
+
+        // SNES comparte una consola/pantalla; P2 recibe el framebuffer del Host.
+        if (core == CoreRegistry.SNES && FrameStreamServer.hasRemoteClients()) {
+            try {
+                Bitmap remote = bitmap.copy(Bitmap.Config.ARGB_8888, false);
+                if (remote != null) EmulatorFrameHub.publishOwned(remote);
+            } catch (Throwable ignored) {}
+        }
 
         Canvas canvas = null;
         try {

@@ -52,6 +52,7 @@ public class LibraryActivity extends Activity {
         findViewById(R.id.btnLibraryControls).setOnClickListener(v -> startActivity(new Intent(this, ControlTestActivity.class)));
         findViewById(R.id.btnLibraryRefreshCovers).setOnClickListener(v -> refreshCovers());
         findViewById(R.id.btnLibraryGameBoy).setOnClickListener(v -> startActivity(new Intent(this, GameBoyLibraryActivity.class)));
+        findViewById(R.id.btnLibrarySnes).setOnClickListener(v -> startActivity(new Intent(this, SnesLibraryActivity.class)));
 
         findViewById(R.id.navLibraryHome).setOnClickListener(v -> finish());
         findViewById(R.id.navLibraryRoom).setOnClickListener(v -> startActivity(new Intent(this, HostActivity.class)));

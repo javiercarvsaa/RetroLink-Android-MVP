@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/snesGameRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:clipChildren="true"
+    android:splitMotionEvents="true">
+
+    <cl.retrolink.app.SoftwareCoreView
+        android:id="@+id/snesEmulatorSurface"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <Button
+        android:id="@+id/btnL"
+        android:layout_width="72dp"
+        android:layout_height="48dp"
+        android:layout_gravity="top|left"
+        android:layout_marginLeft="14dp"
+        android:layout_marginTop="66dp"
+        android:alpha="0.76"
+        android:background="@drawable/btn_overlay"
+        android:text="L"
+        android:textColor="#FFFFFFFF"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/btnR"
+        android:layout_width="72dp"
+        android:layout_height="48dp"
+        android:layout_gravity="top|right"
+        android:layout_marginTop="66dp"
+        android:layout_marginRight="14dp"
+        android:alpha="0.76"
+        android:background="@drawable/btn_overlay"
+        android:text="R"
+        android:textColor="#FFFFFFFF"
+        android:textStyle="bold" />
+
+    <cl.retrolink.app.VirtualStickView
+        android:id="@+id/virtualStick"
+        android:layout_width="180dp"
+        android:layout_height="180dp"
+        android:layout_gravity="bottom|left"
+        android:layout_marginLeft="18dp"
+        android:layout_marginBottom="16dp" />
+
+    <Button
+        android:id="@+id/btnSelect"
+        android:layout_width="84dp"
+        android:layout_height="48dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginRight="96dp"
+        android:layout_marginBottom="18dp"
+        android:alpha="0.76"
+        android:background="@drawable/btn_neon_dark"
+        android:text="SELECT"
+        android:textColor="@color/retro_text"
+        android:textSize="9sp" />
+
+    <Button
+        android:id="@+id/btnStart"
+        android:layout_width="84dp"
+        android:layout_height="48dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginLeft="96dp"
+        android:layout_marginBottom="18dp"
+        android:alpha="0.76"
+        android:background="@drawable/btn_neon_dark"
+        android:text="START"
+        android:textColor="@color/retro_text"
+        android:textSize="9sp" />
+
+    <Button
+        android:id="@+id/btnY"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_gravity="bottom|right"
+        android:layout_marginRight="154dp"
+        android:layout_marginBottom="112dp"
+        android:alpha="0.78"
+        android:background="@drawable/btn_overlay"
+        android:text="Y"
+        android:textColor="#FFFFFFFF"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/btnX"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_gravity="bottom|right"
+        android:layout_marginRight="88dp"
+        android:layout_marginBottom="168dp"
+        android:alpha="0.78"
+        android:background="@drawable/btn_overlay"
+        android:text="X"
+        android:textColor="#FFFFFFFF"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/btnB"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_gravity="bottom|right"
+        android:layout_marginRight="88dp"
+        android:layout_marginBottom="48dp"
+        android:alpha="0.80"
+        android:background="@drawable/btn_overlay"
+        android:text="B"
+        android:textColor="#FFFFFFFF"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/btnA"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_gravity="bottom|right"
+        android:layout_marginRight="24dp"
+        android:layout_marginBottom="106dp"
+        android:alpha="0.82"
+        android:background="@drawable/btn_overlay"
+        android:text="A"
+        android:textColor="#FFFFFFFF"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:id="@+id/snesGameTopBar"
+        android:layout_width="match_parent"
+        android:layout_height="62dp"
+        android:layout_gravity="top"
+        android:layout_marginLeft="12dp"
+        android:layout_marginTop="7dp"
+        android:layout_marginRight="62dp"
+        android:background="@drawable/panel_overlay"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingLeft="14dp"
+        android:paddingRight="8dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/txtSnesGameTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="SNES · JUEGO"
+                android:textColor="@color/retro_cyan"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtSnesGameStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="Preparando Snes9x…"
+                android:textColor="@color/retro_text"
+                android:textSize="8sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtSnesGameStats"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="Software framebuffer"
+                android:textColor="@color/retro_muted"
+                android:textSize="7sp" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnSnesGameReset"
+            android:layout_width="78dp"
+            android:layout_height="42dp"
+            android:background="@drawable/btn_secondary_neon"
+            android:text="RESET"
+            android:textColor="@color/retro_text"
+            android:textSize="8sp" />
+
+        <Button
+            android:id="@+id/btnSnesGameSettings"
+            android:layout_width="86dp"
+            android:layout_height="42dp"
+            android:layout_marginLeft="5dp"
+            android:background="@drawable/btn_secondary_neon"
+            android:text="⚙ AJUSTES"
+            android:textColor="@color/retro_text"
+            android:textSize="7sp" />
+
+        <Button
+            android:id="@+id/btnSnesGameExit"
+            android:layout_width="76dp"
+            android:layout_height="42dp"
+            android:layout_marginLeft="5dp"
+            android:background="@drawable/btn_magenta_neon"
+            android:text="SALIR"
+            android:textColor="@color/retro_text"
+            android:textSize="8sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnSnesGameHud"
+        android:layout_width="46dp"
+        android:layout_height="46dp"
+        android:layout_gravity="top|right"
+        android:layout_marginTop="9dp"
+        android:layout_marginRight="9dp"
+        android:background="@drawable/btn_retro"
+        android:text="⚙"
+        android:textColor="@color/retro_text"
+        android:textSize="18sp" />
+</FrameLayout>

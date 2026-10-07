@@ -37,6 +37,27 @@
             android:screenOrientation="sensorLandscape" />
 
         <activity
+            android:name=".SnesControllerActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape" />
+
+        <activity
+            android:name=".SnesGameActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape"
+            android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity
+            android:name=".SnesRoomActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape" />
+
+        <activity
+            android:name=".SnesLibraryActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape" />
+
+        <activity
             android:name=".GameBoyLinkActivity"
             android:exported="false"
             android:screenOrientation="sensorLandscape" />

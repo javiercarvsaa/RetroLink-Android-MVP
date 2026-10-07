@@ -566,7 +566,8 @@ int16_t input_state_cb(unsigned port, unsigned device, unsigned index, unsigned 
             case RETRO_DEVICE_ID_JOYPAD_R: return (in.mask & R) ? 1 : 0;
             case RETRO_DEVICE_ID_JOYPAD_B: return g_core_is_n64 ? ((in.mask & A) ? 1 : 0) : ((in.mask & B) ? 1 : 0);
             case RETRO_DEVICE_ID_JOYPAD_A: return (!g_core_is_n64 && (in.mask & A)) ? 1 : 0;
-            case RETRO_DEVICE_ID_JOYPAD_Y: return (g_core_is_n64 && (in.mask & B)) ? 1 : 0;
+            case RETRO_DEVICE_ID_JOYPAD_Y: return g_core_is_n64 ? ((in.mask & B) ? 1 : 0) : ((in.mask & C_UP) ? 1 : 0);
+            case RETRO_DEVICE_ID_JOYPAD_X: return (!g_core_is_n64 && (in.mask & C_LEFT)) ? 1 : 0;
             case RETRO_DEVICE_ID_JOYPAD_L2: return (g_core_is_n64 && (in.mask & Z)) ? 1 : 0;
             default: return 0;
         }

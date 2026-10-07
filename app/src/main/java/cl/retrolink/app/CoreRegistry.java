@@ -42,15 +42,21 @@ public final class CoreRegistry {
             "gb.gambatte", "Game Boy / Game Boy Color", "GB/GBC",
             "libretro_gambatte.so", "gb|gbc", false, false);
 
+    public static final Core SNES = new Core(
+            "snes.snes9x", "Super Nintendo Entertainment System", "SNES",
+            "libretro_snes9x.so", "sfc|smc", true, false);
+
     private CoreRegistry() {}
 
     public static Core byId(String id) {
         if (GAME_BOY.id.equals(id)) return GAME_BOY;
+        if (SNES.id.equals(id)) return SNES;
         return N64;
     }
 
     public static Core forFileName(String name) {
         if (GAME_BOY.supportsFileName(name)) return GAME_BOY;
+        if (SNES.supportsFileName(name)) return SNES;
         if (N64.supportsFileName(name)) return N64;
         return null;
     }

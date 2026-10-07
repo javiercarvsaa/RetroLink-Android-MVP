@@ -60,7 +60,9 @@ public class HostBleManager {
 
     public void setSessionType(String sessionType) {
         String value = sessionType == null ? "" : sessionType.trim().toUpperCase(java.util.Locale.US);
-        this.sessionType = "GBLINK".equals(value) ? "GBLINK" : "N64";
+        if ("GBLINK".equals(value)) this.sessionType = "GBLINK";
+        else if ("SNES".equals(value)) this.sessionType = "SNES";
+        else this.sessionType = "N64";
     }
 
     @SuppressLint("MissingPermission")
@@ -105,7 +107,11 @@ public class HostBleManager {
     }
 
     private final AdvertiseCallback advertiseCallback = new AdvertiseCallback() {
-        @Override public void onStartSuccess(AdvertiseSettings settingsInEffect) { advertising = true; status("GBLINK".equals(sessionType) ? "Host activo · Game Boy Link P1" : "Host activo · BLE + pantalla distribuida"); log("Publicidad BLE iniciada."); }
+        @Override public void onStartSuccess(AdvertiseSettings settingsInEffect) { advertising = true; status("GBLINK".equals(sessionType)
+                ? "Host activo · Game Boy Link P1"
+                : ("SNES".equals(sessionType)
+                    ? "Host activo · SNES P1 + mando remoto"
+                    : "Host activo · BLE + pantalla distribuida")); log("Publicidad BLE iniciada."); }
         @Override public void onStartFailure(int errorCode) { advertising = false; status("Error al anunciar Host BLE (" + errorCode + ")."); log("Advertise failure=" + errorCode); }
     };
 

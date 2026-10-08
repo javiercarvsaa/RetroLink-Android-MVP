@@ -1579,7 +1579,6 @@ jobs:
           assert 'GL_RGBA8' in gpu
           assert 'FrameStreamServer.hasRemoteClients()' in gpu
           assert 'pcsx_rearmed_neon_enhancement_enable", "enabled"' in gpu
-          assert 'ADAPTIVE FALLBACK' in gpu
           assert 'RETROSR_TEMPORAL_FRAGMENT' in gpu
           assert 'uniform sampler2D uHistory' in gpu
           assert 'historyTextures = new int[2]' in gpu

@@ -1,0 +1,26 @@
+{
+  "base_commit": "9379168238fbc3d78fc284744536c95a0ef88718",
+  "files": {
+    "README_HUB_OVERLAY.md": "c559bf26d8b654860ce0e62460ba7f196843bc5639f07f1fbf406d6f2d2f32da",
+    "app/src/main/java/cl/retrolink/app/HubCatalog.java": "043237f09384517187729653e2c1cd364c29cc8fe930c04c501d93ad414473cc",
+    "app/src/main/java/cl/retrolink/app/HubCoverLoader.java": "c85fc9e9fabdf340f628db908e585a2cf59c05db130cd1ef8d55885ee929efcb",
+    "app/src/main/java/cl/retrolink/app/HubGame.java": "1474e770d613947b033ac8af8722b03c29d71d39aaa59492023fc651c6234a69",
+    "app/src/main/java/cl/retrolink/app/HubStore.java": "5707c4b5dc1325ddf202308befb95c9a0c216e1c4a6ed31c46b9e0123b0fbb41",
+    "app/src/main/java/cl/retrolink/app/RetroHubActivity.java": "a890c6f128d37c094d66d838f88ae3b175c0b6905ed78a48123b4f54388fe8ab",
+    "app/src/main/res/drawable/hub_icon_foreground.xml": "587db8d2b5d7638c6c24c8c19f6b98cae67cbcc5fe492b1969a7fcc29cc6d721",
+    "app/src/main/res/drawable-nodpi/hub_brand.webp": "0b5d90a766b5d5f28e4cda3ee2ecd8313e6491de73fbdbcbca0a5063d48af84a",
+    "app/src/main/res/mipmap-anydpi-v26/hub_launcher.xml": "12a3eaf62df9c52720203ee284f4326d74fe9b86a6ef956df1919f9bdf12a266",
+    "app/src/main/res/mipmap-hdpi/hub_launcher.png": "6f5a06bab05bbc3d40a149553baefabfb61aaf00d4be684b6fab697b43f0487d",
+    "app/src/main/res/mipmap-mdpi/hub_launcher.png": "c26254eb486bca5f443c181a9387d3691ae4f61ae0a656427cf3fd8435c1b01b",
+    "app/src/main/res/mipmap-xhdpi/hub_launcher.png": "1f3adcd9716691e6edbd4839e58b3716c61cf3abf3f9af6562857555f441e070",
+    "app/src/main/res/mipmap-xxhdpi/hub_launcher.png": "ab4e4189aa5ead6f4b5b7f56d5471788f43844f9b8beaac95982821e52127995",
+    "app/src/main/res/mipmap-xxxhdpi/hub_launcher.png": "ca819b23f03eb47a925147fa60f88603a7d57aa0f40fabece9c19a621308059f",
+    "app/src/main/res/values/hub_colors.xml": "fa2ca1dcb6443ab9e0bffa822f03a470f3bdb05b27c58ace188c2f526ed8da22",
+    "docs/RETROLINK_V1_6_HUB.md": "6562257ee630a1133c9112ed36f0f10d5ae49d449ac2e6699121ef4e615a45e4",
+    "tests/HubGameTest.java": "a5d8379b5670b5e046de1518cb556107dd51c8e7288f98facddc4dc9a5e20780",
+    "tools/CheckJavaSyntax.java": "7e6500c0a0279b95c884f108443ad4c4beeb9971bd50393b5368d870fab52c9e",
+    "tools/apply_hub.py": "f94c32e73c5e8f61c9694d2d64cee802e06f5ef3a3b06820bf511a67885ffbd8",
+    "tools/validate_hub.py": "7aa02b18c1da6c546f042d98fcfe0f032e647beb3dabdb4b61974392ca35364b",
+    "tools/validate_hub_apk.py": "52050968d9b0869739c9bb6eddc86eae13d94a352b47d8544f824abd405c14f1"
+  }
+}

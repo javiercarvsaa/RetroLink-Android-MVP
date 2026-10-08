@@ -38,6 +38,7 @@ public class IntegratedN64Activity extends Activity implements EmulatorSurfaceVi
     private boolean playerView;
     private boolean capturePending;
     private boolean coreShutdown;
+    private AdaptiveOptimizationEngine.Plan adaptivePlan;
     private final Handler main = new Handler(Looper.getMainLooper());
     private HandlerThread captureThread;
     private Handler captureHandler;
@@ -88,6 +89,9 @@ public class IntegratedN64Activity extends Activity implements EmulatorSurfaceVi
         systemDir.mkdirs();
         saveDir.mkdirs();
         String corePath = getApplicationInfo().nativeLibraryDir + "/" + CoreRegistry.N64.libraryFile;
+        adaptivePlan = AdaptiveOptimizationEngine.resolve(
+                this, CoreRegistry.N64, romPath, playerCount > 1);
+        surface.setAdaptivePlan(adaptivePlan);
 
         controls = new N64ControlBinder(this, (mask, x, y) -> InputHub.set(1, mask, x, y));
         if (controlRoot != null) ControlLayoutStore.applyAll(this, controlRoot, ControlLayoutStore.SCOPE_N64_LANDSCAPE);
@@ -106,8 +110,13 @@ public class IntegratedN64Activity extends Activity implements EmulatorSurfaceVi
         findViewById(R.id.btnEmuViewReset).setOnClickListener(v -> { PlayerViewportPreferences.reset(this, false, 1); applyPlayerTransform(); updateViewportLabel(); });
         findViewById(R.id.btnEmuViewDone).setOnClickListener(v -> { if (viewportPanel != null) viewportPanel.setVisibility(View.GONE); });
         findViewById(R.id.btnEmuGraphics).setOnClickListener(v -> {
-            RetroPreferences.setGraphicsProfile(this, (RetroPreferences.graphicsProfile(this) + 1) % 3);
-            surface.setPerformanceProfile(RetroPreferences.graphicsProfile(this));
+            if (OptimizationProfileStore.mode(this) == OptimizationProfileStore.MODE_OFF) {
+                RetroPreferences.setGraphicsProfile(this, (RetroPreferences.graphicsProfile(this) + 1) % 3);
+                int manualProfile = RetroPreferences.graphicsProfile(this);
+                surface.setPerformanceProfile(manualProfile);
+            } else {
+                Toast.makeText(this, "Adaptive Core aplicará el perfil al próximo inicio", Toast.LENGTH_SHORT).show();
+            }
             refreshGameSettingsPanel();
         });
         findViewById(R.id.btnEmuRetroSr).setOnClickListener(v -> {
@@ -126,11 +135,11 @@ public class IntegratedN64Activity extends Activity implements EmulatorSurfaceVi
         updateViewButton();
         refreshGameSettingsPanel();
 
-        surface.setPerformanceProfile(RetroPreferences.graphicsProfile(this));
+        surface.setPerformanceProfile(adaptivePlan == null ? RetroPreferences.graphicsProfile(this) : adaptivePlan.n64RenderProfile);
         viewport.post(this::fitSurfaceFourByThree);
         String preload = NativeLibretro.corePreloadError();
         status.setText(preload.isEmpty() ? "N64 · preparando núcleo integrado…" : "N64 · pre-carga pendiente · " + preload);
-        stats.setText("Etapa 1/5 · OpenGL ES 3 · " + RetroPreferences.graphicsProfileLabel(this));
+        stats.setText("Etapa 1/5 · OpenGL ES 3 · " + (adaptivePlan == null ? RetroPreferences.graphicsProfileLabel(this) : adaptivePlan.detailedLabel()));
         surface.configure(corePath, romPath, systemDir.getAbsolutePath(), saveDir.getAbsolutePath(), this);
         main.post(captureTick);
     }
@@ -366,7 +375,7 @@ public class IntegratedN64Activity extends Activity implements EmulatorSurfaceVi
         super.onResume();
         hideSystemUi();
         if (surface != null && !coreShutdown) {
-            surface.setPerformanceProfile(RetroPreferences.graphicsProfile(this));
+            surface.setPerformanceProfile(adaptivePlan == null ? RetroPreferences.graphicsProfile(this) : adaptivePlan.n64RenderProfile);
             surface.onResume();
             applyPlayerTransform();
         }

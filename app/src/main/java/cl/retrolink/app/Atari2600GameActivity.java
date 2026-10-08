@@ -99,6 +99,9 @@ public class Atari2600GameActivity extends Activity
         String corePath = getApplicationInfo().nativeLibraryDir
                 + "/" + CoreRegistry.ATARI_2600.libraryFile;
 
+        AdaptiveOptimizationEngine.Plan adaptivePlan = AdaptiveOptimizationEngine.resolve(
+                this, CoreRegistry.ATARI_2600, romPath, hostSession);
+        surface.setAdaptivePlan(adaptivePlan);
         surface.configure(CoreRegistry.ATARI_2600,
                 corePath,
                 romPath,

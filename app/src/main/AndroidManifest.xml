@@ -45,6 +45,11 @@
             android:screenOrientation="sensorLandscape" />
 
         <activity
+            android:name=".OptimizationSettingsActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape" />
+
+        <activity
             android:name=".ProfileActivity"
             android:exported="false"
             android:screenOrientation="sensorLandscape" />

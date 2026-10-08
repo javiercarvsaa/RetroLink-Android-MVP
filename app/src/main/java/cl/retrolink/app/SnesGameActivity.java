@@ -81,6 +81,9 @@ public class SnesGameActivity extends Activity implements EmulatorSurfaceView.Li
         saveDir.mkdirs();
 
         String corePath = getApplicationInfo().nativeLibraryDir + "/" + CoreRegistry.SNES.libraryFile;
+        AdaptiveOptimizationEngine.Plan adaptivePlan = AdaptiveOptimizationEngine.resolve(
+                this, CoreRegistry.SNES, romPath, hostSession);
+        surface.setAdaptivePlan(adaptivePlan);
         surface.configure(CoreRegistry.SNES, corePath, romPath,
                 systemDir.getAbsolutePath(), saveDir.getAbsolutePath(), this);
 

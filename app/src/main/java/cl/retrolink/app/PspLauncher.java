@@ -29,7 +29,7 @@ public final class PspLauncher {
         if (game == null || !game.isFile()) throw new IllegalArgumentException("Juego PSP no disponible");
         if (mode == PspIniManager.Mode.CLIENT && !PspNetworkInfo.isValidIpv4(hostIp))
             throw new IllegalArgumentException("IP del host no válida");
-        PspIniManager.configure(activity, mode, hostIp);
+        PspIniManager.configure(activity, mode, hostIp, game.getAbsolutePath());
         if (mode == PspIniManager.Mode.HOST || mode == PspIniManager.Mode.CLIENT)
             PspAdhocLock.acquire(activity);
         else PspAdhocLock.release();

@@ -121,6 +121,8 @@ public class SettingsActivity extends Activity {
             refresh();
             Toast.makeText(this, "Ajustes restablecidos", Toast.LENGTH_SHORT).show();
         });
+        findViewById(R.id.btnAdaptiveOptimizer).setOnClickListener(v ->
+                startActivity(new Intent(this, OptimizationSettingsActivity.class)));
         findViewById(R.id.btnSettingsDone).setOnClickListener(v -> finish());
         findViewById(R.id.btnSettingsBack).setOnClickListener(v -> finish());
         findViewById(R.id.navSettingsHome).setOnClickListener(v -> finish());
@@ -176,6 +178,7 @@ public class SettingsActivity extends Activity {
         File n64 = new File(getApplicationInfo().nativeLibraryDir, CoreRegistry.N64.libraryFile);
         diagnostics.setText((n64.isFile() ? "● Core N64 instalado" : "○ Core N64 no encontrado")
                 + "   ·   Render " + RetroPreferences.renderWidth(this) + "×" + RetroPreferences.renderHeight(this)
-                + "   ·   Stream " + RetroPreferences.resolvedStreamFps(this) + " FPS / Q" + q);
+                + "   ·   Stream " + RetroPreferences.resolvedStreamFps(this) + " FPS / Q" + q
+                + "   ·   Adaptive " + OptimizationProfileStore.modeLabel(this));
     }
 }

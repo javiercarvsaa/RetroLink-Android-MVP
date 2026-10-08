@@ -20,6 +20,11 @@ public final class PspIniManager {
     private PspIniManager() {}
 
     public static synchronized File configure(Context c, Mode mode, String hostIp) throws Exception {
+        return configure(c, mode, hostIp, null);
+    }
+
+    public static synchronized File configure(Context c, Mode mode, String hostIp,
+                                              String gamePath) throws Exception {
         File memstick = ensureMemstick(c);
         File system = new File(memstick, "PSP/SYSTEM");
         if (!system.exists() && !system.mkdirs())
@@ -28,7 +33,10 @@ public final class PspIniManager {
         File ini = new File(system, "ppsspp.ini");
         IniDocument doc = IniDocument.read(ini);
 
-        int internalResolution = qualityScale(c);
+        boolean linkedSession = mode == Mode.HOST || mode == Mode.CLIENT;
+        AdaptiveOptimizationEngine.Plan adaptivePlan = AdaptiveOptimizationEngine.resolve(
+                c, CoreRegistry.PSP, gamePath, linkedSession);
+        int internalResolution = adaptivePlan.pspInternalResolution;
         doc.put("General", "FirstRun", "False");
         doc.put("General", "AutoRun", "True");
         doc.put("General", "CheckForNewVersion", "False");
@@ -40,15 +48,15 @@ public final class PspIniManager {
         doc.put("Graphics", "SoftwareSkinning", "True");
         doc.put("Graphics", "TextureFiltering", "1");
         doc.put("Graphics", "Smart2DTexFiltering", "True");
-        doc.put("Graphics", "AnisotropyLevel", "4");
-        doc.put("Graphics", "HighQualityDepth", "True");
+        doc.put("Graphics", "AnisotropyLevel", Integer.toString(adaptivePlan.pspAnisotropy));
+        doc.put("Graphics", "HighQualityDepth", adaptivePlan.pspHighQualityDepth ? "True" : "False");
         doc.put("Graphics", "FrameSkip", "0");
         doc.put("Graphics", "AutoFrameSkip", "False");
         doc.put("Graphics", "TexScalingLevel", "1");
         doc.put("Graphics", "TexDeposterize", "False");
         doc.put("Graphics", "VerticalSync", "True");
         doc.put("Graphics", "LowLatencyPresent", "True");
-        doc.put("Graphics", "SustainedPerformanceMode", "True");
+        doc.put("Graphics", "SustainedPerformanceMode", adaptivePlan.mode == OptimizationProfileStore.MODE_BATTERY ? "False" : "True");
 
         doc.put("Control", "ShowTouchControls", "True");
         doc.put("Control", "HapticFeedback", "True");
@@ -73,7 +81,7 @@ public final class PspIniManager {
     public static String status(Context c) {
         try {
             File memstick = ensureMemstick(c);
-            return "PPSSPP 1.20.4 integrado · " + qualityScale(c) + "× interno · Memory Stick persistente";
+            return "PPSSPP 1.20.4 integrado · " + AdaptiveOptimizationEngine.resolve(c, CoreRegistry.PSP, "", false).pspInternalResolution + "× interno · Memory Stick persistente";
         } catch (Exception e) {
             return "PPSSPP integrado · configuración pendiente";
         }

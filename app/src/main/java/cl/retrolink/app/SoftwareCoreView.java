@@ -36,6 +36,8 @@ public final class SoftwareCoreView extends SurfaceView implements SurfaceHolder
     private volatile String gameBoyLinkHost = "";
     private volatile int gameBoyLinkPort = 56400;
     private volatile boolean ps1DefaultsEnabled;
+    private volatile AdaptiveOptimizationEngine.Plan adaptivePlan;
+    private AdaptiveRuntimeSession adaptiveSession;
     private Thread thread;
     private CountDownLatch stopped = new CountDownLatch(1);
 
@@ -54,11 +56,20 @@ public final class SoftwareCoreView extends SurfaceView implements SurfaceHolder
         setKeepScreenOn(true);
     }
 
+    public synchronized void setAdaptivePlan(AdaptiveOptimizationEngine.Plan plan) {
+        this.adaptivePlan = plan;
+    }
+
     public synchronized void configure(CoreRegistry.Core core, String corePath, String romPath,
                                        String systemDir, String saveDir,
                                        EmulatorSurfaceView.Listener listener) {
         this.core = core == null ? CoreRegistry.GAME_BOY : core;
-        paint.setFilterBitmap(this.core == CoreRegistry.PS1);
+        if (adaptivePlan == null || adaptivePlan.core != this.core) {
+            adaptivePlan = AdaptiveOptimizationEngine.resolve(
+                    getContext(), this.core, romPath, false);
+        }
+        // Pixel-art systems remain nearest-neighbour; PS1 keeps its validated smooth presentation.
+        paint.setFilterBitmap(this.core == CoreRegistry.PS1 && adaptivePlan.ps1Spatial);
         this.corePath = corePath;
         this.romPath = romPath;
         this.systemDir = systemDir;
@@ -85,9 +96,9 @@ public final class SoftwareCoreView extends SurfaceView implements SurfaceHolder
         NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_memcard1", "serial");
         NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_memcard2", "shared");
         NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_drc", "enabled");
-        NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_neon_enhancement_enable", "enabled");
+        NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_neon_enhancement_enable", adaptivePlan != null && adaptivePlan.ps1EnhancedResolution ? "enabled" : "disabled");
 NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_neon_enhancement_no_main", "disabled");
-NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_neon_enhancement_tex_adj_v2", "enabled");
+NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_neon_enhancement_tex_adj_v2", adaptivePlan != null && adaptivePlan.ps1EnhancedResolution ? "enabled" : "disabled");
         NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_frameskip_type", "disabled");
         NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_show_bios_bootlogo", "disabled");
         NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_multitap", "disabled");
@@ -190,6 +201,16 @@ NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_neon_enhancement_tex_adj_v2
             postReady(NativeLibretro.nativeGetCoreInfo(), coreFps, coreRate);
 
             long interval = (long)(1_000_000_000.0 / fps);
+            adaptiveSession = new AdaptiveRuntimeSession(getContext(), adaptivePlan,
+                    new AdaptiveRuntimeSession.Listener() {
+                        @Override public void onAdaptiveStatus(String value) {
+                            postStats(core.shortSystem + " · " + value);
+                        }
+                        @Override public void onOptionalEffectsAllowed(boolean allowed) {
+                            // SNES and Atari already use the lowest-risk faithful path.
+                        }
+                    });
+            adaptiveSession.startForCurrentThread(interval);
             long next = System.nanoTime();
             long statStart = next;
             int statFrames = 0;
@@ -212,6 +233,7 @@ NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_neon_enhancement_tex_adj_v2
                     resetRequested = false;
                 }
 
+                long adaptiveWorkStart = System.nanoTime();
                 if (!NativeLibretro.nativeRunFrame()) {
                     postError("El núcleo " + core.shortSystem + " dejó de ejecutar frames · etapa=" + NativeLibretro.nativeGetStage());
                     break;
@@ -220,6 +242,8 @@ NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_neon_enhancement_tex_adj_v2
                 int n = NativeLibretro.nativeDrainAudio(audioBuffer);
                 if (n > 0) audio.write(audioBuffer, n);
                 drawLatestFrame();
+                AdaptiveRuntimeSession session = adaptiveSession;
+                if (session != null) session.recordFrame(System.nanoTime() - adaptiveWorkStart);
 
                 statFrames++;
                 long now = System.nanoTime();
@@ -228,7 +252,8 @@ NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_neon_enhancement_tex_adj_v2
                     postStats(String.format(Locale.US,
                             "%s · %.1f/%.2f FPS · %dx%d · SOFTWARE · PSYNC",
                             core.shortSystem, real, fps,
-                            NativeLibretro.nativeGetVideoWidth(), NativeLibretro.nativeGetVideoHeight()));
+                            NativeLibretro.nativeGetVideoWidth(), NativeLibretro.nativeGetVideoHeight())
+                            + (adaptiveSession == null ? "" : " · " + adaptiveSession.compactStatus()));
                     statFrames = 0;
                     statStart = now;
                 }
@@ -242,6 +267,10 @@ NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_neon_enhancement_tex_adj_v2
             postError(t.getClass().getSimpleName() + ": " + String.valueOf(t.getMessage())
                     + " · etapa=" + safeStage());
         } finally {
+            if (adaptiveSession != null) {
+                adaptiveSession.close();
+                adaptiveSession = null;
+            }
             ready = false;
             audio.stop();
             try { NativeLibretro.nativeShutdown(); } catch (Throwable ignored) {}

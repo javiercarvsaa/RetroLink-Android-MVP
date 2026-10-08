@@ -31,6 +31,7 @@ public class EmulatorSurfaceView extends GLSurfaceView {
     private int performanceProfile = 1;
     private volatile N64GameProfile gameProfile = N64GameProfile.detect("");
     private volatile CoreRegistry.Core activeCore = CoreRegistry.N64;
+    private volatile AdaptiveOptimizationEngine.Plan adaptivePlan;
     private final AtomicBoolean shutdownStarted = new AtomicBoolean(false);
     private final CountDownLatch shutdownDone = new CountDownLatch(1);
 
@@ -85,6 +86,11 @@ public class EmulatorSurfaceView extends GLSurfaceView {
         requestRender();
     }
 
+    public void setAdaptivePlan(AdaptiveOptimizationEngine.Plan plan) {
+        adaptivePlan = plan;
+        coreRenderer.setAdaptivePlan(plan);
+    }
+
     public void setPerformanceProfile(int profile) {
         performanceProfile = Math.max(0, Math.min(2, profile));
         if (performanceProfile == 0) { renderWidth = 320; renderHeight = 240; }
@@ -133,6 +139,7 @@ public class EmulatorSurfaceView extends GLSurfaceView {
             try {
                 queueEvent(() -> {
                     try {
+                        coreRenderer.closeAdaptiveSession();
                         NativeLibretro.nativeShutdown();
                         coreRenderer.ready = false;
                     } finally {
@@ -205,6 +212,12 @@ public class EmulatorSurfaceView extends GLSurfaceView {
         private int rw = 640, rh = 480, profile = 1;
         private final short[] audioBuffer = new short[8192];
         private final NativeAudioSink audio = new NativeAudioSink();
+        private AdaptiveOptimizationEngine.Plan rendererPlan;
+        private AdaptiveRuntimeSession adaptiveSession;
+
+        synchronized void setAdaptivePlan(AdaptiveOptimizationEngine.Plan plan) {
+            rendererPlan = plan;
+        }
 
         synchronized void setRenderSize(int width, int height, int p) {
             rw = width; rh = height; profile = p;
@@ -242,6 +255,7 @@ public class EmulatorSurfaceView extends GLSurfaceView {
             }
 
             long now = System.nanoTime();
+            long adaptiveWorkStart = now;
 
             for (int p = 1; p <= 4; p++) {
                 InputHub.State s = InputHub.get(p);
@@ -257,6 +271,8 @@ public class EmulatorSurfaceView extends GLSurfaceView {
 
             int n = NativeLibretro.nativeDrainAudio(audioBuffer);
             if (n > 0) audio.write(audioBuffer, n);
+            AdaptiveRuntimeSession session = adaptiveSession;
+            if (session != null) session.recordFrame(System.nanoTime() - adaptiveWorkStart);
 
             statFrames++;
             if (now - statStartNs >= 1_000_000_000L) {
@@ -273,7 +289,8 @@ public class EmulatorSurfaceView extends GLSurfaceView {
                 final String msg = String.format(Locale.US,
                         "VI/PRESENT %.1f/%.2f · video %.1f FPS · pantalla %.0f Hz · %dx%d · %s · PSYNC",
                         realFps, fps, gameFps, displayHz, rw, rh,
-                        profile == 0 ? "PERF" : profile == 2 ? "QUALITY" : "BALANCED");
+                        profile == 0 ? "PERF" : profile == 2 ? "QUALITY" : "BALANCED")
+                        + (adaptiveSession == null ? "" : " · " + adaptiveSession.compactStatus());
                 if (listener != null) post(() -> listener.onStats(msg));
                 statFrames = 0;
                 statStartNs = now;
@@ -349,6 +366,20 @@ public class EmulatorSurfaceView extends GLSurfaceView {
             fps = NativeLibretro.nativeGetFps();
             if (fps < 20 || fps > 120) fps = 60.0;
             frameIntervalNs = (long)(1_000_000_000.0 / fps);
+            if (rendererPlan == null) {
+                rendererPlan = AdaptiveOptimizationEngine.resolve(
+                        getContext(), activeCore, romPath, false);
+            }
+            adaptiveSession = new AdaptiveRuntimeSession(getContext(), rendererPlan,
+                    new AdaptiveRuntimeSession.Listener() {
+                        @Override public void onAdaptiveStatus(String value) {
+                            if (listener != null) post(() -> listener.onStats("N64 · " + value));
+                        }
+                        @Override public void onOptionalEffectsAllowed(boolean allowed) {
+                            // Core options are not mutated mid-session; safe profile is persisted for next launch.
+                        }
+                    });
+            adaptiveSession.startForCurrentThread(frameIntervalNs);
             requestContentFrameRate(fps);
             int sampleRate = NativeLibretro.nativeGetSampleRate();
             audio.start(sampleRate);
@@ -399,6 +430,13 @@ public class EmulatorSurfaceView extends GLSurfaceView {
                     }
                 } catch (Throwable ignored) {}
             });
+        }
+
+        void closeAdaptiveSession() {
+            if (adaptiveSession != null) {
+                adaptiveSession.close();
+                adaptiveSession = null;
+            }
         }
 
         private void postError(String error) {

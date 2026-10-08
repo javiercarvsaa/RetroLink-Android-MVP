@@ -252,6 +252,9 @@ public final class Ps1GpuCoreView extends GLSurfaceView implements GLSurfaceView
     private volatile boolean ready;
     private volatile boolean resetRequested;
     private volatile boolean ps1DefaultsEnabled;
+    private volatile AdaptiveOptimizationEngine.Plan adaptivePlan;
+    private AdaptiveRuntimeSession adaptiveSession;
+    private volatile boolean temporalAllowedByPlan = true;
     private Thread emulationThread;
     private CountDownLatch stopped = new CountDownLatch(1);
 
@@ -310,11 +313,21 @@ public final class Ps1GpuCoreView extends GLSurfaceView implements GLSurfaceView
         setKeepScreenOn(true);
     }
 
+    public synchronized void setAdaptivePlan(AdaptiveOptimizationEngine.Plan plan) {
+        this.adaptivePlan = plan;
+        this.temporalAllowedByPlan = plan == null || plan.ps1Temporal;
+    }
+
     public synchronized void configure(CoreRegistry.Core core, String corePath, String romPath,
                                        String systemDir, String saveDir,
                                        EmulatorSurfaceView.Listener listener) {
         if (core != CoreRegistry.PS1)
             throw new IllegalArgumentException("Ps1GpuCoreView solo admite PS1");
+        if (adaptivePlan == null) {
+            adaptivePlan = AdaptiveOptimizationEngine.resolve(
+                    getContext(), CoreRegistry.PS1, romPath, false);
+            temporalAllowedByPlan = adaptivePlan.ps1Temporal;
+        }
         this.corePath = corePath;
         this.romPath = romPath;
         this.systemDir = systemDir;
@@ -385,7 +398,7 @@ public final class Ps1GpuCoreView extends GLSurfaceView implements GLSurfaceView
         }
 
         temporalProgram = createProgram(VERTEX_SHADER, RETROSR_TEMPORAL_FRAGMENT);
-        if (temporalProgram == 0) temporalEnabled = false;
+        temporalEnabled = temporalProgram != 0 && temporalAllowedByPlan;
 
         uTexture = GLES30.glGetUniformLocation(program, "uTexture");
         uViewportInfo = GLES30.glGetUniformLocation(program, "uViewportInfo");
@@ -648,9 +661,9 @@ public final class Ps1GpuCoreView extends GLSurfaceView implements GLSurfaceView
         NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_memcard1", "serial");
         NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_memcard2", "shared");
         NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_drc", "enabled");
-        NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_neon_enhancement_enable", "enabled");
+        NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_neon_enhancement_enable", adaptivePlan != null && adaptivePlan.ps1EnhancedResolution ? "enabled" : "disabled");
         NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_neon_enhancement_no_main", "disabled");
-        NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_neon_enhancement_tex_adj_v2", "enabled");
+        NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_neon_enhancement_tex_adj_v2", adaptivePlan != null && adaptivePlan.ps1EnhancedResolution ? "enabled" : "disabled");
         NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_frameskip_type", "disabled");
         NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_show_bios_bootlogo", "disabled");
         NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_multitap", "disabled");
@@ -676,6 +689,20 @@ public final class Ps1GpuCoreView extends GLSurfaceView implements GLSurfaceView
             postReady(NativeLibretro.nativeGetCoreInfo(), fps, sampleRate);
 
             long interval = (long) (1_000_000_000.0 / fps);
+            adaptiveSession = new AdaptiveRuntimeSession(getContext(), adaptivePlan,
+                    new AdaptiveRuntimeSession.Listener() {
+                        @Override public void onAdaptiveStatus(String value) {
+                            postStats("PS1 · " + value);
+                        }
+                        @Override public void onOptionalEffectsAllowed(boolean allowed) {
+                            if (!allowed) {
+                                temporalAllowedByPlan = false;
+                                temporalEnabled = false;
+                                sceneCutPending = true;
+                            }
+                        }
+                    });
+            adaptiveSession.startForCurrentThread(interval);
             long next = System.nanoTime();
             long statStart = next;
             int statFrames = 0;
@@ -699,6 +726,7 @@ public final class Ps1GpuCoreView extends GLSurfaceView implements GLSurfaceView
                     resetRequested = false;
                 }
 
+                long adaptiveWorkStart = System.nanoTime();
                 if (!NativeLibretro.nativeRunFrame()) {
                     postError("El núcleo PS1 dejó de ejecutar frames · etapa="
                             + NativeLibretro.nativeGetStage());
@@ -708,6 +736,8 @@ public final class Ps1GpuCoreView extends GLSurfaceView implements GLSurfaceView
                 int samples = NativeLibretro.nativeDrainAudio(audioBuffer);
                 if (samples > 0) audio.write(audioBuffer, samples);
                 captureLatestFrame();
+                AdaptiveRuntimeSession session = adaptiveSession;
+                if (session != null) session.recordFrame(System.nanoTime() - adaptiveWorkStart);
 
                 statFrames++;
                 long now = System.nanoTime();
@@ -720,7 +750,8 @@ public final class Ps1GpuCoreView extends GLSurfaceView implements GLSurfaceView
                             real, fps,
                             NativeLibretro.nativeGetVideoWidth(),
                             NativeLibretro.nativeGetVideoHeight(),
-                            currentRenderLabel()));
+                            currentRenderLabel())
+                            + (adaptiveSession == null ? "" : " · " + adaptiveSession.compactStatus()));
                     statFrames = 0;
                     statStart = now;
                 }
@@ -734,6 +765,10 @@ public final class Ps1GpuCoreView extends GLSurfaceView implements GLSurfaceView
             postError(t.getClass().getSimpleName() + ": "
                     + String.valueOf(t.getMessage()) + " · etapa=" + safeStage());
         } finally {
+            if (adaptiveSession != null) {
+                adaptiveSession.close();
+                adaptiveSession = null;
+            }
             ready = false;
             audio.stop();
             try { NativeLibretro.nativeShutdown(); } catch (Throwable ignored) {}
@@ -819,7 +854,7 @@ public final class Ps1GpuCoreView extends GLSurfaceView implements GLSurfaceView
             sceneCutPending = true;
             slowIntervals = 0;
             stableIntervals = 0;
-        } else if (!temporalEnabled && stableIntervals >= 8) {
+        } else if (!temporalEnabled && temporalAllowedByPlan && stableIntervals >= 8) {
             temporalEnabled = true;
             sceneCutPending = true;
             slowIntervals = 0;

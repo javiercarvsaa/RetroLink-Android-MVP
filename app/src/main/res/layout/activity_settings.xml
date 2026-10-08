@@ -103,7 +103,8 @@
 
         <!-- Acciones reales -->
         <LinearLayout android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="8dp" android:orientation="horizontal">
-            <Button android:id="@+id/btnSettingsReset" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/btn_secondary_neon" android:text="↻  RESTABLECER" android:textColor="@color/retro_text" android:textSize="9sp" />
+            <Button android:id="@+id/btnSettingsReset" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.8" android:background="@drawable/btn_secondary_neon" android:text="↻  RESTABLECER" android:textColor="@color/retro_text" android:textSize="9sp" />
+            <Button android:id="@+id/btnAdaptiveOptimizer" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginLeft="8dp" android:background="@drawable/segment_selected" android:text="⚡  ADAPTIVE CORE" android:textColor="@color/retro_text" android:textSize="9sp" android:textStyle="bold" />
             <Button android:id="@+id/btnSettingsDone" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.2" android:layout_marginLeft="8dp" android:background="@drawable/btn_primary_gradient" android:text="✓  LISTO · CAMBIOS GUARDADOS" android:textColor="@color/retro_text" android:textSize="9sp" android:textStyle="bold" />
         </LinearLayout>
 

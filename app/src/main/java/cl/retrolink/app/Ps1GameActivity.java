@@ -26,6 +26,7 @@ public class Ps1GameActivity extends Activity implements EmulatorSurfaceView.Lis
     private Ps1ControlBinder controls;
     private boolean coreShutdown;
     private boolean hostSession;
+    private AdaptiveOptimizationEngine.Plan adaptivePlan;
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -86,6 +87,9 @@ public class Ps1GameActivity extends Activity implements EmulatorSurfaceView.Lis
         String corePath = getApplicationInfo().nativeLibraryDir + "/"
                 + CoreRegistry.PS1.libraryFile;
 
+        adaptivePlan = AdaptiveOptimizationEngine.resolve(
+                this, CoreRegistry.PS1, romPath, hostSession);
+        surface.setAdaptivePlan(adaptivePlan);
         surface.configurePs1Defaults();
         surface.configure(CoreRegistry.PS1,
                 corePath,
@@ -121,8 +125,8 @@ public class Ps1GameActivity extends Activity implements EmulatorSurfaceView.Lis
                 : "PS1 · " + coreInfo)
                 + "\n" + Ps1BiosManager.status(this));
         stats.setText(String.format(java.util.Locale.US,
-                "%.2f FPS · %d Hz · PCSX · RETROSR FUSION TEMPORAL · MEMCARD ACTIVA",
-                fps, sampleRate));
+                "%.2f FPS · %d Hz · PCSX · %s · MEMCARD ACTIVA",
+                fps, sampleRate, adaptivePlan == null ? "RETROSR" : adaptivePlan.shortLabel()));
         Toast.makeText(this, "PlayStation lista", Toast.LENGTH_SHORT).show();
     }
 

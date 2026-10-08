@@ -55,8 +55,8 @@ public class Ps1GameActivity extends Activity implements EmulatorSurfaceView.Lis
                 ? "JUEGO" : gameTitle.trim()));
 
         status.setText((hostSession
-                ? "PCSX-ReARMed · RETROSR GPU 1-PASS · P1 HOST · preparando P2…"
-                : "PCSX-ReARMed · RETROSR GPU 1-PASS · preparando núcleo…")
+                ? "PCSX-ReARMed · RETROSR FUSION TEMPORAL · P1 HOST · preparando P2…"
+                : "PCSX-ReARMed · RETROSR FUSION TEMPORAL · preparando núcleo…")
                 + "\n" + Ps1BiosManager.status(this));
 
         if (!hostSession) {
@@ -121,7 +121,7 @@ public class Ps1GameActivity extends Activity implements EmulatorSurfaceView.Lis
                 : "PS1 · " + coreInfo)
                 + "\n" + Ps1BiosManager.status(this));
         stats.setText(String.format(java.util.Locale.US,
-                "%.2f FPS · %d Hz · PCSX · RETROSR GPU 1-PASS · MEMCARD ACTIVA",
+                "%.2f FPS · %d Hz · PCSX · RETROSR FUSION TEMPORAL · MEMCARD ACTIVA",
                 fps, sampleRate));
         Toast.makeText(this, "PlayStation lista", Toast.LENGTH_SHORT).show();
     }

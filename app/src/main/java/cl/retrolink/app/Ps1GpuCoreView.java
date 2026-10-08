@@ -24,11 +24,13 @@ import javax.microedition.khronos.opengles.GL10;
  * PS1 software core + GPU presentation.
  *
  * The PlayStation core remains PCSX-ReARMed with NEON 2X internal resolution.
- * The final framebuffer is uploaded to an OpenGL ES 3 texture and processed
- * in one spatial upscaling/sharpening pass inspired by Snapdragon GSR.
+ * The PS1 framebuffer is first stabilized at native enhanced resolution by
+ * a motion-compensated temporal pass. The resolved history is then fed into
+ * the existing one-pass spatial upscaler at full display resolution. This
+ * two-pass order keeps the expensive temporal work at PS1 resolution.
  */
 public final class Ps1GpuCoreView extends GLSurfaceView implements GLSurfaceView.Renderer {
-    private static final String TAG = "RetroLinkPs1Gpu";
+    private static final String TAG = "RetroLinkPs1Fusion";
 
     private static final String VERTEX_SHADER =
             "#version 300 es\n" +
@@ -166,6 +168,118 @@ public final class Ps1GpuCoreView extends GLSurfaceView implements GLSurfaceView
             "  outColor = vec4(clamp(sharpened, lo, hi), 1.0);\n" +
             "}\n";
 
+    private static final String RETROSR_TEMPORAL_FRAGMENT =
+            "#version 300 es\n" +
+            "precision highp float;\n" +
+            "uniform sampler2D uSourceNow;\n" +
+            "uniform sampler2D uSourcePrev;\n" +
+            "uniform sampler2D uHistory;\n" +
+            "uniform vec2 uTexel;\n" +
+            "uniform float uHistoryValid;\n" +
+            "uniform int uSearchMode;\n" +
+            "in vec2 vUv;\n" +
+            "out vec4 outColor;\n" +
+            "\n" +
+            "float lum(vec3 c) {\n" +
+            "  return dot(c, vec3(0.2126, 0.7152, 0.0722));\n" +
+            "}\n" +
+            "\n" +
+            "vec3 sourceNowRgb(vec2 uv) {\n" +
+            "  vec4 raw = textureLod(uSourceNow, clamp(uv, vec2(0.0), vec2(1.0)), 0.0);\n" +
+            "  return raw.bgr;\n" +
+            "}\n" +
+            "\n" +
+            "vec3 sourcePrevRgb(vec2 uv) {\n" +
+            "  vec4 raw = textureLod(uSourcePrev, clamp(uv, vec2(0.0), vec2(1.0)), 0.0);\n" +
+            "  return raw.bgr;\n" +
+            "}\n" +
+            "\n" +
+            "vec3 historyRgb(vec2 uv) {\n" +
+            "  vec4 raw = textureLod(uHistory, clamp(uv, vec2(0.0), vec2(1.0)), 0.0);\n" +
+            "  return raw.bgr;\n" +
+            "}\n" +
+            "\n" +
+            "float motionError(vec3 current, vec2 uv, vec2 offset) {\n" +
+            "  vec3 previous = sourcePrevRgb(uv + offset);\n" +
+            "  vec3 delta = abs(current - previous);\n" +
+            "  return dot(delta, vec3(0.24, 0.62, 0.14));\n" +
+            "}\n" +
+            "\n" +
+            "void testCandidate(vec3 current, vec2 uv, vec2 offset,\n" +
+            "                   inout float bestError, inout vec2 bestOffset) {\n" +
+            "  float candidate = motionError(current, uv, offset);\n" +
+            "  if (candidate < bestError) {\n" +
+            "    bestError = candidate;\n" +
+            "    bestOffset = offset;\n" +
+            "  }\n" +
+            "}\n" +
+            "\n" +
+            "void main() {\n" +
+            "  vec3 current = sourceNowRgb(vUv);\n" +
+            "\n" +
+            "  float bestError = 1000.0;\n" +
+            "  vec2 bestOffset = vec2(0.0);\n" +
+            "  testCandidate(current, vUv, vec2(0.0), bestError, bestOffset);\n" +
+            "  testCandidate(current, vUv, vec2( uTexel.x, 0.0), bestError, bestOffset);\n" +
+            "  testCandidate(current, vUv, vec2(-uTexel.x, 0.0), bestError, bestOffset);\n" +
+            "  testCandidate(current, vUv, vec2(0.0,  uTexel.y), bestError, bestOffset);\n" +
+            "  testCandidate(current, vUv, vec2(0.0, -uTexel.y), bestError, bestOffset);\n" +
+            "\n" +
+            "  if (uSearchMode > 0) {\n" +
+            "    testCandidate(current, vUv, vec2( uTexel.x,  uTexel.y), bestError, bestOffset);\n" +
+            "    testCandidate(current, vUv, vec2(-uTexel.x,  uTexel.y), bestError, bestOffset);\n" +
+            "    testCandidate(current, vUv, vec2( uTexel.x, -uTexel.y), bestError, bestOffset);\n" +
+            "    testCandidate(current, vUv, vec2(-uTexel.x, -uTexel.y), bestError, bestOffset);\n" +
+            "  }\n" +
+            "\n" +
+            "  vec2 historyUv = clamp(vUv + bestOffset, uTexel * 0.5, vec2(1.0) - uTexel * 0.5);\n" +
+            "  vec3 history = historyRgb(historyUv);\n" +
+            "\n" +
+            "  vec3 north = sourceNowRgb(vUv + vec2(0.0, -uTexel.y));\n" +
+            "  vec3 south = sourceNowRgb(vUv + vec2(0.0,  uTexel.y));\n" +
+            "  vec3 east = sourceNowRgb(vUv + vec2( uTexel.x, 0.0));\n" +
+            "  vec3 west = sourceNowRgb(vUv + vec2(-uTexel.x, 0.0));\n" +
+            "  vec3 northEast = sourceNowRgb(vUv + vec2( uTexel.x, -uTexel.y));\n" +
+            "  vec3 northWest = sourceNowRgb(vUv + vec2(-uTexel.x, -uTexel.y));\n" +
+            "  vec3 southEast = sourceNowRgb(vUv + vec2( uTexel.x,  uTexel.y));\n" +
+            "  vec3 southWest = sourceNowRgb(vUv + vec2(-uTexel.x,  uTexel.y));\n" +
+            "\n" +
+            "  vec3 neighborhoodMin = min(current, min(min(north, south), min(east, west)));\n" +
+            "  neighborhoodMin = min(neighborhoodMin, min(min(northEast, northWest), min(southEast, southWest)));\n" +
+            "  vec3 neighborhoodMax = max(current, max(max(north, south), max(east, west)));\n" +
+            "  neighborhoodMax = max(neighborhoodMax, max(max(northEast, northWest), max(southEast, southWest)));\n" +
+            "\n" +
+            "  vec3 localRange = neighborhoodMax - neighborhoodMin;\n" +
+            "  vec3 clipMargin = vec3(1.5 / 255.0) + localRange * 0.08;\n" +
+            "  vec3 clippedHistory = clamp(history, neighborhoodMin - clipMargin, neighborhoodMax + clipMargin);\n" +
+            "\n" +
+            "  float historyDifference = dot(abs(current - clippedHistory), vec3(0.24, 0.62, 0.14));\n" +
+            "  float motionConfidence = 1.0 - smoothstep(0.020, 0.165, bestError);\n" +
+            "  float historyConfidence = 1.0 - smoothstep(0.030, 0.185, historyDifference);\n" +
+            "  float edgeStrength = max(abs(lum(east) - lum(west)), abs(lum(north) - lum(south)));\n" +
+            "  float edgeTrust = mix(1.0, 0.90, smoothstep(0.08, 0.32, edgeStrength));\n" +
+            "\n" +
+            "  float historyWeight = 0.74 * motionConfidence * historyConfidence * edgeTrust * uHistoryValid;\n" +
+            "  if (bestError > 0.23 || historyDifference > 0.23) {\n" +
+            "    historyWeight = 0.0;\n" +
+            "  }\n" +
+            "\n" +
+            "  vec3 resolved = mix(current, clippedHistory, clamp(historyWeight, 0.0, 0.74));\n" +
+            "  vec3 localBlur = (north + south + east + west) * 0.25;\n" +
+            "  vec3 protectedDetail = current - localBlur;\n" +
+            "  resolved += protectedDetail * (0.035 * (1.0 - historyWeight));\n" +
+            "  resolved = clamp(resolved, neighborhoodMin - clipMargin, neighborhoodMax + clipMargin);\n" +
+            "\n" +
+            "  // Store in the same byte-channel layout as the CPU-uploaded PS1 texture.\n" +
+            "  // RETROSR_GSR_FRAGMENT performs the matching .bgr read in the second pass.\n" +
+            "  outColor = vec4(clamp(resolved, vec3(0.0), vec3(1.0)).bgr, 1.0);\n" +
+            "}\n";
+
+    private static final int HIGH_QUALITY_SEARCH_PIXELS = 600_000;
+    private static final int SCENE_SAMPLE_COLS = 12;
+    private static final int SCENE_SAMPLE_ROWS = 8;
+    private static final int SCENE_SAMPLE_COUNT = SCENE_SAMPLE_COLS * SCENE_SAMPLE_ROWS;
+
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final AtomicBoolean configured = new AtomicBoolean(false);
     private final Object frameLock = new Object();
@@ -181,6 +295,8 @@ public final class Ps1GpuCoreView extends GLSurfaceView implements GLSurfaceView
     private volatile boolean ready;
     private volatile boolean resetRequested;
     private volatile boolean ps1DefaultsEnabled;
+    private volatile boolean historyResetRequested = true;
+    private volatile String shaderLabel = "RETROSR FUSION · INICIANDO";
     private Thread emulationThread;
     private CountDownLatch stopped = new CountDownLatch(1);
 
@@ -191,20 +307,45 @@ public final class Ps1GpuCoreView extends GLSurfaceView implements GLSurfaceView
     private long latestSerial;
     private long uploadedSerial;
 
+    private final int[] previousSceneSamples = new int[SCENE_SAMPLE_COUNT];
+    private boolean sceneSamplesValid;
+    private int sceneSampleWidth;
+    private int sceneSampleHeight;
+
     private final short[] audioBuffer = new short[8192];
     private final NativeAudioSink audio = new NativeAudioSink();
 
-    private int program;
-    private int texture;
+    private int spatialProgram;
+    private int temporalProgram;
     private int vao;
-    private int textureWidth;
-    private int textureHeight;
+
+    private final int[] sourceTextures = new int[2];
+    private int sourceWidth;
+    private int sourceHeight;
+    private int currentSourceIndex = -1;
+    private int previousSourceIndex = -1;
+
+    private final int[] historyTextures = new int[2];
+    private final int[] historyFbos = new int[2];
+    private int historyIndex = -1;
+    private boolean historyValid;
+    private boolean historyTargetsReady;
+    private int historyWidth;
+    private int historyHeight;
+
     private int surfaceWidth;
     private int surfaceHeight;
-    private int uTexture;
-    private int uViewportInfo;
     private IntBuffer uploadBuffer;
-    private String shaderLabel = "RETROSR GPU";
+
+    private int spatialTextureUniform;
+    private int spatialViewportUniform;
+
+    private int temporalSourceNowUniform;
+    private int temporalSourcePrevUniform;
+    private int temporalHistoryUniform;
+    private int temporalTexelUniform;
+    private int temporalHistoryValidUniform;
+    private int temporalSearchModeUniform;
 
     public Ps1GpuCoreView(Context context) {
         this(context, null);
@@ -244,17 +385,20 @@ public final class Ps1GpuCoreView extends GLSurfaceView implements GLSurfaceView
 
     public void resetCore() {
         if (ready) resetRequested = true;
+        historyResetRequested = true;
     }
 
     public void onResumeCore() {
         try { super.onResume(); } catch (Throwable ignored) {}
         paused = false;
+        historyResetRequested = true;
         maybeStart();
         requestRender();
     }
 
     public void onPauseCore() {
         paused = true;
+        historyResetRequested = true;
         audio.pause();
         try { super.onPause(); } catch (Throwable ignored) {}
     }
@@ -275,40 +419,57 @@ public final class Ps1GpuCoreView extends GLSurfaceView implements GLSurfaceView
     @Override public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         destroyGlResources();
         GLES30.glClearColor(0f, 0f, 0f, 1f);
+        GLES30.glDisable(GLES30.GL_BLEND);
+        GLES30.glDisable(GLES30.GL_DEPTH_TEST);
+        GLES30.glDisable(GLES30.GL_CULL_FACE);
 
-        program = createProgram(VERTEX_SHADER, RETROSR_GSR_FRAGMENT);
-        if (program != 0) {
-            shaderLabel = "RETROSR GPU · GSR 1-PASS";
-        } else {
-            program = createProgram(VERTEX_SHADER, FALLBACK_FRAGMENT);
-            shaderLabel = "RETROSR GPU · ADAPTIVE FALLBACK";
+        spatialProgram = createProgram(VERTEX_SHADER, RETROSR_GSR_FRAGMENT);
+        boolean spatialPrimary = spatialProgram != 0;
+        if (!spatialPrimary) {
+            spatialProgram = createProgram(VERTEX_SHADER, FALLBACK_FRAGMENT);
         }
+        temporalProgram = createProgram(VERTEX_SHADER, RETROSR_TEMPORAL_FRAGMENT);
 
-        if (program == 0) {
+        if (spatialProgram == 0) {
             postError("No se pudo inicializar el escalador GPU");
             glReady = false;
             return;
         }
 
-        uTexture = GLES30.glGetUniformLocation(program, "uTexture");
-        uViewportInfo = GLES30.glGetUniformLocation(program, "uViewportInfo");
+        spatialTextureUniform = GLES30.glGetUniformLocation(spatialProgram, "uTexture");
+        spatialViewportUniform = GLES30.glGetUniformLocation(spatialProgram, "uViewportInfo");
+
+        if (temporalProgram != 0) {
+            temporalSourceNowUniform = GLES30.glGetUniformLocation(temporalProgram, "uSourceNow");
+            temporalSourcePrevUniform = GLES30.glGetUniformLocation(temporalProgram, "uSourcePrev");
+            temporalHistoryUniform = GLES30.glGetUniformLocation(temporalProgram, "uHistory");
+            temporalTexelUniform = GLES30.glGetUniformLocation(temporalProgram, "uTexel");
+            temporalHistoryValidUniform = GLES30.glGetUniformLocation(temporalProgram, "uHistoryValid");
+            temporalSearchModeUniform = GLES30.glGetUniformLocation(temporalProgram, "uSearchMode");
+        }
 
         int[] vaos = new int[1];
         GLES30.glGenVertexArrays(1, vaos, 0);
         vao = vaos[0];
 
-        int[] textures = new int[1];
-        GLES30.glGenTextures(1, textures, 0);
-        texture = textures[0];
-        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texture);
-        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_LINEAR);
-        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
-        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
-        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE);
-        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0);
+        GLES30.glGenTextures(2, sourceTextures, 0);
+        for (int textureId : sourceTextures) configureTexture(textureId);
 
-        textureWidth = textureHeight = 0;
+        sourceWidth = sourceHeight = 0;
+        currentSourceIndex = previousSourceIndex = -1;
         uploadedSerial = 0L;
+        historyValid = false;
+        historyIndex = -1;
+        historyResetRequested = true;
+
+        if (temporalProgram != 0) {
+            shaderLabel = spatialPrimary
+                    ? "RETROSR FUSION · TEMPORAL 2-PASS"
+                    : "RETROSR FUSION · COMPAT 2-PASS";
+        } else {
+            shaderLabel = "RETROSR GPU · SPATIAL FALLBACK";
+        }
+
         glReady = true;
         maybeStart();
     }
@@ -316,24 +477,28 @@ public final class Ps1GpuCoreView extends GLSurfaceView implements GLSurfaceView
     @Override public void onSurfaceChanged(GL10 gl, int width, int height) {
         surfaceWidth = Math.max(1, width);
         surfaceHeight = Math.max(1, height);
+        historyResetRequested = true;
         requestRender();
     }
 
     @Override public void onDrawFrame(GL10 gl) {
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);
         GLES30.glViewport(0, 0, Math.max(1, surfaceWidth), Math.max(1, surfaceHeight));
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT);
-        if (!glReady || program == 0 || texture == 0) return;
+        if (!glReady || spatialProgram == 0 || sourceTextures[0] == 0) return;
 
         int w;
         int h;
         long serial;
+        boolean newFrame;
         synchronized (frameLock) {
             w = latestWidth;
             h = latestHeight;
             serial = latestSerial;
             if (latestPixels == null || w <= 0 || h <= 0) return;
 
-            if (serial != uploadedSerial) {
+            newFrame = serial != uploadedSerial;
+            if (newFrame) {
                 int count = w * h;
                 if (uploadBuffer == null || uploadBuffer.capacity() < count) {
                     uploadBuffer = ByteBuffer.allocateDirect(count * 4)
@@ -343,54 +508,51 @@ public final class Ps1GpuCoreView extends GLSurfaceView implements GLSurfaceView
                 uploadBuffer.clear();
                 uploadBuffer.put(latestPixels, 0, count);
                 uploadBuffer.position(0);
-
-                GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texture);
-                GLES30.glPixelStorei(GLES30.GL_UNPACK_ALIGNMENT, 4);
-                if (textureWidth != w || textureHeight != h) {
-                    GLES30.glTexImage2D(
-                            GLES30.GL_TEXTURE_2D, 0, GLES30.GL_RGBA8,
-                            w, h, 0, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE,
-                            uploadBuffer);
-                    textureWidth = w;
-                    textureHeight = h;
-                } else {
-                    GLES30.glTexSubImage2D(
-                            GLES30.GL_TEXTURE_2D, 0, 0, 0,
-                            w, h, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE,
-                            uploadBuffer);
-                }
-                uploadedSerial = serial;
             }
         }
+
+        if (newFrame) {
+            uploadSourceFrame(uploadBuffer, w, h);
+            uploadedSerial = serial;
+        }
+        if (currentSourceIndex < 0) return;
+
+        boolean resetHistory = historyResetRequested;
+        historyResetRequested = false;
+        if (resetHistory) {
+            historyValid = false;
+            historyIndex = -1;
+        }
+
+        if (temporalProgram != 0 && historyTargetsReady
+                && (newFrame || resetHistory || !historyValid)) {
+            int searchMode = ((long) sourceWidth * sourceHeight <= HIGH_QUALITY_SEARCH_PIXELS) ? 1 : 0;
+            resolveTemporalSource(searchMode,
+                    historyValid && previousSourceIndex >= 0);
+
+            shaderLabel = searchMode > 0
+                    ? "RETROSR FUSION · TEMPORAL HQ 2-PASS"
+                    : "RETROSR FUSION · TEMPORAL ECO 2-PASS";
+        }
+
+        int presentationTexture = temporalProgram != 0 && historyValid
+                ? historyTextures[historyIndex]
+                : sourceTextures[currentSourceIndex];
 
         float scale = Math.min(surfaceWidth / (float) w, surfaceHeight / (float) h);
         int renderWidth = Math.max(1, Math.round(w * scale));
         int renderHeight = Math.max(1, Math.round(h * scale));
         int left = (surfaceWidth - renderWidth) / 2;
         int bottom = (surfaceHeight - renderHeight) / 2;
-        GLES30.glViewport(left, bottom, renderWidth, renderHeight);
 
-        GLES30.glUseProgram(program);
-        GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
-        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texture);
-        GLES30.glUniform1i(uTexture, 0);
-        GLES30.glUniform4f(uViewportInfo,
-                1.0f / Math.max(1, w),
-                1.0f / Math.max(1, h),
-                (float) w,
-                (float) h);
-        GLES30.glBindVertexArray(vao);
-        GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 3);
-        GLES30.glBindVertexArray(0);
-        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0);
-        GLES30.glUseProgram(0);
+        renderSpatial(presentationTexture, w, h, left, bottom, renderWidth, renderHeight);
     }
 
     private synchronized void maybeStart() {
         if (!configured.get() || !glReady || running.get()) return;
         stopped = new CountDownLatch(1);
         running.set(true);
-        emulationThread = new Thread(this::runCore, "RetroLinkPs1GpuCore");
+        emulationThread = new Thread(this::runCore, "RetroLinkPs1FusionCore");
         try { emulationThread.setPriority(Thread.NORM_PRIORITY + 1); } catch (Throwable ignored) {}
         emulationThread.start();
     }
@@ -507,6 +669,10 @@ public final class Ps1GpuCoreView extends GLSurfaceView implements GLSurfaceView
         long serial = NativeLibretro.nativeCopyVideoFrame(capturePixels);
         if (serial <= 0 || serial == latestSerial) return;
 
+        if (detectSceneCut(capturePixels, w, h)) {
+            historyResetRequested = true;
+        }
+
         synchronized (frameLock) {
             if (latestPixels == null || latestPixels.length != count)
                 latestPixels = new int[count];
@@ -516,6 +682,8 @@ public final class Ps1GpuCoreView extends GLSurfaceView implements GLSurfaceView
             latestSerial = serial;
         }
 
+        // P2 receives the native enhanced framebuffer to preserve netplay latency.
+        // RetroSR Fusion stays on the P1 GPU and never adds a CPU readback.
         if (FrameStreamServer.hasRemoteClients()) {
             try {
                 Bitmap remote = Bitmap.createBitmap(
@@ -525,6 +693,213 @@ public final class Ps1GpuCoreView extends GLSurfaceView implements GLSurfaceView
         }
 
         requestRender();
+    }
+
+    private boolean detectSceneCut(int[] pixels, int width, int height) {
+        if (!sceneSamplesValid || width != sceneSampleWidth || height != sceneSampleHeight) {
+            fillSceneSamples(pixels, width, height);
+            sceneSamplesValid = true;
+            sceneSampleWidth = width;
+            sceneSampleHeight = height;
+            return true;
+        }
+
+        long differenceSum = 0L;
+        int largeChanges = 0;
+        int index = 0;
+        for (int row = 0; row < SCENE_SAMPLE_ROWS; row++) {
+            int y = Math.min(height - 1, ((row * 2 + 1) * height) / (SCENE_SAMPLE_ROWS * 2));
+            for (int col = 0; col < SCENE_SAMPLE_COLS; col++) {
+                int x = Math.min(width - 1, ((col * 2 + 1) * width) / (SCENE_SAMPLE_COLS * 2));
+                int now = pixels[y * width + x];
+                int previous = previousSceneSamples[index];
+
+                int dr = Math.abs(((now >>> 16) & 0xff) - ((previous >>> 16) & 0xff));
+                int dg = Math.abs(((now >>> 8) & 0xff) - ((previous >>> 8) & 0xff));
+                int db = Math.abs((now & 0xff) - (previous & 0xff));
+                int weighted = (dr + (dg << 1) + db) >> 2;
+                differenceSum += weighted;
+                if (weighted > 56) largeChanges++;
+
+                previousSceneSamples[index++] = now;
+            }
+        }
+
+        double average = differenceSum / (double) SCENE_SAMPLE_COUNT;
+        return average > 42.0 && largeChanges > (SCENE_SAMPLE_COUNT * 3 / 5);
+    }
+
+    private void fillSceneSamples(int[] pixels, int width, int height) {
+        int index = 0;
+        for (int row = 0; row < SCENE_SAMPLE_ROWS; row++) {
+            int y = Math.min(height - 1, ((row * 2 + 1) * height) / (SCENE_SAMPLE_ROWS * 2));
+            for (int col = 0; col < SCENE_SAMPLE_COLS; col++) {
+                int x = Math.min(width - 1, ((col * 2 + 1) * width) / (SCENE_SAMPLE_COLS * 2));
+                previousSceneSamples[index++] = pixels[y * width + x];
+            }
+        }
+    }
+
+    private void uploadSourceFrame(IntBuffer pixels, int width, int height) {
+        boolean resized = width != sourceWidth || height != sourceHeight;
+        if (resized) {
+            allocateSourceTextures(width, height);
+            ensureHistoryTargets(width, height);
+            currentSourceIndex = -1;
+            previousSourceIndex = -1;
+            historyValid = false;
+            historyIndex = -1;
+            historyResetRequested = true;
+        }
+
+        int nextIndex = currentSourceIndex < 0 ? 0 : 1 - currentSourceIndex;
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, sourceTextures[nextIndex]);
+        GLES30.glPixelStorei(GLES30.GL_UNPACK_ALIGNMENT, 4);
+        pixels.position(0);
+        GLES30.glTexSubImage2D(
+                GLES30.GL_TEXTURE_2D, 0, 0, 0,
+                width, height, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, pixels);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0);
+
+        previousSourceIndex = currentSourceIndex;
+        currentSourceIndex = nextIndex;
+    }
+
+    private void allocateSourceTextures(int width, int height) {
+        sourceWidth = width;
+        sourceHeight = height;
+        for (int textureId : sourceTextures) {
+            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureId);
+            GLES30.glTexImage2D(
+                    GLES30.GL_TEXTURE_2D, 0, GLES30.GL_RGBA8,
+                    width, height, 0,
+                    GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, null);
+        }
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0);
+    }
+
+    private boolean ensureHistoryTargets(int width, int height) {
+        if (historyTargetsReady && historyWidth == width && historyHeight == height)
+            return true;
+
+        destroyHistoryTargets();
+
+        GLES30.glGenTextures(2, historyTextures, 0);
+        GLES30.glGenFramebuffers(2, historyFbos, 0);
+
+        for (int i = 0; i < 2; i++) {
+            configureTexture(historyTextures[i]);
+            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, historyTextures[i]);
+            GLES30.glTexImage2D(
+                    GLES30.GL_TEXTURE_2D, 0, GLES30.GL_RGBA8,
+                    width, height, 0,
+                    GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, null);
+
+            GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, historyFbos[i]);
+            GLES30.glFramebufferTexture2D(
+                    GLES30.GL_FRAMEBUFFER,
+                    GLES30.GL_COLOR_ATTACHMENT0,
+                    GLES30.GL_TEXTURE_2D,
+                    historyTextures[i],
+                    0);
+            if (GLES30.glCheckFramebufferStatus(GLES30.GL_FRAMEBUFFER)
+                    != GLES30.GL_FRAMEBUFFER_COMPLETE) {
+                Log.e(TAG, "Framebuffer temporal PS1 incompleto en índice " + i);
+                GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);
+                destroyHistoryTargets();
+                return false;
+            }
+
+            GLES30.glViewport(0, 0, width, height);
+            GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT);
+        }
+
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0);
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);
+        historyTargetsReady = true;
+        historyWidth = width;
+        historyHeight = height;
+        historyValid = false;
+        historyIndex = -1;
+        return true;
+    }
+
+    private void resolveTemporalSource(int searchMode, boolean canUseHistory) {
+        int writeIndex = historyIndex < 0 ? 0 : 1 - historyIndex;
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, historyFbos[writeIndex]);
+        GLES30.glViewport(0, 0, sourceWidth, sourceHeight);
+        GLES30.glUseProgram(temporalProgram);
+
+        bindTexture(0, sourceTextures[currentSourceIndex], temporalSourceNowUniform);
+        int previousTexture = previousSourceIndex >= 0
+                ? sourceTextures[previousSourceIndex]
+                : sourceTextures[currentSourceIndex];
+        bindTexture(1, previousTexture, temporalSourcePrevUniform);
+
+        int historyTexture = canUseHistory && historyIndex >= 0
+                ? historyTextures[historyIndex]
+                : sourceTextures[currentSourceIndex];
+        bindTexture(2, historyTexture, temporalHistoryUniform);
+
+        GLES30.glUniform2f(
+                temporalTexelUniform,
+                1.0f / Math.max(1, sourceWidth),
+                1.0f / Math.max(1, sourceHeight));
+        GLES30.glUniform1f(temporalHistoryValidUniform, canUseHistory ? 1.0f : 0.0f);
+        GLES30.glUniform1i(temporalSearchModeUniform, searchMode);
+
+        drawFullscreenTriangle();
+
+        for (int unit = 0; unit < 3; unit++) {
+            GLES30.glActiveTexture(GLES30.GL_TEXTURE0 + unit);
+            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0);
+        }
+        GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
+        GLES30.glUseProgram(0);
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);
+
+        historyIndex = writeIndex;
+        historyValid = true;
+    }
+
+    private void renderSpatial(int textureId, int sourceW, int sourceH,
+                               int left, int bottom, int width, int height) {
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);
+        GLES30.glViewport(left, bottom, width, height);
+        GLES30.glUseProgram(spatialProgram);
+        GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureId);
+        GLES30.glUniform1i(spatialTextureUniform, 0);
+        GLES30.glUniform4f(
+                spatialViewportUniform,
+                1.0f / Math.max(1, sourceW),
+                1.0f / Math.max(1, sourceH),
+                (float) sourceW,
+                (float) sourceH);
+        drawFullscreenTriangle();
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0);
+        GLES30.glUseProgram(0);
+    }
+
+    private void drawFullscreenTriangle() {
+        GLES30.glBindVertexArray(vao);
+        GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 3);
+        GLES30.glBindVertexArray(0);
+    }
+
+    private void bindTexture(int unit, int textureId, int uniform) {
+        GLES30.glActiveTexture(GLES30.GL_TEXTURE0 + unit);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureId);
+        GLES30.glUniform1i(uniform, unit);
+    }
+
+    private void configureTexture(int textureId) {
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureId);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_LINEAR);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0);
     }
 
     private int createProgram(String vertexSource, String fragmentSource) {
@@ -569,20 +944,37 @@ public final class Ps1GpuCoreView extends GLSurfaceView implements GLSurfaceView
         return shader;
     }
 
+    private void destroyHistoryTargets() {
+        GLES30.glDeleteTextures(2, historyTextures, 0);
+        GLES30.glDeleteFramebuffers(2, historyFbos, 0);
+        historyTextures[0] = historyTextures[1] = 0;
+        historyFbos[0] = historyFbos[1] = 0;
+        historyTargetsReady = false;
+        historyWidth = historyHeight = 0;
+        historyValid = false;
+        historyIndex = -1;
+    }
+
     private void destroyGlResources() {
-        if (texture != 0) {
-            int[] textures = {texture};
-            GLES30.glDeleteTextures(1, textures, 0);
-            texture = 0;
-        }
+        destroyHistoryTargets();
+
+        GLES30.glDeleteTextures(2, sourceTextures, 0);
+        sourceTextures[0] = sourceTextures[1] = 0;
+        sourceWidth = sourceHeight = 0;
+        currentSourceIndex = previousSourceIndex = -1;
+
         if (vao != 0) {
             int[] vaos = {vao};
             GLES30.glDeleteVertexArrays(1, vaos, 0);
             vao = 0;
         }
-        if (program != 0) {
-            GLES30.glDeleteProgram(program);
-            program = 0;
+        if (spatialProgram != 0) {
+            GLES30.glDeleteProgram(spatialProgram);
+            spatialProgram = 0;
+        }
+        if (temporalProgram != 0) {
+            GLES30.glDeleteProgram(temporalProgram);
+            temporalProgram = 0;
         }
     }
 

@@ -752,13 +752,9 @@ Java_cl_retrolink_app_NativeLibretro_nativeInit(JNIEnv* env, jclass,
         shutdown_core();
         return env->NewStringUTF(err.c_str());
     }
-    g_stage = "read rom";
-    if (!read_file(rom, g_rom)) {
-        g_last_error = "No se pudo leer la ROM desde almacenamiento interno";
-        std::string err = g_last_error;
-        shutdown_core();
-        return env->NewStringUTF(err.c_str());
-    }
+    // v1.0.2: no precargar el contenido antes de conocer need_fullpath.
+    // PCSX-ReARMed usa directamente game.path cuando need_fullpath=true.
+    g_rom.clear();
 
     g_stage = "bind callbacks";
     p_set_environment(environment_cb);

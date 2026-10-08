@@ -148,7 +148,7 @@ public final class AdaptiveRuntimeSession implements AutoCloseable {
     }
 
     private static int currentPssMb() {
-        try { return Math.max(0, Debug.getPss() / 1024); }
+        try { return (int) Math.min((long) Integer.MAX_VALUE, Math.max(0L, Debug.getPss() / 1024L)); }
         catch (Throwable ignored) { return 0; }
     }
 

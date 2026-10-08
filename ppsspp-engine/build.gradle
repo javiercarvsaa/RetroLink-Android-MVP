@@ -45,7 +45,7 @@ android {
             java.srcDirs = [file("${upstreamDir}/android/src")]
             aidl.srcDirs = [file("${upstreamDir}/android/src")]
             proto.srcDirs = [file("${upstreamDir}/android/src/main/proto")]
-            res.srcDirs = [file("${upstreamDir}/android/res"), file("${upstreamDir}/android/normal/res")]
+            res.srcDirs = [file("${upstreamDir}/android/src/main/res"), file("${upstreamDir}/android/res"), file("${upstreamDir}/android/normal/res")]
             assets.srcDirs = [file('src/main/assets'), file("${upstreamDir}/assets")]
         }
     }

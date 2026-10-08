@@ -58,6 +58,7 @@ public final class SoftwareCoreView extends SurfaceView implements SurfaceHolder
                                        String systemDir, String saveDir,
                                        EmulatorSurfaceView.Listener listener) {
         this.core = core == null ? CoreRegistry.GAME_BOY : core;
+        paint.setFilterBitmap(this.core == CoreRegistry.PS1);
         this.corePath = corePath;
         this.romPath = romPath;
         this.systemDir = systemDir;
@@ -84,7 +85,10 @@ public final class SoftwareCoreView extends SurfaceView implements SurfaceHolder
         NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_memcard1", "serial");
         NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_memcard2", "shared");
         NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_drc", "enabled");
-        NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_frameskip_type", "auto");
+        NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_neon_enhancement_enable", "enabled");
+NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_neon_enhancement_no_main", "disabled");
+NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_neon_enhancement_tex_adj_v2", "enabled");
+        NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_frameskip_type", "disabled");
         NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_show_bios_bootlogo", "disabled");
         NativeLibretro.nativeSetFrontendOption("pcsx_rearmed_multitap", "disabled");
     }

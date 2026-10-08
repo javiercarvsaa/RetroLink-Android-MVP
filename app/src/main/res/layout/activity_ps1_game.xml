@@ -7,7 +7,7 @@
     android:clipChildren="true"
     android:splitMotionEvents="true">
 
-    <cl.retrolink.app.SoftwareCoreView
+    <cl.retrolink.app.Ps1GpuCoreView
         android:id="@+id/ps1EmulatorSurface"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />

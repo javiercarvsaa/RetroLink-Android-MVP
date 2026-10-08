@@ -54,6 +54,10 @@ public final class CoreRegistry {
             "ps1.pcsx_rearmed", "Sony PlayStation", "PS1",
             "libretro_ps1.so", "chd|pbp|cue|iso|img|mdf|m3u", true, false);
 
+    public static final Core PSP = new Core(
+        "psp.ppsspp", "Sony PlayStation Portable", "PSP",
+        "libppsspp_jni.so", "iso|cso|chd|pbp|elf", true, true);
+
     private CoreRegistry() {}
 
     public static Core byId(String id) {
@@ -61,10 +65,13 @@ public final class CoreRegistry {
         if (SNES.id.equals(id)) return SNES;
         if (ATARI_2600.id.equals(id)) return ATARI_2600;
         if (PS1.id.equals(id)) return PS1;
+        if (PSP.id.equals(id)) return PSP;
         return N64;
     }
 
     public static Core forFileName(String name) {
+        String n = name == null ? "" : name.toLowerCase(Locale.US);
+        if (n.endsWith(".cso") || n.endsWith(".elf")) return PSP;
         if (GAME_BOY.supportsFileName(name)) return GAME_BOY;
         if (SNES.supportsFileName(name)) return SNES;
         if (ATARI_2600.supportsFileName(name)) return ATARI_2600;

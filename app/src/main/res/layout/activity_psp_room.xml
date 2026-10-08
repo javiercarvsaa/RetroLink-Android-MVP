@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/pspRoomRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_neon"
+    android:fillViewport="true"
+    android:scrollbars="none">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:orientation="horizontal">
+            <ImageView android:layout_width="52dp" android:layout_height="52dp" android:src="@mipmap/ic_launcher" android:contentDescription="RetroLink" />
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginLeft="10dp" android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="PSP · Sala Ad Hoc" android:textColor="@color/retro_text" android:textSize="22sp" android:textStyle="bold" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Dos teléfonos · dos PSP emuladas · misma red Wi‑Fi" android:textColor="@color/retro_cyan" android:textSize="9sp" />
+            </LinearLayout>
+            <Button android:id="@+id/btnPspRoomLibrary" android:layout_width="126dp" android:layout_height="42dp" android:background="@drawable/btn_secondary_neon" android:text="BIBLIOTECA PSP" android:textColor="@color/retro_text" android:textSize="7sp" />
+            <Button android:id="@+id/btnPspRoomBack" android:layout_width="48dp" android:layout_height="42dp" android:layout_marginLeft="8dp" android:background="@drawable/btn_secondary_neon" android:text="←" android:textColor="@color/retro_text" android:textSize="18sp" />
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="86dp" android:layout_marginTop="10dp" android:background="@drawable/hero_neon" android:orientation="vertical" android:padding="14dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="JUEGO SELECCIONADO EN ESTE TELÉFONO" android:textColor="#B8DAF4" android:textSize="8sp" android:textStyle="bold" />
+            <TextView android:id="@+id/txtPspRoomGame" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:text="Sin juego PSP seleccionado" android:textColor="@color/retro_text" android:textSize="16sp" android:textStyle="bold" />
+            <TextView android:id="@+id/txtPspLocalIp" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="IP de este teléfono: No detectada" android:textColor="@color/retro_green" android:textSize="9sp" android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="250dp" android:layout_marginTop="10dp" android:baselineAligned="false" android:orientation="horizontal">
+            <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/card_cyan_active" android:orientation="vertical" android:padding="18dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="TELÉFONO P1 · HOST" android:textColor="@color/retro_text" android:textSize="16sp" android:textStyle="bold" />
+                <TextView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="10dp" android:lineSpacingExtra="4dp" android:text="1. Ambos teléfonos deben tener el mismo juego.&#10;2. Conecta ambos a la misma red Wi‑Fi.&#10;3. Toca Crear host PSP.&#10;4. En P2 escribe la IP que aparece arriba.&#10;5. Dentro del juego entra al modo Ad Hoc." android:textColor="#BFD8F1" android:textSize="9sp" />
+                <Button android:id="@+id/btnPspRoomHost" android:layout_width="match_parent" android:layout_height="48dp" android:background="@drawable/btn_primary_gradient" android:text="CREAR HOST PSP P1" android:textColor="@color/retro_text" android:textSize="10sp" android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginLeft="10dp" android:background="@drawable/card_purple" android:orientation="vertical" android:padding="18dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="TELÉFONO P2 · UNIRSE" android:textColor="@color/retro_text" android:textSize="16sp" android:textStyle="bold" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="IP local mostrada por el teléfono P1" android:textColor="#BFD8F1" android:textSize="9sp" />
+                <EditText android:id="@+id/editPspHostIp" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="8dp" android:background="@drawable/card_glass" android:hint="192.168.1.25" android:inputType="text" android:paddingLeft="14dp" android:paddingRight="14dp" android:singleLine="true" android:textColor="@color/retro_text" android:textColorHint="#5F7E9F" android:textSize="14sp" />
+                <TextView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="8dp" android:text="Luego, dentro del juego, entra al mismo lobby o sala Ad Hoc que creó P1." android:textColor="#8DAACA" android:textSize="8sp" />
+                <Button android:id="@+id/btnPspRoomJoin" android:layout_width="match_parent" android:layout_height="48dp" android:background="@drawable/btn_primary_gradient" android:text="UNIR PSP P2 AL HOST" android:textColor="@color/retro_text" android:textSize="10sp" android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="54dp" android:layout_marginTop="10dp" android:orientation="horizontal">
+            <TextView android:id="@+id/txtPspRoomState" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/card_glass" android:gravity="center_vertical" android:paddingLeft="14dp" android:text="Mismo juego en ambos teléfonos" android:textColor="#8BB3D8" android:textSize="8sp" />
+            <Button android:id="@+id/btnPspRoomEngine" android:layout_width="158dp" android:layout_height="match_parent" android:layout_marginLeft="8dp" android:background="@drawable/btn_secondary_neon" android:text="AJUSTES PPSSPP" android:textColor="@color/retro_text" android:textSize="8sp" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

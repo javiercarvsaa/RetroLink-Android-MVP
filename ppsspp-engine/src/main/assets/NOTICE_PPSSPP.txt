@@ -1,0 +1,16 @@
+RetroLink PSP Engine Notice
+===========================
+
+This build integrates PPSSPP, the fast and portable PSP emulator.
+Upstream project: hrydgard/ppsspp
+Pinned upstream release: v1.20.4
+Pinned source commit: 13c1773bc24e97a2ca7bd4362b12b8859a6f71a3
+
+PPSSPP is distributed under the GNU General Public License version 2 or later,
+with third-party components under their respective compatible licenses.
+RetroLink does not include PSP games, firmware dumps, copyrighted game data,
+or any commercial content. Users must provide content they are legally entitled to use.
+
+The complete upstream source is fetched from the pinned public repository during
+the reproducible GitHub Actions build. The full upstream LICENSE.TXT is also
+bundled in the APK as PPSSPP_LICENSE.txt.

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/pspLibraryRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_neon"
+    android:fillViewport="true"
+    android:scrollbars="none">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="18dp">
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="58dp" android:gravity="center_vertical" android:orientation="horizontal">
+            <ImageView android:layout_width="54dp" android:layout_height="54dp" android:contentDescription="RetroLink" android:src="@mipmap/ic_launcher" />
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginLeft="10dp" android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="PlayStation Portable" android:textColor="@color/retro_text" android:textSize="21sp" android:textStyle="bold" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="RetroLink MultiPlatform · PPSSPP 1.20.4" android:textColor="@color/retro_cyan" android:textSize="9sp" />
+            </LinearLayout>
+            <TextView android:id="@+id/txtPspCount" android:layout_width="wrap_content" android:layout_height="42dp" android:background="@drawable/card_glass" android:gravity="center" android:paddingLeft="14dp" android:paddingRight="14dp" android:text="0 juegos" android:textColor="@color/retro_text" android:textSize="9sp" android:textStyle="bold" />
+            <Button android:id="@+id/btnPspImport" android:layout_width="138dp" android:layout_height="42dp" android:layout_marginLeft="8dp" android:background="@drawable/btn_primary_gradient" android:text="＋ IMPORTAR JUEGO" android:textColor="@color/retro_text" android:textSize="7sp" android:textStyle="bold" />
+            <Button android:id="@+id/btnPspBack" android:layout_width="48dp" android:layout_height="42dp" android:layout_marginLeft="8dp" android:background="@drawable/btn_secondary_neon" android:text="←" android:textColor="@color/retro_text" android:textSize="18sp" />
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="42dp" android:layout_marginTop="8dp" android:orientation="horizontal">
+            <TextView android:id="@+id/txtPspCoverStatus" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/card_glass" android:gravity="center_vertical" android:paddingLeft="14dp" android:text="Carátulas PSP · búsqueda automática" android:textColor="#8BB3D8" android:textSize="8sp" />
+            <Button android:id="@+id/btnPspRefreshCovers" android:layout_width="116dp" android:layout_height="match_parent" android:layout_marginLeft="8dp" android:background="@drawable/btn_secondary_neon" android:text="↻ CARÁTULAS" android:textColor="@color/retro_text" android:textSize="7sp" android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="44dp" android:layout_marginTop="8dp" android:orientation="horizontal">
+            <TextView android:id="@+id/txtPspEngineStatus" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/card_glass" android:gravity="center_vertical" android:paddingLeft="14dp" android:text="PPSSPP integrado · perfil gráfico adaptativo" android:textColor="@color/retro_green" android:textSize="8sp" android:textStyle="bold" />
+            <Button android:id="@+id/btnPspEngine" android:layout_width="150dp" android:layout_height="match_parent" android:layout_marginLeft="8dp" android:background="@drawable/btn_secondary_neon" android:text="AJUSTES PPSSPP" android:textColor="@color/retro_text" android:textSize="7sp" android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:baselineAligned="false" android:orientation="horizontal">
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1.7" android:minHeight="344dp" android:background="@drawable/card_glass" android:orientation="vertical" android:padding="12dp">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="BIBLIOTECA PSP" android:textColor="#B8DAF4" android:textSize="8sp" android:textStyle="bold" android:letterSpacing="0.14" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="ISO · CSO recomendado para ahorrar espacio · CHD · PBP · ELF" android:textColor="#789BC0" android:textSize="7sp" />
+                <GridLayout android:id="@+id/pspRomGrid" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="9dp" android:columnCount="2" />
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="0dp" android:layout_height="344dp" android:layout_weight="1" android:layout_marginLeft="10dp" android:background="@drawable/hero_neon" android:orientation="vertical" android:padding="14dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="JUEGO SELECCIONADO" android:textColor="#B8DAF4" android:textSize="8sp" android:textStyle="bold" />
+                <LinearLayout android:layout_width="match_parent" android:layout_height="132dp" android:layout_marginTop="7dp" android:orientation="horizontal">
+                    <ImageView android:id="@+id/imgPspSelectedCover" android:layout_width="96dp" android:layout_height="132dp" android:alpha="0.30" android:background="@drawable/card_blue" android:contentDescription="Carátula PSP" android:scaleType="centerInside" android:src="@mipmap/ic_launcher" />
+                    <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginLeft="10dp" android:orientation="vertical">
+                        <TextView android:id="@+id/txtPspTitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:maxLines="3" android:text="Selecciona un juego de PSP" android:textColor="@color/retro_text" android:textSize="16sp" android:textStyle="bold" />
+                        <TextView android:id="@+id/txtPspMeta" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="7dp" android:text="PlayStation Portable · PPSSPP" android:textColor="@color/retro_muted" android:textSize="9sp" />
+                        <TextView android:id="@+id/txtPspState" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="○ SIN JUEGO SELECCIONADO" android:textColor="@color/retro_green" android:textSize="9sp" android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+                <TextView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center_vertical" android:lineSpacingExtra="3dp" android:text="PPSSPP ARM64 · renderizado Vulkan/OpenGL nativo&#10;Resolución interna adaptativa 2×/3× · baja latencia&#10;Ad Hoc: ambos teléfonos ejecutan el mismo juego PSP." android:textColor="#789BC0" android:textSize="8sp" />
+                <Button android:id="@+id/btnPspPlay" android:layout_width="match_parent" android:layout_height="44dp" android:background="@drawable/btn_primary_gradient" android:text="▶ JUGAR 1P" android:textColor="@color/retro_text" android:textSize="9sp" android:textStyle="bold" />
+                <Button android:id="@+id/btnPspMultiplayer" android:layout_width="match_parent" android:layout_height="42dp" android:layout_marginTop="5dp" android:background="@drawable/btn_secondary_neon" android:text="⌁ MULTIPLAYER AD HOC · 2 PSP" android:textColor="@color/retro_text" android:textSize="8sp" android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

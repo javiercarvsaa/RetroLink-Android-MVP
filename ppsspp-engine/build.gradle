@@ -1,0 +1,86 @@
+plugins {
+    id 'com.android.library'
+    id 'com.google.protobuf'
+}
+
+def upstreamDir = file("${projectDir}/upstream")
+
+android {
+    namespace 'org.ppsspp.ppsspp'
+    compileSdk 36
+    ndkVersion '28.2.13676358'
+
+    defaultConfig {
+        minSdk 26
+        targetSdk 36
+        ndk { abiFilters 'arm64-v8a' }
+        externalNativeBuild {
+            cmake {
+                arguments '-DANDROID=true',
+                        '-DANDROID_PLATFORM=android-26',
+                        '-DANDROID_TOOLCHAIN=clang',
+                        '-DANDROID_CPP_FEATURES=',
+                        '-DANDROID_STL=c++_shared',
+                        '-DUSE_CCACHE=OFF'
+                targets 'ppsspp_jni'
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    externalNativeBuild {
+        cmake {
+            path file("${upstreamDir}/CMakeLists.txt")
+            version '3.22.1'
+        }
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile 'src/main/AndroidManifest.xml'
+            java.srcDirs = [file("${upstreamDir}/android/src")]
+            aidl.srcDirs = [file("${upstreamDir}/android/src")]
+            proto.srcDirs = [file("${upstreamDir}/android/src/main/proto")]
+            res.srcDirs = [file("${upstreamDir}/android/res"), file("${upstreamDir}/android/normal/res")]
+            assets.srcDirs = [file('src/main/assets'), file("${upstreamDir}/assets")]
+        }
+    }
+
+    buildFeatures {
+        aidl true
+        buildConfig true
+    }
+
+    packaging {
+        jniLibs { useLegacyPackaging = true }
+        resources {
+            excludes += ['META-INF/DEPENDENCIES', 'META-INF/LICENSE*', 'META-INF/NOTICE*']
+        }
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}
+
+protobuf {
+    protoc { artifact = 'com.google.protobuf:protoc:3.25.3' }
+    generateProtoTasks {
+        all().configureEach { task ->
+            task.builtins {
+                java { option 'lite' }
+            }
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.7.1'
+    implementation 'androidx.documentfile:documentfile:1.1.0'
+    implementation 'com.google.protobuf:protobuf-javalite:4.33.5'
+}

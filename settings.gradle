@@ -16,3 +16,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "RetroLink"
 include(":app")
+
+include(":ppsspp-engine")

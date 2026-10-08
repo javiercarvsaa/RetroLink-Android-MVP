@@ -1,0 +1,50 @@
+{
+  "product": "RetroLink v1.6.0 Library Hub RC1 source increment",
+  "base_source_commit": "9379168238fbc3d78fc284744536c95a0ef88718",
+  "delivery_status": "Source and workflow created locally; no remote branch or new build started",
+  "tests": {
+    "jvm_model_tests": {
+      "passed": 38,
+      "total": 38,
+      "output": "HubGame: 38/38 JVM checks PASS"
+    },
+    "java_syntax": {
+      "files": 5,
+      "output": "Java syntax: 5 source units PASS (not Android compilation)",
+      "is_android_compilation": false
+    },
+    "baseline_dex_bindings": {
+      "passed": 77,
+      "basis": "existing v1.5.0d APK DEX symbols, not new Android compile"
+    },
+    "config_patch_exact_git_blobs": {
+      "result": "PASS",
+      "output": "Exact base blobs, additive launcher, permissions, version-only Gradle change and resource XML: PASS"
+    },
+    "yaml_parse": "PASS",
+    "workflow_steps": 33,
+    "bash_syntax_blocks_passed": 28,
+    "embedded_python_blocks_parsed": 9,
+    "payload_integrity": "PASS",
+    "source_archive_files": 22,
+    "new_xml_resources_parse": "PASS",
+    "baseline_dex_reader_test": "PASS"
+  },
+  "pending": [
+    "Android SDK/NDK compilation",
+    "GitHub source preservation gate on full base checkout",
+    "APK v1.6 signature and installation compatibility",
+    "Physical UI and game testing",
+    "P2/Ad Hoc/Link, audio, saves and sustained performance comparison"
+  ],
+  "physical_devices_tested": [],
+  "new_apk_exists": false,
+  "known_previous_signing_certificate_sha256": {
+    "v1.4.0d": "1a870dd02005ac3b0f98526dce106d20876310eddd6f88b2ea86c4e5e0feb36e",
+    "v1.5.0d": "ee2728a92ffe08ace0c8663fb948d25fb5d03866a2e4c500e46fdd339887723c"
+  },
+  "delivery_files": {
+    "build-retrolink-v1.6.0-library-hub.yml": "f339d810af08a09b05789c163b1a3129aa0bb7c2f267248c6e52bfd4b601e465",
+    "RetroLink-v1.6.0-library-hub-source-overlay.zip": "b90d0eee2d51a709494840e8750a9d850d7a086d603472480ec690d08cc185ef"
+  }
+}
